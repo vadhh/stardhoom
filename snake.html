@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vadhh@localhost: ~$ ./snake.exe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #000000;
+    color: #00ff00;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* CRT Scanlines */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Screen flicker */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 0, 0.02);
+    pointer-events: none;
+    z-index: 999;
+    animation: flicker 0.15s infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.27861; }
+    5% { opacity: 0.34769; }
+    10% { opacity: 0.23604; }
+    15% { opacity: 0.90626; }
+    20% { opacity: 0.18128; }
+    25% { opacity: 0.83891; }
+    30% { opacity: 0.65583; }
+    35% { opacity: 0.67807; }
+    40% { opacity: 0.26559; }
+    45% { opacity: 0.84693; }
+    50% { opacity: 0.96019; }
+    55% { opacity: 0.08594; }
+    60% { opacity: 0.20313; }
+    65% { opacity: 0.71988; }
+    70% { opacity: 0.53455; }
+    75% { opacity: 0.37288; }
+    80% { opacity: 0.71428; }
+    85% { opacity: 0.70419; }
+    90% { opacity: 0.7003; }
+    95% { opacity: 0.36108; }
+    100% { opacity: 0.24387; }
+  }
+
+  .terminal-container {
+    max-width: 650px;
+    width: 95%;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  /* Terminal Window */
+  .terminal-window {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+  }
+
+  /* Terminal Header */
+  .terminal-header {
+    background: #1a1a1a;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #00ff00;
+  }
+
+  .terminal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .terminal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+
+  .terminal-title {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #00ff00;
+  }
+
+  .close-btn {
+    color: #00ffff;
+    text-decoration: none;
+    border: 1px solid #00ffff;
+    padding: 2px 8px;
+    font-size: 12px;
+    transition: all 0.3s;
+  }
+
+  .close-btn:hover {
+    background: rgba(0, 255, 255, 0.1);
+    color: #00ff00;
+    border-color: #00ff00;
+  }
+
+  /* Terminal Body */
+  .terminal-body {
+    padding: 20px;
+  }
+
+  /* Game Area */
+  .game-area {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    border: 1px solid #00ff00;
+    box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.1);
+    margin: 20px 0;
+  }
+
+  canvas {
+    display: block;
+    background: #000;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Overlay Screen */
+  #overlay-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.95);
+    color: #00ff00;
+    text-align: center;
+    z-index: 100;
+  }
+
+  #overlay-screen h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #00ff00;
+    letter-spacing: 2px;
+  }
+
+  #overlay-screen p {
+    font-size: 14px;
+    color: #00ffff;
+    margin-bottom: 10px;
+  }
+
+  .retro-btn {
+    background: transparent;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    padding: 12px 30px;
+    font-family: 'Fira Code', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+
+  .retro-btn:hover {
+    background: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+  }
+
+  .retro-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Status Bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 13px;
+    color: #00ff00;
+    border-top: 1px solid #00ff00;
+  }
+
+  .status-bar span {
+    color: #888888;
+  }
+
+  .status-bar b {
+    color: #00ff00;
+    margin-left: 5px;
+  }
+
+  /* Mobile Controls */
+  .mobile-controls {
+    display: none;
+    grid-template-columns: repeat(3, 60px);
+    gap: 5px;
+    justify-content: center;
+    margin-top: 15px;
+  }
+
+  .d-pad-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 2px solid #00ff00;
+    color: #00ff00;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+
+  .d-pad-btn:active {
+    background: rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+  }
+
+  .d-pad-btn:nth-child(2) {
+    grid-column: 2;
+  }
+
+  .d-pad-btn:nth-child(1) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .d-pad-btn:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .d-pad-btn:nth-child(4) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  /* Leaderboard */
+  .leaderboard-box {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff00;
+    padding: 15px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .leaderboard-title {
+    text-align: center;
+    color: #00ffff;
+    font-weight: 700;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #00ff00;
+    text-shadow: 0 0 10px #00ffff;
+    letter-spacing: 2px;
+  }
+
+  .leaderboard-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #00ff00;
+  }
+
+  .rank-1 {
+    color: #ffff00;
+    text-shadow: 0 0 5px #ffff00;
+    font-weight: 700;
+  }
+
+  .rank-you {
+    color: #00ffff;
+    animation: blinker 1s linear infinite;
+    font-weight: 700;
+  }
+
+  @keyframes blinker {
+    50% { opacity: 0.3; }
+  }
+
+  .game-over-title {
+    color: #ff0000 !important;
+    text-shadow: 0 0 10px #ff0000 !important;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-controls {
+      display: grid;
+    }
+
+    .terminal-container {
+      padding: 0 10px;
+    }
+
+    .terminal-body {
+      padding: 15px;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .d-pad-btn {
+      width: 50px;
+      height: 50px;
+      font-size: 20px;
+    }
+
+    .mobile-controls {
+      grid-template-columns: repeat(3, 50px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    #overlay-screen h2 {
+      font-size: 18px;
+    }
+
+    .retro-btn {
+      padding: 10px 20px;
+      font-size: 12px;
+    }
+
+    .leaderboard-box {
+      padding: 10px;
+    }
+
+    .leaderboard-row {
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="terminal-container">
+  <div class="terminal-window">
+    <div class="terminal-header">
+      <div class="terminal-header-left">
+        <span class="terminal-dot dot-red"></span>
+        <span class="terminal-dot dot-yellow"></span>
+        <span class="terminal-dot dot-green"></span>
+        <span class="terminal-title">vadhh@localhost: ~$ ./snake.exe</span>
+      </div>
+      <a href="index.html" class="close-btn">EXIT</a>
+    </div>
+
+    <div class="terminal-body">
+      <div class="game-area">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <div id="overlay-screen">
+          <h2>SNAKE_OS v1.0</h2>
+          <p>▸ USE ARROW KEYS TO MOVE</p>
+          <p>▸ COLLECT RED PIXELS</p>
+          <p>▸ DON'T HIT WALLS OR YOURSELF</p>
+          <button class="retro-btn" onclick="startGame()">[ INITIALIZE GAME ]</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span>SCORE: <b id="score">0</b></span>
+        <span>MODE: <b>HARDCORE</b></span>
+        <span>STATUS: <b id="status">STANDBY</b></span>
+      </div>
+
+      <div class="mobile-controls">
+        <button class="d-pad-btn" onclick="changeDirection({key: 'ArrowUp'})">▲</button>
+        <button class="d-pad-btn" onclick="changeDirection({key: 'ArrowLeft'})">◄</button>
+        <button class="d-pad-btn" onclick="changeDirection({key: 'ArrowDown'})">▼</button>
+        <button class="d-pad-btn" onclick="changeDirection({key: 'ArrowRight'})">►</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const statusEl = document.getElementById('status');
+  const overlay = document.getElementById('overlay-screen');
+
+  // Game Settings
+  const gridSize = 20;
+  let tileCount = 20;
+  
+  let velocityX = 0;
+  let velocityY = 0;
+  let snake = [];
+  let food = { x: 15, y: 15 };
+  let score = 0;
+  let intervalId;
+  let isGameRunning = false;
+
+  function startGame() {
+    overlay.style.display = 'none';
+    snake = [{x: 10, y: 10}, {x: 9, y: 10}, {x: 8, y: 10}];
+    score = 0;
+    scoreEl.innerText = score;
+    statusEl.innerText = 'RUNNING';
+    velocityX = 1;
+    velocityY = 0;
+    isGameRunning = true;
+    
+    window.focus();
+
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(gameLoop, 100);
+  }
+
+  function gameLoop() {
+    if (!isGameRunning) return;
+
+    const head = { x: snake[0].x + velocityX, y: snake[0].y + velocityY };
+
+    // Wall Collision
+    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+      gameOver();
+      return;
+    }
+
+    // Self Collision
+    for (let i = 0; i < snake.length; i++) {
+      if (head.x === snake[i].x && head.y === snake[i].y) {
+        gameOver();
+        return;
+      }
+    }
+
+    snake.unshift(head);
+
+    // Food Check
+    if (head.x === food.x && head.y === food.y) {
+      score += 10;
+      scoreEl.innerText = score;
+      placeFood();
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  function draw() {
+    // Clear Screen
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid lines for retro effect
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= tileCount; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * gridSize, 0);
+      ctx.lineTo(i * gridSize, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * gridSize);
+      ctx.lineTo(canvas.width, i * gridSize);
+      ctx.stroke();
+    }
+
+    // Draw Food with glow effect
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ff0000';
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
+    ctx.shadowBlur = 0;
+
+    // Draw Snake with glow
+    for (let i = 0; i < snake.length; i++) {
+      if (i === 0) {
+        // Head - brighter
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00ff00';
+        ctx.fillStyle = '#00ff00';
+      } else {
+        // Body - darker
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = '#00ff00';
+        ctx.fillStyle = '#00cc00';
+      }
+      
+      ctx.fillRect(
+        snake[i].x * gridSize + 2, 
+        snake[i].y * gridSize + 2, 
+        gridSize - 4, 
+        gridSize - 4
+      );
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  function placeFood() {
+    food.x = Math.floor(Math.random() * tileCount);
+    food.y = Math.floor(Math.random() * tileCount);
+    
+    for (let part of snake) {
+      if (part.x === food.x && part.y === food.y) {
+        placeFood();
+        break;
+      }
+    }
+  }
+
+  function gameOver() {
+    isGameRunning = false;
+    clearInterval(intervalId);
+    statusEl.innerText = 'CRASHED';
+
+    const riggedHighScore = 99999999999999; 
+    
+    overlay.innerHTML = `
+      <h2 class="game-over-title">SYSTEM FAILURE</h2>
+      <p style="color: #ff0000;">▸ COLLISION DETECTED</p>
+      <p style="color: #888;">▸ FINAL SCORE: ${score}</p>
+      
+      <div class="leaderboard-box">
+        <div class="leaderboard-title">TOP PLAYERS</div>
+        
+        <div class="leaderboard-row rank-1">
+          <span>1. NANATT</span>
+          <span>${riggedHighScore}</span>
+        </div>
+
+        <div class="leaderboard-row">
+          <span>2. VADHH</span>
+          <span>050000</span>
+        </div>
+
+        <div class="leaderboard-row rank-you">
+          <span>3. GUEST (YOU)</span>
+          <span>${score.toString().padStart(6, '0')}</span>
+        </div>
+      </div>
+
+      <button class="retro-btn" onclick="startGame()">[ REBOOT SYSTEM ]</button>
+    `;
+    overlay.style.display = 'flex';
+  }
+
+  function changeDirection(event) {
+    if (!isGameRunning) return;
+    
+    const key = event.key;
+    
+    if (key === 'ArrowUp' && velocityY !== 1) {
+      velocityX = 0; velocityY = -1;
+    } else if (key === 'ArrowDown' && velocityY !== -1) {
+      velocityX = 0; velocityY = 1;
+    } else if (key === 'ArrowLeft' && velocityX !== 1) {
+      velocityX = -1; velocityY = 0;
+    } else if (key === 'ArrowRight' && velocityX !== -1) {
+      velocityX = 1; velocityY = 0;
+    }
+  }
+
+  document.addEventListener('keydown', changeDirection);
+
+  // Responsive canvas sizing
+  function resizeCanvas() {
+    const container = canvas.parentElement;
+    const maxSize = Math.min(container.clientWidth - 4, 400);
+    canvas.style.width = maxSize + 'px';
+    canvas.style.height = maxSize + 'px';
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vadhh@localhost: ~$ whoami</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #000000;
+    color: #00ff00;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* CRT Scanlines */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Screen flicker */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 0, 0.02);
+    pointer-events: none;
+    z-index: 999;
+    animation: flicker 0.15s infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.27861; }
+    5% { opacity: 0.34769; }
+    10% { opacity: 0.23604; }
+    15% { opacity: 0.90626; }
+    20% { opacity: 0.18128; }
+    25% { opacity: 0.83891; }
+    30% { opacity: 0.65583; }
+    35% { opacity: 0.67807; }
+    40% { opacity: 0.26559; }
+    45% { opacity: 0.84693; }
+    50% { opacity: 0.96019; }
+    55% { opacity: 0.08594; }
+    60% { opacity: 0.20313; }
+    65% { opacity: 0.71988; }
+    70% { opacity: 0.53455; }
+    75% { opacity: 0.37288; }
+    80% { opacity: 0.71428; }
+    85% { opacity: 0.70419; }
+    90% { opacity: 0.7003; }
+    95% { opacity: 0.36108; }
+    100% { opacity: 0.24387; }
+  }
+
+  .terminal-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  /* Terminal Window */
+  .terminal-window {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+    margin-bottom: 20px;
+  }
+
+  /* Terminal Header */
+  .terminal-header {
+    background: #1a1a1a;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #00ff00;
+  }
+
+  .terminal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+
+  .terminal-title {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #00ff00;
+  }
+
+  /* Terminal Body */
+  .terminal-body {
+    padding: 20px;
+    min-height: 300px;
+  }
+
+  .prompt {
+    color: #00ff00;
+    text-shadow: 0 0 5px #00ff00;
+  }
+
+  .command {
+    color: #00ffff;
+  }
+
+  .output {
+    color: #00ff00;
+    margin-left: 20px;
+  }
+
+  .comment {
+    color: #666666;
+  }
+
+  .highlight {
+    color: #00ffff;
+    font-weight: 700;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: #00ff00;
+    animation: blink 1s infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Section Styling */
+  .section {
+    margin-bottom: 30px;
+  }
+
+  .section-header {
+    color: #00ffff;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 25px 0 15px 0;
+    text-shadow: 0 0 10px #00ffff;
+  }
+
+  .section-header::before {
+    content: '┌─[ ';
+    color: #00ff00;
+  }
+
+  .section-header::after {
+    content: ' ]';
+    color: #00ff00;
+  }
+
+  /* Command Input Simulation */
+  .command-line {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .command-line .prompt {
+    margin-right: 10px;
+  }
+
+  /* Profile Section */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #00ff00;
+    background: rgba(0, 255, 0, 0.03);
+  }
+
+  .profile-image {
+    width: 180px;
+    height: 220px;
+    border: 2px solid #00ff00;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+  }
+
+  .profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    filter: contrast(1.1);
+  }
+
+  /* Stats Table */
+  .stats-table {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .stats-table .stat-row {
+    margin-bottom: 8px;
+    display: flex;
+  }
+
+  .stats-table .stat-label {
+    color: #ffff00;
+    min-width: 150px;
+    font-weight: 700;
+  }
+
+  .stats-table .stat-value {
+    color: #00ff00;
+  }
+
+  .stat-bar {
+    color: #ff0000;
+    font-weight: 700;
+  }
+
+  /* Content Blocks */
+  .content-block {
+    margin: 20px 0;
+    padding: 15px;
+    border-left: 3px solid #00ffff;
+    background: rgba(0, 255, 255, 0.03);
+  }
+
+  .content-block p {
+    margin-bottom: 12px;
+    line-height: 1.8;
+  }
+
+  .content-block ul {
+    margin-left: 20px;
+    margin-top: 10px;
+  }
+
+  .content-block li {
+    margin-bottom: 10px;
+    line-height: 1.8;
+  }
+
+  .content-block b {
+    color: #00ffff;
+  }
+
+  .content-block i {
+    color: #ffff00;
+  }
+
+  /* Typewriter Box */
+  .typewriter-box {
+    background: rgba(0, 255, 0, 0.05);
+    border: 1px solid #00ff00;
+    padding: 15px;
+    margin: 20px 0;
+    font-size: 13px;
+    min-height: 120px;
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+
+  /* Links styled as commands */
+  .cmd-link {
+    color: #00ffff;
+    text-decoration: none;
+    border: 1px solid #00ffff;
+    padding: 8px 20px;
+    display: inline-block;
+    margin: 10px 10px 10px 0;
+    transition: all 0.3s;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .cmd-link:hover {
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    color: #00ff00;
+    border-color: #00ff00;
+  }
+
+  /* CTF Name Challenge */
+  .decrypt-btn {
+    color: #ff00ff; /* Magenta for "Locked" state */
+    cursor: pointer;
+    font-weight: bold;
+    background: rgba(255, 0, 255, 0.1);
+    padding: 2px 8px;
+    border: 1px dashed #ff00ff;
+    transition: all 0.3s;
+  }
+
+  .decrypt-btn:hover {
+    background: #ff00ff;
+    color: #000;
+    box-shadow: 0 0 10px #ff00ff;
+  }
+
+  .decrypt-btn.unlocked {
+    color: #00ff00; /* Green for "Unlocked" state */
+    border: 1px solid #00ff00;
+    background: transparent;
+    cursor: default;
+  }
+
+  /* Network Traceroute Challenge */
+  .trace-btn {
+    color: #00ffff; /* Cyan for Network/Data */
+    cursor: crosshair; /* Target cursor */
+    font-family: 'Courier New', monospace;
+    border-bottom: 1px dotted #00ffff;
+    transition: all 0.2s;
+  }
+
+  .trace-btn:hover {
+    background: rgba(0, 255, 255, 0.15);
+    text-shadow: 0 0 8px #00ffff;
+  }
+
+  .trace-btn.resolved {
+    color: #00ff00;
+    border-bottom: none;
+    cursor: default;
+    background: transparent;
+  }
+
+  /* System info bar */
+  .system-bar {
+    background: #1a1a1a;
+    padding: 8px 15px;
+    font-size: 11px;
+    border-top: 1px solid #00ff00;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .system-info {
+    color: #888888;
+  }
+
+  .system-info span {
+    color: #00ff00;
+    margin-left: 5px;
+  }
+
+  /* Center content */
+  .center-content {
+    text-align: center;
+    margin: 30px 0;
+  }
+
+  .construction-gif {
+    display: block;
+    margin: 20px auto;
+    border: 2px solid #00ff00;
+    padding: 5px;
+    background: #000;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    body {
+      font-size: 12px;
+    }
+
+    .terminal-container {
+      margin: 10px auto;
+      padding: 0 10px;
+    }
+
+    .terminal-body {
+      padding: 15px;
+    }
+
+    .profile-grid {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+
+    .profile-image {
+      width: 150px;
+      height: 180px;
+      margin: 0 auto;
+    }
+
+    .stats-table .stat-row {
+      flex-direction: column;
+    }
+
+    .stats-table .stat-label {
+      min-width: auto;
+      margin-bottom: 3px;
+    }
+
+    .system-bar {
+      font-size: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div class="terminal-container">
+    <div class="terminal-window">
+      <div class="terminal-header">
+        <span class="terminal-dot dot-red"></span>
+        <span class="terminal-dot dot-yellow"></span>
+        <span class="terminal-dot dot-green"></span>
+        <span class="terminal-title">vadhh@localhost: ~$ whoami</span>
+      </div>
+
+      <div class="terminal-body">
+        <!-- Boot Sequence -->
+        <div class="section">
+          <div class="command-line">
+            <span class="prompt">vadhh@localhost:~$</span>
+            <span class="command">./init_bio.sh</span>
+          </div>
+          <div class="typewriter-box" id="typewriter"></div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="section">
+          <div class="section-header">00_HUMAN</div>
+          
+          <div class="profile-grid">
+            <div class="profile-image">
+              <img src="me.jpg" alt="Vadhh">
+            </div>
+
+            <div class="stats-table">
+              <div class="stat-row">
+                <span class="stat-label">IDENTITY:</span>
+                <span 
+                  class="stat-value decrypt-btn" 
+                  id="name-cipher" 
+                  onclick="decryptName()" 
+                  data-real="AFRIDHO TATTAQ TAVADHU"
+                >
+                  [ 0xSECURE_DATA_LOCKED ]
+                </span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">CLASS:</span>
+                <span class="stat-value">Engineering Student / Full-Stack Tinkerer</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">ALIGNMENT:</span>
+                <span class="stat-value">Chaotic Good (Open Source)</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">WEAPON:</span>
+                <span class="stat-value">Neovim (Configured to break often)</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">CURRENT_QUEST:</span>
+                <span class="stat-value">Surviving 7th Semester & MLOps Pipelines</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">MANA:</span>
+                <span class="stat-bar">██░░░░░░░░</span>
+                <span class="stat-value"> (Caffeine Dependent)</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">LOCATION:</span>
+                <span 
+                  class="stat-value trace-btn" 
+                  id="loc-trace" 
+                  onclick="traceLocation()"
+                >
+                  127.0.0.1 (Localhost)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Pitch -->
+        <div class="section">
+          <div class="section-header">01_STATE</div>
+          <div class="content-block">
+            <p><b>Models die in notebooks.</b> That is the hard truth of this industry.</p>
+            
+            <p>My value isn't just knowing the math behind a Neural Network; it's knowing how to wrap it in <span class="highlight">Docker</span>, track it with <span class="highlight">MLflow</span>, and serve it via <span class="highlight">Next.js</span> without it crashing under load.</p>
+            
+            <p>I don't just build algorithms. I build <b>products</b>. I bridge the gap between "it works on my machine" and "it works in production."</p>
+          </div>
+        </div>
+
+        <!-- The Philosophy -->
+        <div class="section">
+          <div class="section-header">02_PHILOSOPHY</div>
+          <div class="content-block">
+            <p>I believe in <b>controlled chaos</b>. Whether it's the polyrhythms of System of a Down or a distributed system architecture, complexity requires orchestration.</p>
+            
+            <ul>
+              <li><b>Tools:</b> I use Arch Linux and Neovim not for "clout," but because I need to strip away the abstraction and understand exactly how the metal screams.</li>
+              <li><b>Mindset:</b> Like Pantheon, I don't fear the mountain. The 7th semester, the failing pipelines, the memory leaks—they are not obstacles. They are the path.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="center-content">
+          <img src="https://cyber.dabamos.de/88x31/construction.gif" class="construction-gif" alt="Under Construction">
+          <p class="output comment"># This personality is constantly under construction.</p>
+          
+          <a href="index.html" class="cmd-link">← RETURN TO SYSTEM ROOT</a>
+        </div>
+
+        <div class="command-line">
+          <span class="prompt">vadhh@localhost:~$</span>
+          <span class="cursor"></span>
+        </div>
+      </div>
+
+      <div class="system-bar">
+        <div class="system-info">SESSION:<span>WHOAMI</span></div>
+        <div class="system-info">USER:<span>vadhh</span></div>
+        <div class="system-info">PWD:<span>~/about</span></div>
+        <div class="system-info">STATUS:<span>ONLINE</span></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const text = "> LOADING PROFILE...\n> STATUS: ONLINE.\n\nHello, friend.\n\nI am Vadhh. I build systems that turn messy data into revenue. I prefer the terminal over the mouse, and simple code over clever code.";
+  
+  const element = document.getElementById("typewriter");
+  let i = 0;
+
+  function typeWriter() {
+    if (i < text.length) {
+      element.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
+      i++;
+      setTimeout(typeWriter, Math.floor(Math.random() * 50) + 30); 
+    } else {
+      element.innerHTML = text + '<span class="cursor"></span>';
+    }
+  }
+
+  window.onload = typeWriter;
+  
+  // CTF Decrypt Effect
+  function decryptName() {
+    const element = document.getElementById("name-cipher");
+    const realName = element.getAttribute("data-real");
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let iterations = 0;
+    
+    // Prevent re-running if already unlocked
+    if (element.classList.contains("unlocked")) return;
+
+    const interval = setInterval(() => {
+      element.innerText = realName
+        .split("")
+        .map((letter, index) => {
+          // If the iteration count is past the index, show the real letter
+          if (index < iterations) {
+            return realName[index];
+          }
+          // Otherwise show a random matrix character
+          return characters[Math.floor(Math.random() * characters.length)];
+        })
+        .join("");
+
+      // Reveal letters progressively
+      if (iterations >= realName.length) { 
+        clearInterval(interval);
+        element.classList.remove("decrypt-btn"); // Remove button styling
+        element.classList.add("unlocked");       // Add plain text styling
+        element.style.border = "none";           // Clean look
+        element.style.padding = "0";
+      }
+      
+      // Speed of decryption (1/3 of a letter per frame approx)
+      iterations += 1 / 3; 
+    }, 30);
+  }
+  
+  // Network Traceroute Effect
+  function traceLocation() {
+    const element = document.getElementById("loc-trace");
+    const steps = [
+      "192.168.1.105 (LAN)",
+      "10.20.15.1 (GATEWAY)",
+      "202.14.x.x (WAN)",
+      "ACCESSING GEO-DB...",
+      "TRIANGULATING...",
+      "Semarang, ID (GMT+7)" // <--- Your final location
+    ];
+    
+    // Prevent re-running
+    if (element.classList.contains("resolved")) return;
+    
+    let stepIndex = 0;
+    
+    // Fast cycle through IPs
+    const timer = setInterval(() => {
+      if (stepIndex < steps.length) {
+        element.innerText = "> " + steps[stepIndex];
+        stepIndex++;
+      } else {
+        clearInterval(timer);
+        element.innerText = steps[steps.length - 1]; // Ensure final text matches exactly
+        element.classList.remove("trace-btn");
+        element.classList.add("resolved");
+      }
+    }, 250); // 250ms per hop
+  }
+</script>
+
+
+</body>
+</html>
