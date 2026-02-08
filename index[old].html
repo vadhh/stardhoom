@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vadhh@localhost:~$</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #000000;
+    color: #00ff00;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* CRT Scanlines */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Screen flicker */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 0, 0.02);
+    pointer-events: none;
+    z-index: 999;
+    animation: flicker 0.15s infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.27861; }
+    5% { opacity: 0.34769; }
+    10% { opacity: 0.23604; }
+    15% { opacity: 0.90626; }
+    20% { opacity: 0.18128; }
+    25% { opacity: 0.83891; }
+    30% { opacity: 0.65583; }
+    35% { opacity: 0.67807; }
+    40% { opacity: 0.26559; }
+    45% { opacity: 0.84693; }
+    50% { opacity: 0.96019; }
+    55% { opacity: 0.08594; }
+    60% { opacity: 0.20313; }
+    65% { opacity: 0.71988; }
+    70% { opacity: 0.53455; }
+    75% { opacity: 0.37288; }
+    80% { opacity: 0.71428; }
+    85% { opacity: 0.70419; }
+    90% { opacity: 0.7003; }
+    95% { opacity: 0.36108; }
+    100% { opacity: 0.24387; }
+  }
+
+  .terminal-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  /* Terminal Window */
+  .terminal-window {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+    margin-bottom: 20px;
+  }
+
+  /* Terminal Header */
+  .terminal-header {
+    background: #1a1a1a;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #00ff00;
+  }
+
+  .terminal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+
+  .terminal-title {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #00ff00;
+  }
+
+  /* Terminal Body */
+  .terminal-body {
+    padding: 20px;
+    min-height: 300px;
+  }
+
+  .prompt {
+    color: #00ff00;
+    text-shadow: 0 0 5px #00ff00;
+  }
+
+  .prompt::before {
+    content: '> ';
+    color: #00ff00;
+  }
+
+  .command {
+    color: #00ffff;
+  }
+
+  .output {
+    color: #00ff00;
+    margin-left: 20px;
+  }
+
+  .comment {
+    color: #666666;
+  }
+
+  .error {
+    color: #ff0000;
+  }
+
+  .warning {
+    color: #ffff00;
+  }
+
+  .highlight {
+    color: #00ffff;
+    font-weight: 700;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: #00ff00;
+    animation: blink 1s infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Section Styling */
+  .section {
+    margin-bottom: 30px;
+  }
+
+  .section-header {
+    color: #00ffff;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px #00ffff;
+  }
+
+  .section-header::before {
+    content: '┌─[ ';
+    color: #00ff00;
+  }
+
+  .section-header::after {
+    content: ' ]';
+    color: #00ff00;
+  }
+
+  /* Project Logs */
+  .project-log {
+    margin-bottom: 25px;
+    padding: 15px;
+    border-left: 3px solid #00ff00;
+    background: rgba(0, 255, 0, 0.03);
+  }
+
+  .project-log:hover {
+    background: rgba(0, 255, 0, 0.08);
+    border-left-color: #00ffff;
+  }
+
+  .log-header {
+    color: #ffff00;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .log-time {
+    color: #666666;
+    font-size: 12px;
+  }
+
+  .log-status {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-left: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-deployed {
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+    border: 1px solid #00ff00;
+  }
+
+  .status-active {
+    background: rgba(0, 255, 255, 0.2);
+    color: #00ffff;
+    border: 1px solid #00ffff;
+  }
+
+  .log-content {
+    margin-top: 10px;
+    line-height: 1.8;
+  }
+
+  .log-meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #888888;
+  }
+
+  .log-link {
+    color: #00ffff;
+    text-decoration: none;
+    border-bottom: 1px dotted #00ffff;
+    transition: all 0.3s;
+  }
+
+  .log-link:hover {
+    color: #00ff00;
+    border-bottom-color: #00ff00;
+    text-shadow: 0 0 5px #00ff00;
+  }
+
+  /* Skills Tree */
+  .skill-tree {
+    margin-left: 20px;
+  }
+
+  .skill-item {
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+  }
+
+  .skill-item::before {
+    content: '├──';
+    position: absolute;
+    left: 0;
+    color: #00ff00;
+  }
+
+  .skill-item:last-child::before {
+    content: '└──';
+  }
+
+  .skill-name {
+    color: #00ffff;
+    font-weight: 700;
+  }
+
+  /* ASCII Art */
+  .ascii-art {
+    color: #00ff00;
+    font-size: 10px;
+    line-height: 1.2;
+    margin: 20px 0;
+    text-align: center;
+    text-shadow: 0 0 5px #00ff00;
+  }
+
+  /* Command Input Simulation */
+  .command-line {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .command-line .prompt {
+    margin-right: 10px;
+  }
+
+  .typed-text {
+    color: #00ffff;
+  }
+
+  /* Links styled as commands */
+  .cmd-link {
+    color: #00ffff;
+    text-decoration: none;
+    border: 1px solid #00ffff;
+    padding: 5px 15px;
+    display: inline-block;
+    margin: 5px 5px 5px 0;
+    transition: all 0.3s;
+    font-size: 12px;
+  }
+
+  .cmd-link:hover {
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    color: #00ff00;
+    border-color: #00ff00;
+  }
+
+  /* System info bar */
+  .system-bar {
+    background: #1a1a1a;
+    padding: 8px 15px;
+    font-size: 11px;
+    border-top: 1px solid #00ff00;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .system-info {
+    color: #888888;
+  }
+
+  .system-info span {
+    color: #00ff00;
+    margin-left: 5px;
+  }
+   
+  /* Game Link Special Style */
+  .game-link {
+    border-color: #ff00ff; /* Magenta border */
+    color: #ff00ff;
+    animation: pulse-game 2s infinite;
+  }
+   
+  .game-link:hover {
+    background: rgba(255, 0, 255, 0.1);
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
+    color: #ffffff;
+    border-color: #ffffff;
+    text-shadow: 0 0 5px #ff00ff;
+  }
+
+  @keyframes pulse-game {
+    0% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 0, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0); }
+  }
+  /* Responsive */
+  @media (max-width: 768px) {
+    body {
+      font-size: 12px;
+    }
+
+    .terminal-container {
+      margin: 10px auto;
+      padding: 0 10px;
+    }
+
+    .terminal-body {
+      padding: 15px;
+    }
+
+    .ascii-art {
+      font-size: 8px;
+    }
+
+    .system-bar {
+      font-size: 10px;
+    }
+
+    .output {
+      margin-left: 10px;
+    }
+  }
+
+  /* Typewriter effect */
+  .typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typing 2s steps(40, end);
+  }
+
+  @keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="terminal-container">
+    <div class="terminal-window">
+      <div class="terminal-header">
+        <span class="terminal-dot dot-red"></span>
+        <span class="terminal-dot dot-yellow"></span>
+        <span class="terminal-dot dot-green"></span>
+        <span class="terminal-title">vadhh@localhost: ~</span>
+      </div>
+
+      <div class="terminal-body">
+        <div class="section">
+          <div class="command-line">
+            <span class="prompt">vadhh@localhost:~$</span>
+            <span class="command">whoami</span>
+          </div>
+          <div class="output">
+            <span class="highlight">VADHH</span> - AI Engineer | MLOps Specialist | Cybersecurity Enthusiast
+          </div>
+          <div class="output comment">
+            # Building privacy-first AI systems and breaking things to understand how they work
+          </div>
+        </div>
+
+        <pre class="ascii-art">
+        
+░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓█▓▒▒▓█▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓████████▓▒░ 
+  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+   ░▒▓██▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+                                                                   
+                                                                   
+        </pre>
+
+        <div class="section">
+          <div class="command-line">
+            <span class="prompt">vadhh@localhost:~$</span>
+            <span class="command">cat skills.txt</span>
+          </div>
+          <div class="section-header">OPERATIONAL_CAPABILITIES</div>
+          <div class="skill-tree">
+            <div class="skill-item">
+              <span class="skill-name">[ AI_ENGINEERING ]</span>
+              <div class="output">Event-driven Architecture using <span class="highlight">Redpanda</span> and <span class="highlight">Llama 3</span>. Offline RAG with <span class="highlight">Qdrant</span> and <span class="highlight">Ollama</span>.</div>
+            </div>
+            <div class="skill-item">
+              <span class="skill-name">[ MLOPS_ENGINEERING ]</span>
+              <div class="output">Pipeline automation using <span class="highlight">MLflow</span>, <span class="highlight">Docker</span> containerization, and <span class="highlight">GitHub Actions</span>.</div>
+            </div>
+            <div class="skill-item">
+              <span class="skill-name">[ FULL_STACK_ARCH ]</span>
+              <div class="output">Hybrid systems using <span class="highlight">Laravel 10</span> and <span class="highlight">Next.js 14</span>. Type-safe frontends with robust SQL/NoSQL backends.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="command-line">
+            <span class="prompt">vadhh@localhost:~$</span>
+            <span class="command">tail -f /var/log/projects.log</span>
+          </div>
+          <div class="section-header">PROJECT_LOGS</div>
+
+          <div class="project-log">
+            <div class="log-header">
+              <span class="log-time">[2026-01-02 19:30:05]</span>
+              PROJECT_00: PULSESTREAM_REALTIME_INTEL
+              <span class="log-status status-active">◉ LIVE_FEED</span>
+            </div>
+            <div class="log-content">
+              <div class="output"><span class="highlight">[MISSION]</span> Real-Time AI Financial Market Intelligence</div>
+              <div class="output"><span class="highlight">[OUTCOME]</span> Engineered an event-driven data pipeline. Ingests news streams via Redpanda, performs sentiment analysis using local Llama 3 (Ollama), and visualizes insights via WebSockets. Achieved self-healing, containerized architecture with sub-25ms latency.</div>
+              <div class="log-meta">
+                STACK :: [ Redpanda / Llama 3 / Redis / Qdrant / Docker ]<br>
+                REPO :: <a href="https://github.com/vadhh/pulsestream" class="log-link" target="_blank">github.com/vadhh/pulsestream</a>
+              </div>
+            </div>
+          </div>
+          <div class="project-log">
+            <div class="log-header">
+              <span class="log-time">[2024-12-30 14:23:11]</span>
+              PROJECT_01: VAULTSEARCH_LOCAL_RAG
+              <span class="log-status status-deployed">✓ DEPLOYED</span>
+            </div>
+            <div class="log-content">
+              <div class="output"><span class="highlight">[MISSION]</span> Privacy-First Document Search (No Cloud APIs)</div>
+              <div class="output"><span class="highlight">[OUTCOME]</span> Engineered a secure, offline RAG system. Orchestrated Llama 3 (Ollama) and Qdrant for semantic search, eliminating data leaks. Built a FastAPI backend with sliding-window chunking for sub-second retrieval latency.</div>
+              <div class="log-meta">
+                STACK :: [ Llama 3 / Qdrant / LangChain / FastAPI / Next.js ]<br>
+                REPO :: <a href="https://github.com/vadhh/vaultsearch" class="log-link" target="_blank">github.com/vadhh/vaultsearch</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="project-log">
+            <div class="log-header">
+              <span class="log-time">[2024-11-15 09:47:33]</span>
+              PROJECT_02: CUSTOMER_SEGMENTATION_ENGINE
+              <span class="log-status status-active">◉ ACTIVE</span>
+            </div>
+            <div class="log-content">
+              <div class="output"><span class="highlight">[MISSION]</span> Revenue Uplift Modeling for Accenture/Dicoding Capstone</div>
+              <div class="output"><span class="highlight">[OUTCOME]</span> Developed clustering model identifying high-value customer segments, projecting potential $22.4M revenue uplift. Built interactive dashboard for real-time cluster trait visualization.</div>
+              <div class="log-meta">
+                STACK :: [ Python / Streamlit / PCA / Scikit-learn ]<br>
+                REPO :: <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" class="log-link" target="_blank">github.com/vadhh/Capstone-Project-A25-CS286</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="project-log">
+            <div class="log-header">
+              <span class="log-time">[2024-10-08 16:12:59]</span>
+              PROJECT_03: TELCO_CHURN_PIPELINE
+              <span class="log-status status-deployed">✓ DEPLOYED</span>
+            </div>
+            <div class="log-content">
+              <div class="output"><span class="highlight">[MISSION]</span> End-to-End ML Lifecycle Automation</div>
+              <div class="output"><span class="highlight">[OUTCOME]</span> Moved beyond "notebook data science" by containerizing training pipeline. Integrated MLflow for experiment tracking and GitHub Actions for automated testing/deployment, reducing manual intervention by 90%.</div>
+              <div class="log-meta">
+                STACK :: [ Docker / MLflow / GitHub Actions / CI/CD ]<br>
+                REPO :: <a href="https://github.com/vadhh/telco-churn-mlops" class="log-link" target="_blank">github.com/vadhh/telco-churn-mlops</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="project-log">
+            <div class="log-header">
+              <span class="log-time">[2024-09-22 11:34:18]</span>
+              PROJECT_04: CONTACTLESS_ORDERING_PLATFORM
+              <span class="log-status status-active">◉ ACTIVE</span>
+            </div>
+            <div class="log-content">
+              <div class="output"><span class="highlight">[MISSION]</span> SaaS-style Digital Menu Solution</div>
+              <div class="output"><span class="highlight">[OUTCOME]</span> Full-stack QR ordering platform with dual-interface architecture (Client vs Admin). JWT-based session security, real-time cart state management, optimized SEO rendering.</div>
+              <div class="log-meta">
+                STACK :: [ Next.js 14 / MongoDB / NextAuth / Tailwind ]<br>
+                REPO :: <a href="https://github.com/vadhh/contactless-ordering-platform" class="log-link" target="_blank">github.com/vadhh/contactless-ordering-platform</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="project-log">
+            <div class="log-header">
+              <span class="log-time">[2024-08-14 13:56:42]</span>
+              PROJECT_05: RETAIL_POS_WORKFLOW_SYSTEM
+              <span class="log-status status-deployed">✓ DEPLOYED</span>
+            </div>
+            <div class="log-content">
+              <div class="output"><span class="highlight">[MISSION]</span> Retail Transaction & Workflow Management</div>
+              <div class="output"><span class="highlight">[OUTCOME]</span> Engineered hybrid monolith POS system handling high-volume transactions. Implemented custom Workflow Engine tracking order states (Pending → Processing → Quality Check) with RBAC security protocols.</div>
+              <div class="log-meta">
+                STACK :: [ Laravel 10 / Vue.js / MySQL / State Machines ]<br>
+                REPO :: <a href="https://github.com/vadhh/laravel-vue-pos-system" class="log-link" target="_blank">github.com/vadhh/laravel-vue-pos-system</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="output comment"># End of log file</div>
+        </div>
+
+        <div class="section">
+          <div class="command-line">
+            <span class="prompt">vadhh@localhost:~$</span>
+            <span class="command">ls -la /contact/</span>
+          </div>
+          <div class="output">
+            <a href="about.html" class="cmd-link" target="_blank">./ABOUT.ME</a>
+            <a href="resume.pdf" class="cmd-link" target="_blank">./RESUME.PDF</a>
+            <a href="mailto:attridho@gmail.com" class="cmd-link">./EMAIL.TXT</a>
+            <a href="https://github.com/vadhh" class="cmd-link" target="_blank">./GITHUB.URL</a>
+            <a href="https://linkedin.com/in/afr1dho" class="cmd-link" target="_blank">./LINKEDIN.URL</a>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="command-line">
+            <span class="prompt">vadhh@localhost:~$</span>
+            <span class="command">cd ~/games/ && ./snake.exe</span>
+          </div>
+          <div class="section-header">ENTERTAINMENT_SUBSYSTEM</div>
+           
+          <div class="output">
+            <span class="comment"># Warning: Productivity may decrease.</span>
+            <br>
+            <span class="comment"># Status: READY_TO_PLAY</span>
+            <br><br>
+            <a href="snake.html" class="cmd-link game-link">
+              [ EXECUTE_SNAKE ]
+            </a>
+          </div>
+        </div>
+
+        <div class="command-line">
+          <span class="prompt">vadhh@localhost:~$</span>
+          <span class="cursor"></span>
+        </div>
+      </div>
+
+      <div class="system-bar">
+        <div class="system-info">UPTIME:<span>1337 days</span></div>
+        <div class="system-info">LOAD:<span>0.42, 0.38, 0.35</span></div>
+        <div class="system-info">MEM:<span>84% used</span></div>
+        <div class="system-info">NET:<span>10Gbps</span></div>
+        <div class="system-info">STATUS:<span>ONLINE</span></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

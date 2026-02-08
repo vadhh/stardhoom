@@ -1,638 +1,1759 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>vadhh@localhost:~$</title>
+<title>VadhOS</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+:root {
+  --bg-desktop: #1a1b26;
+  --bg-taskbar: #13141cee;
+  --bg-window: #1e1f2b;
+  --bg-window-header: #161722;
+  --bg-terminal: #0d0e17;
+  --text-primary: #c0caf5;
+  --text-secondary: #565f89;
+  --text-muted: #3b3f5c;
+  --accent-blue: #7aa2f7;
+  --accent-purple: #bb9af7;
+  --accent-green: #9ece6a;
+  --accent-red: #f7768e;
+  --accent-orange: #ff9e64;
+  --accent-teal: #73daca;
+  --accent-yellow: #e0af68;
+  --border-color: #292d42;
+  --border-active: #7aa2f7;
+  --shadow: 0 8px 32px rgba(0,0,0,0.45);
+  --shadow-active: 0 12px 48px rgba(122,162,247,0.15);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+}
 
-  body {
-    background: #000000;
-    color: #00ff00;
-    font-family: 'Fira Code', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.6;
-    overflow-x: hidden;
-    position: relative;
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
 
-  /* CRT Scanlines */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.15),
-      rgba(0, 0, 0, 0.15) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-    pointer-events: none;
-    z-index: 1000;
-  }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  user-select: none;
+}
 
-  /* Screen flicker */
-  body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 255, 0, 0.02);
-    pointer-events: none;
-    z-index: 999;
-    animation: flicker 0.15s infinite;
-  }
+/* ═══════ DESKTOP ═══════ */
+#desktop {
+  width: 100%; height: 100%;
+  background: var(--bg-desktop);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(122,162,247,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(187,154,247,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(115,218,202,0.04) 0%, transparent 50%);
+  position: relative;
+}
 
-  @keyframes flicker {
-    0% { opacity: 0.27861; }
-    5% { opacity: 0.34769; }
-    10% { opacity: 0.23604; }
-    15% { opacity: 0.90626; }
-    20% { opacity: 0.18128; }
-    25% { opacity: 0.83891; }
-    30% { opacity: 0.65583; }
-    35% { opacity: 0.67807; }
-    40% { opacity: 0.26559; }
-    45% { opacity: 0.84693; }
-    50% { opacity: 0.96019; }
-    55% { opacity: 0.08594; }
-    60% { opacity: 0.20313; }
-    65% { opacity: 0.71988; }
-    70% { opacity: 0.53455; }
-    75% { opacity: 0.37288; }
-    80% { opacity: 0.71428; }
-    85% { opacity: 0.70419; }
-    90% { opacity: 0.7003; }
-    95% { opacity: 0.36108; }
-    100% { opacity: 0.24387; }
-  }
+/* Subtle grid pattern */
+#desktop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(122,162,247,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122,162,247,0.015) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
 
-  .terminal-container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
-  }
+/* ═══════ DESKTOP ICONS ═══════ */
+#desktop-icons {
+  position: absolute;
+  top: 20px; left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1;
+}
 
-  /* Terminal Window */
-  .terminal-window {
-    background: rgba(0, 0, 0, 0.9);
-    border: 2px solid #00ff00;
-    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-    margin-bottom: 20px;
-  }
+.desktop-icon {
+  width: 80px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
 
-  /* Terminal Header */
-  .terminal-header {
-    background: #1a1a1a;
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid #00ff00;
-  }
+.desktop-icon:hover {
+  background: rgba(122,162,247,0.1);
+  border-color: rgba(122,162,247,0.2);
+}
 
-  .terminal-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-  }
+.desktop-icon:active {
+  transform: scale(0.95);
+}
 
-  .dot-red { background: #ff5f56; }
-  .dot-yellow { background: #ffbd2e; }
-  .dot-green { background: #27c93f; }
+.desktop-icon .icon-img {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
 
-  .terminal-title {
-    margin-left: 10px;
-    font-size: 12px;
-    color: #00ff00;
-  }
+.desktop-icon .icon-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #e0e0f0;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  line-height: 1.3;
+  word-break: break-word;
+}
 
-  /* Terminal Body */
-  .terminal-body {
-    padding: 20px;
-    min-height: 300px;
-  }
+/* ═══════ WINDOW SYSTEM ═══════ */
+.window {
+  position: absolute;
+  background: var(--bg-window);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-width: 320px;
+  min-height: 200px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
 
-  .prompt {
-    color: #00ff00;
-    text-shadow: 0 0 5px #00ff00;
-  }
+.window.active {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-active);
+}
 
-  .prompt::before {
-    content: '> ';
-    color: #00ff00;
-  }
+.window.maximized {
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: calc(100% - 48px) !important;
+  border-radius: 0;
+}
 
-  .command {
-    color: #00ffff;
-  }
+.window-header {
+  background: var(--bg-window-header);
+  padding: 0 12px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
+}
 
-  .output {
-    color: #00ff00;
-    margin-left: 20px;
-  }
+.window-header:active { cursor: grabbing; }
 
-  .comment {
-    color: #666666;
-  }
+.window-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
 
-  .error {
-    color: #ff0000;
-  }
+.window-title .wt-icon { font-size: 14px; }
 
-  .warning {
-    color: #ffff00;
-  }
+.window-controls {
+  display: flex;
+  gap: 8px;
+}
 
-  .highlight {
-    color: #00ffff;
-    font-weight: 700;
-  }
+.window-controls button {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
 
-  .cursor {
-    display: inline-block;
-    width: 8px;
-    height: 16px;
-    background: #00ff00;
-    animation: blink 1s infinite;
-    margin-left: 2px;
-  }
+.window-controls button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
 
-  @keyframes blink {
-    0%, 49% { opacity: 1; }
-    50%, 100% { opacity: 0; }
-  }
+.btn-close { background: var(--accent-red); }
+.btn-minimize { background: var(--accent-yellow); }
+.btn-maximize { background: var(--accent-green); }
 
-  /* Section Styling */
-  .section {
-    margin-bottom: 30px;
-  }
+.btn-close:hover { background: #ff4060; box-shadow: 0 0 8px rgba(247,118,142,0.5); }
+.btn-minimize:hover { background: #f0c040; box-shadow: 0 0 8px rgba(224,175,104,0.5); }
+.btn-maximize:hover { background: #a0e040; box-shadow: 0 0 8px rgba(158,206,106,0.5); }
 
-  .section-header {
-    color: #00ffff;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    text-shadow: 0 0 10px #00ffff;
-  }
+.window-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+}
 
-  .section-header::before {
-    content: '┌─[ ';
-    color: #00ff00;
-  }
+.window-body::-webkit-scrollbar { width: 6px; }
+.window-body::-webkit-scrollbar-track { background: transparent; }
+.window-body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+.window-body::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
-  .section-header::after {
-    content: ' ]';
-    color: #00ff00;
-  }
+/* Resize handles */
+.window .resize-handle {
+  position: absolute;
+  z-index: 10;
+}
+.resize-handle.rh-right { top:0; right:-3px; width:6px; height:100%; cursor:ew-resize; }
+.resize-handle.rh-bottom { bottom:-3px; left:0; width:100%; height:6px; cursor:ns-resize; }
+.resize-handle.rh-corner { bottom:-4px; right:-4px; width:14px; height:14px; cursor:nwse-resize; }
 
-  /* Project Logs */
-  .project-log {
-    margin-bottom: 25px;
-    padding: 15px;
-    border-left: 3px solid #00ff00;
-    background: rgba(0, 255, 0, 0.03);
-  }
+/* ═══════ TASKBAR ═══════ */
+#taskbar {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 48px;
+  background: var(--bg-taskbar);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  z-index: 9999;
+}
 
-  .project-log:hover {
-    background: rgba(0, 255, 0, 0.08);
-    border-left-color: #00ffff;
-  }
+#start-btn {
+  width: 40px; height: 36px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--accent-blue);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  margin-right: 4px;
+}
 
-  .log-header {
-    color: #ffff00;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
+#start-btn:hover {
+  background: rgba(122,162,247,0.12);
+  border-color: rgba(122,162,247,0.25);
+}
 
-  .log-time {
-    color: #666666;
-    font-size: 12px;
-  }
+#taskbar-windows {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 0 4px;
+}
 
-  .log-status {
-    display: inline-block;
-    padding: 2px 8px;
-    margin-left: 10px;
-    font-size: 11px;
-    font-weight: 700;
-  }
+.taskbar-item {
+  height: 34px;
+  padding: 0 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
 
-  .status-deployed {
-    background: rgba(0, 255, 0, 0.2);
-    color: #00ff00;
-    border: 1px solid #00ff00;
-  }
+.taskbar-item:hover {
+  background: rgba(255,255,255,0.08);
+}
 
-  .status-active {
-    background: rgba(0, 255, 255, 0.2);
-    color: #00ffff;
-    border: 1px solid #00ffff;
-  }
+.taskbar-item.active {
+  background: rgba(122,162,247,0.15);
+  border-color: rgba(122,162,247,0.3);
+  color: var(--text-primary);
+}
 
-  .log-content {
-    margin-top: 10px;
-    line-height: 1.8;
-  }
+.taskbar-item .ti-icon { font-size: 14px; }
 
-  .log-meta {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #888888;
-  }
+#taskbar-tray {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
 
-  .log-link {
-    color: #00ffff;
-    text-decoration: none;
-    border-bottom: 1px dotted #00ffff;
-    transition: all 0.3s;
-  }
+#clock { color: var(--text-primary); }
 
-  .log-link:hover {
-    color: #00ff00;
-    border-bottom-color: #00ff00;
-    text-shadow: 0 0 5px #00ff00;
-  }
+/* ═══════ START MENU ═══════ */
+#start-menu {
+  position: absolute;
+  bottom: 56px; left: 8px;
+  width: 280px;
+  background: var(--bg-window);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: none;
+  z-index: 10000;
+  overflow: hidden;
+}
 
-  /* Skills Tree */
-  .skill-tree {
-    margin-left: 20px;
-  }
+#start-menu.visible { display: block; }
 
-  .skill-item {
-    margin-bottom: 10px;
-    padding-left: 25px;
-    position: relative;
-  }
+.start-menu-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .skill-item::before {
-    content: '├──';
-    position: absolute;
-    left: 0;
-    color: #00ff00;
-  }
+.start-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-blue);
+}
 
-  .skill-item:last-child::before {
-    content: '└──';
-  }
+.start-user-info .start-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
 
-  .skill-name {
-    color: #00ffff;
-    font-weight: 700;
-  }
+.start-user-info .start-role {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
 
-  /* ASCII Art */
-  .ascii-art {
-    color: #00ff00;
-    font-size: 10px;
-    line-height: 1.2;
-    margin: 20px 0;
-    text-align: center;
-    text-shadow: 0 0 5px #00ff00;
-  }
+.start-menu-items {
+  padding: 8px;
+}
 
-  /* Command Input Simulation */
-  .command-line {
-    margin: 15px 0;
-    display: flex;
-    align-items: center;
-  }
+.start-menu-item {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s;
+}
 
-  .command-line .prompt {
-    margin-right: 10px;
-  }
+.start-menu-item:hover {
+  background: rgba(122,162,247,0.1);
+}
 
-  .typed-text {
-    color: #00ffff;
-  }
+.start-menu-item .smi-icon { 
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+}
 
-  /* Links styled as commands */
-  .cmd-link {
-    color: #00ffff;
-    text-decoration: none;
-    border: 1px solid #00ffff;
-    padding: 5px 15px;
-    display: inline-block;
-    margin: 5px 5px 5px 0;
-    transition: all 0.3s;
-    font-size: 12px;
-  }
+.start-menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 8px;
+}
 
-  .cmd-link:hover {
-    background: rgba(0, 255, 255, 0.1);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    color: #00ff00;
-    border-color: #00ff00;
-  }
+/* ═══════ TERMINAL ═══════ */
+#win-terminal .window-body {
+  background: var(--bg-terminal);
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
 
-  /* System info bar */
-  .system-bar {
-    background: #1a1a1a;
-    padding: 8px 15px;
-    font-size: 11px;
-    border-top: 1px solid #00ff00;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
+#terminal {
+  width: 100%;
+  height: 100%;
+  padding: 12px 16px;
+  overflow-y: auto;
+}
 
-  .system-info {
-    color: #888888;
-  }
+#terminal::-webkit-scrollbar { width: 6px; }
+#terminal::-webkit-scrollbar-track { background: transparent; }
+#terminal::-webkit-scrollbar-thumb { background: #292d42; border-radius: 3px; }
 
-  .system-info span {
-    color: #00ff00;
-    margin-left: 5px;
-  }
-   
-  /* Game Link Special Style */
-  .game-link {
-    border-color: #ff00ff; /* Magenta border */
-    color: #ff00ff;
-    animation: pulse-game 2s infinite;
-  }
-   
-  .game-link:hover {
-    background: rgba(255, 0, 255, 0.1);
-    box-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
-    color: #ffffff;
-    border-color: #ffffff;
-    text-shadow: 0 0 5px #ff00ff;
-  }
+.term-line {
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
-  @keyframes pulse-game {
-    0% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 0, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0); }
-  }
-  /* Responsive */
-  @media (max-width: 768px) {
-    body {
-      font-size: 12px;
-    }
+.term-prompt { color: var(--accent-green); font-weight: 600; }
+.term-path { color: var(--accent-blue); font-weight: 600; }
+.term-cmd { color: var(--text-primary); }
+.term-output { color: var(--text-secondary); }
+.term-error { color: var(--accent-red); }
+.term-accent { color: var(--accent-teal); }
+.term-yellow { color: var(--accent-yellow); }
+.term-purple { color: var(--accent-purple); }
+.term-blue { color: var(--accent-blue); }
+.term-green { color: var(--accent-green); }
+.term-orange { color: var(--accent-orange); }
+.term-bold { font-weight: 700; }
+.term-dir { color: var(--accent-blue); font-weight: 600; }
+.term-file { color: var(--text-primary); }
+.term-exe { color: var(--accent-green); font-weight: 600; }
+.term-link { color: var(--accent-teal); text-decoration: underline; cursor: pointer; }
 
-    .terminal-container {
-      margin: 10px auto;
-      padding: 0 10px;
-    }
+#terminal-input-line {
+  display: flex;
+  align-items: center;
+  line-height: 1.65;
+}
 
-    .terminal-body {
-      padding: 15px;
-    }
+#terminal-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  flex: 1;
+  caret-color: var(--accent-green);
+}
 
-    .ascii-art {
-      font-size: 8px;
-    }
+/* ═══════ ABOUT WINDOW ═══════ */
+.about-hero {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  align-items: flex-start;
+}
 
-    .system-bar {
-      font-size: 10px;
-    }
+.about-photo {
+  width: 120px; height: 150px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  object-position: center top;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+}
 
-    .output {
-      margin-left: 10px;
-    }
-  }
+.about-info h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
 
-  /* Typewriter effect */
-  .typewriter {
-    overflow: hidden;
-    white-space: nowrap;
-    animation: typing 2s steps(40, end);
-  }
+.about-info .about-tagline {
+  font-size: 13px;
+  color: var(--accent-blue);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
 
-  @keyframes typing {
-    from { width: 0; }
-    to { width: 100%; }
-  }
+.about-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  font-size: 12px;
+}
+
+.about-stats .stat-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+.about-stats .stat-value {
+  color: var(--text-secondary);
+}
+
+.about-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-purple);
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.about-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.about-text b { color: var(--accent-teal); font-weight: 600; }
+
+/* ═══════ PROJECTS WINDOW ═══════ */
+.project-card {
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  transition: all 0.15s;
+  cursor: default;
+}
+
+.project-card:hover {
+  border-color: var(--accent-blue);
+  background: rgba(122,162,247,0.04);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.project-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.project-status {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.status-live { background: rgba(158,206,106,0.15); color: var(--accent-green); }
+.status-deployed { background: rgba(122,162,247,0.15); color: var(--accent-blue); }
+.status-active { background: rgba(187,154,247,0.15); color: var(--accent-purple); }
+
+.project-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.project-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stack-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.project-link {
+  font-size: 11px;
+  color: var(--accent-teal);
+  text-decoration: none;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.project-link:hover { text-decoration: underline; }
+
+/* ═══════ SKILLS WINDOW ═══════ */
+.skill-category {
+  margin-bottom: 18px;
+}
+
+.skill-cat-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skill-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skill-pill {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+.cat-lang .skill-cat-title { color: var(--accent-blue); }
+.cat-lang .skill-pill { background: rgba(122,162,247,0.12); color: var(--accent-blue); border: 1px solid rgba(122,162,247,0.25); }
+
+.cat-ml .skill-cat-title { color: var(--accent-purple); }
+.cat-ml .skill-pill { background: rgba(187,154,247,0.12); color: var(--accent-purple); border: 1px solid rgba(187,154,247,0.25); }
+
+.cat-tools .skill-cat-title { color: var(--accent-green); }
+.cat-tools .skill-pill { background: rgba(158,206,106,0.12); color: var(--accent-green); border: 1px solid rgba(158,206,106,0.25); }
+
+.cat-concepts .skill-cat-title { color: var(--accent-orange); }
+.cat-concepts .skill-pill { background: rgba(255,158,100,0.12); color: var(--accent-orange); border: 1px solid rgba(255,158,100,0.25); }
+
+/* ═══════ SNAKE WINDOW ═══════ */
+#win-snake .window-body {
+  background: #0a0a12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  position: relative;
+}
+
+#snake-canvas {
+  border: 1px solid var(--border-color);
+  display: block;
+  image-rendering: pixelated;
+}
+
+#snake-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,10,18,0.92);
+  z-index: 5;
+}
+
+#snake-overlay h3 {
+  font-size: 18px;
+  color: var(--accent-green);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+#snake-overlay p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+
+#snake-start-btn {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: transparent;
+  border: 2px solid var(--accent-green);
+  color: var(--accent-green);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#snake-start-btn:hover {
+  background: rgba(158,206,106,0.15);
+  box-shadow: 0 0 16px rgba(158,206,106,0.25);
+}
+
+#snake-score-bar {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+#snake-score-bar b { color: var(--accent-green); }
+
+/* ═══════ RESUME WINDOW ═══════ */
+.resume-embed {
+  width: 100%;
+  text-align: center;
+  padding: 20px;
+}
+
+.resume-embed p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.resume-dl-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: rgba(122,162,247,0.12);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.resume-dl-btn:hover {
+  background: rgba(122,162,247,0.25);
+}
+
+/* ═══════ BOOT SCREEN ═══════ */
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  background: #0d0e17;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  transition: opacity 0.5s;
+}
+
+#boot-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#boot-log {
+  font-size: 12px;
+  line-height: 1.8;
+  max-width: 500px;
+  width: 90%;
+}
+
+#boot-log .boot-ok { color: var(--accent-green); }
+#boot-log .boot-warn { color: var(--accent-yellow); }
+#boot-log .boot-label { color: var(--text-primary); font-weight: 600; }
+
+#boot-spinner {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--accent-blue);
+}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media (max-width: 768px) {
+  .desktop-icon { width: 64px; }
+  .desktop-icon .icon-img { width: 36px; height: 36px; font-size: 22px; }
+  .desktop-icon .icon-label { font-size: 10px; }
+  .window { min-width: 280px; }
+  .about-hero { flex-direction: column; align-items: center; text-align: center; }
+  .about-stats { justify-items: center; }
+}
 </style>
 </head>
 <body>
 
-  <div class="terminal-container">
-    <div class="terminal-window">
-      <div class="terminal-header">
-        <span class="terminal-dot dot-red"></span>
-        <span class="terminal-dot dot-yellow"></span>
-        <span class="terminal-dot dot-green"></span>
-        <span class="terminal-title">vadhh@localhost: ~</span>
-      </div>
+<!-- ═══════ BOOT SCREEN ═══════ -->
+<div id="boot-screen">
+  <div id="boot-log"></div>
+  <div id="boot-spinner">▓</div>
+</div>
 
-      <div class="terminal-body">
-        <div class="section">
-          <div class="command-line">
-            <span class="prompt">vadhh@localhost:~$</span>
-            <span class="command">whoami</span>
-          </div>
-          <div class="output">
-            <span class="highlight">VADHH</span> - AI Engineer | MLOps Specialist | Cybersecurity Enthusiast
-          </div>
-          <div class="output comment">
-            # Building privacy-first AI systems and breaking things to understand how they work
-          </div>
-        </div>
+<!-- ═══════ DESKTOP ═══════ -->
+<div id="desktop">
 
-        <pre class="ascii-art">
-        
-░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
- ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
- ░▒▓█▓▒▒▓█▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓████████▓▒░ 
-  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
-  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
-   ░▒▓██▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
-                                                                   
-                                                                   
-        </pre>
-
-        <div class="section">
-          <div class="command-line">
-            <span class="prompt">vadhh@localhost:~$</span>
-            <span class="command">cat skills.txt</span>
-          </div>
-          <div class="section-header">OPERATIONAL_CAPABILITIES</div>
-          <div class="skill-tree">
-            <div class="skill-item">
-              <span class="skill-name">[ AI_ENGINEERING ]</span>
-              <div class="output">Event-driven Architecture using <span class="highlight">Redpanda</span> and <span class="highlight">Llama 3</span>. Offline RAG with <span class="highlight">Qdrant</span> and <span class="highlight">Ollama</span>.</div>
-            </div>
-            <div class="skill-item">
-              <span class="skill-name">[ MLOPS_ENGINEERING ]</span>
-              <div class="output">Pipeline automation using <span class="highlight">MLflow</span>, <span class="highlight">Docker</span> containerization, and <span class="highlight">GitHub Actions</span>.</div>
-            </div>
-            <div class="skill-item">
-              <span class="skill-name">[ FULL_STACK_ARCH ]</span>
-              <div class="output">Hybrid systems using <span class="highlight">Laravel 10</span> and <span class="highlight">Next.js 14</span>. Type-safe frontends with robust SQL/NoSQL backends.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="command-line">
-            <span class="prompt">vadhh@localhost:~$</span>
-            <span class="command">tail -f /var/log/projects.log</span>
-          </div>
-          <div class="section-header">PROJECT_LOGS</div>
-
-          <div class="project-log">
-            <div class="log-header">
-              <span class="log-time">[2026-01-02 19:30:05]</span>
-              PROJECT_00: PULSESTREAM_REALTIME_INTEL
-              <span class="log-status status-active">◉ LIVE_FEED</span>
-            </div>
-            <div class="log-content">
-              <div class="output"><span class="highlight">[MISSION]</span> Real-Time AI Financial Market Intelligence</div>
-              <div class="output"><span class="highlight">[OUTCOME]</span> Engineered an event-driven data pipeline. Ingests news streams via Redpanda, performs sentiment analysis using local Llama 3 (Ollama), and visualizes insights via WebSockets. Achieved self-healing, containerized architecture with sub-25ms latency.</div>
-              <div class="log-meta">
-                STACK :: [ Redpanda / Llama 3 / Redis / Qdrant / Docker ]<br>
-                REPO :: <a href="https://github.com/vadhh/pulsestream" class="log-link" target="_blank">github.com/vadhh/pulsestream</a>
-              </div>
-            </div>
-          </div>
-          <div class="project-log">
-            <div class="log-header">
-              <span class="log-time">[2024-12-30 14:23:11]</span>
-              PROJECT_01: VAULTSEARCH_LOCAL_RAG
-              <span class="log-status status-deployed">✓ DEPLOYED</span>
-            </div>
-            <div class="log-content">
-              <div class="output"><span class="highlight">[MISSION]</span> Privacy-First Document Search (No Cloud APIs)</div>
-              <div class="output"><span class="highlight">[OUTCOME]</span> Engineered a secure, offline RAG system. Orchestrated Llama 3 (Ollama) and Qdrant for semantic search, eliminating data leaks. Built a FastAPI backend with sliding-window chunking for sub-second retrieval latency.</div>
-              <div class="log-meta">
-                STACK :: [ Llama 3 / Qdrant / LangChain / FastAPI / Next.js ]<br>
-                REPO :: <a href="https://github.com/vadhh/vaultsearch" class="log-link" target="_blank">github.com/vadhh/vaultsearch</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="project-log">
-            <div class="log-header">
-              <span class="log-time">[2024-11-15 09:47:33]</span>
-              PROJECT_02: CUSTOMER_SEGMENTATION_ENGINE
-              <span class="log-status status-active">◉ ACTIVE</span>
-            </div>
-            <div class="log-content">
-              <div class="output"><span class="highlight">[MISSION]</span> Revenue Uplift Modeling for Accenture/Dicoding Capstone</div>
-              <div class="output"><span class="highlight">[OUTCOME]</span> Developed clustering model identifying high-value customer segments, projecting potential $22.4M revenue uplift. Built interactive dashboard for real-time cluster trait visualization.</div>
-              <div class="log-meta">
-                STACK :: [ Python / Streamlit / PCA / Scikit-learn ]<br>
-                REPO :: <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" class="log-link" target="_blank">github.com/vadhh/Capstone-Project-A25-CS286</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="project-log">
-            <div class="log-header">
-              <span class="log-time">[2024-10-08 16:12:59]</span>
-              PROJECT_03: TELCO_CHURN_PIPELINE
-              <span class="log-status status-deployed">✓ DEPLOYED</span>
-            </div>
-            <div class="log-content">
-              <div class="output"><span class="highlight">[MISSION]</span> End-to-End ML Lifecycle Automation</div>
-              <div class="output"><span class="highlight">[OUTCOME]</span> Moved beyond "notebook data science" by containerizing training pipeline. Integrated MLflow for experiment tracking and GitHub Actions for automated testing/deployment, reducing manual intervention by 90%.</div>
-              <div class="log-meta">
-                STACK :: [ Docker / MLflow / GitHub Actions / CI/CD ]<br>
-                REPO :: <a href="https://github.com/vadhh/telco-churn-mlops" class="log-link" target="_blank">github.com/vadhh/telco-churn-mlops</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="project-log">
-            <div class="log-header">
-              <span class="log-time">[2024-09-22 11:34:18]</span>
-              PROJECT_04: CONTACTLESS_ORDERING_PLATFORM
-              <span class="log-status status-active">◉ ACTIVE</span>
-            </div>
-            <div class="log-content">
-              <div class="output"><span class="highlight">[MISSION]</span> SaaS-style Digital Menu Solution</div>
-              <div class="output"><span class="highlight">[OUTCOME]</span> Full-stack QR ordering platform with dual-interface architecture (Client vs Admin). JWT-based session security, real-time cart state management, optimized SEO rendering.</div>
-              <div class="log-meta">
-                STACK :: [ Next.js 14 / MongoDB / NextAuth / Tailwind ]<br>
-                REPO :: <a href="https://github.com/vadhh/contactless-ordering-platform" class="log-link" target="_blank">github.com/vadhh/contactless-ordering-platform</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="project-log">
-            <div class="log-header">
-              <span class="log-time">[2024-08-14 13:56:42]</span>
-              PROJECT_05: RETAIL_POS_WORKFLOW_SYSTEM
-              <span class="log-status status-deployed">✓ DEPLOYED</span>
-            </div>
-            <div class="log-content">
-              <div class="output"><span class="highlight">[MISSION]</span> Retail Transaction & Workflow Management</div>
-              <div class="output"><span class="highlight">[OUTCOME]</span> Engineered hybrid monolith POS system handling high-volume transactions. Implemented custom Workflow Engine tracking order states (Pending → Processing → Quality Check) with RBAC security protocols.</div>
-              <div class="log-meta">
-                STACK :: [ Laravel 10 / Vue.js / MySQL / State Machines ]<br>
-                REPO :: <a href="https://github.com/vadhh/laravel-vue-pos-system" class="log-link" target="_blank">github.com/vadhh/laravel-vue-pos-system</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="output comment"># End of log file</div>
-        </div>
-
-        <div class="section">
-          <div class="command-line">
-            <span class="prompt">vadhh@localhost:~$</span>
-            <span class="command">ls -la /contact/</span>
-          </div>
-          <div class="output">
-            <a href="about.html" class="cmd-link" target="_blank">./ABOUT.ME</a>
-            <a href="resume.pdf" class="cmd-link" target="_blank">./RESUME.PDF</a>
-            <a href="mailto:attridho@gmail.com" class="cmd-link">./EMAIL.TXT</a>
-            <a href="https://github.com/vadhh" class="cmd-link" target="_blank">./GITHUB.URL</a>
-            <a href="https://linkedin.com/in/afr1dho" class="cmd-link" target="_blank">./LINKEDIN.URL</a>
-          </div>
-        </div>
-        
-        <div class="section">
-          <div class="command-line">
-            <span class="prompt">vadhh@localhost:~$</span>
-            <span class="command">cd ~/games/ && ./snake.exe</span>
-          </div>
-          <div class="section-header">ENTERTAINMENT_SUBSYSTEM</div>
-           
-          <div class="output">
-            <span class="comment"># Warning: Productivity may decrease.</span>
-            <br>
-            <span class="comment"># Status: READY_TO_PLAY</span>
-            <br><br>
-            <a href="snake.html" class="cmd-link game-link">
-              [ EXECUTE_SNAKE ]
-            </a>
-          </div>
-        </div>
-
-        <div class="command-line">
-          <span class="prompt">vadhh@localhost:~$</span>
-          <span class="cursor"></span>
-        </div>
-      </div>
-
-      <div class="system-bar">
-        <div class="system-info">UPTIME:<span>1337 days</span></div>
-        <div class="system-info">LOAD:<span>0.42, 0.38, 0.35</span></div>
-        <div class="system-info">MEM:<span>84% used</span></div>
-        <div class="system-info">NET:<span>10Gbps</span></div>
-        <div class="system-info">STATUS:<span>ONLINE</span></div>
-      </div>
+  <!-- Desktop Icons -->
+  <div id="desktop-icons">
+    <div class="desktop-icon" ondblclick="openWindow('terminal')">
+      <div class="icon-img">🖥️</div>
+      <div class="icon-label">Terminal</div>
+    </div>
+    <div class="desktop-icon" ondblclick="openWindow('about')">
+      <div class="icon-img">👤</div>
+      <div class="icon-label">About Me</div>
+    </div>
+    <div class="desktop-icon" ondblclick="openWindow('projects')">
+      <div class="icon-img">📁</div>
+      <div class="icon-label">Projects</div>
+    </div>
+    <div class="desktop-icon" ondblclick="openWindow('skills')">
+      <div class="icon-img">⚙️</div>
+      <div class="icon-label">Skills</div>
+    </div>
+    <div class="desktop-icon" ondblclick="openWindow('snake')">
+      <div class="icon-img">🐍</div>
+      <div class="icon-label">Snake</div>
+    </div>
+    <div class="desktop-icon" ondblclick="openWindow('resume')">
+      <div class="icon-img">📄</div>
+      <div class="icon-label">Resume</div>
     </div>
   </div>
 
+  <!-- ═══════ WINDOWS ═══════ -->
+
+  <!-- TERMINAL WINDOW -->
+  <div class="window" id="win-terminal" style="width:660px;height:440px;top:60px;left:140px;">
+    <div class="window-header" data-win="terminal">
+      <div class="window-title"><span class="wt-icon">🖥️</span> Terminal — vadhh@VadhOS</div>
+      <div class="window-controls">
+        <button class="btn-minimize" onclick="minimizeWindow('terminal')"></button>
+        <button class="btn-maximize" onclick="maximizeWindow('terminal')"></button>
+        <button class="btn-close" onclick="closeWindow('terminal')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div id="terminal">
+        <div id="terminal-output"></div>
+        <div id="terminal-input-line">
+          <span class="term-prompt">vadhh</span><span class="term-output">@</span><span class="term-purple">VadhOS</span><span class="term-output">:</span><span class="term-path" id="term-cwd">~</span><span class="term-output">$ </span>
+          <input type="text" id="terminal-input" autofocus autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle rh-right"></div>
+    <div class="resize-handle rh-bottom"></div>
+    <div class="resize-handle rh-corner"></div>
+  </div>
+
+  <!-- ABOUT WINDOW -->
+  <div class="window" id="win-about" style="width:520px;height:500px;top:80px;left:200px;">
+    <div class="window-header" data-win="about">
+      <div class="window-title"><span class="wt-icon">👤</span> About — System Preferences</div>
+      <div class="window-controls">
+        <button class="btn-minimize" onclick="minimizeWindow('about')"></button>
+        <button class="btn-maximize" onclick="maximizeWindow('about')"></button>
+        <button class="btn-close" onclick="closeWindow('about')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="about-hero">
+        <img src="me.jpg" alt="Vadhh" class="about-photo">
+        <div class="about-info">
+          <h2>Afridho Tavadhu</h2>
+          <div class="about-tagline">AI Engineer · MLOps Specialist · Full-Stack Tinkerer</div>
+          <div class="about-stats">
+            <span class="stat-label">Location</span><span class="stat-value">Semarang, ID</span>
+            <span class="stat-label">Education</span><span class="stat-value">B.Eng Informatics — Univ. Stikubank</span>
+            <span class="stat-label">Alignment</span><span class="stat-value">Chaotic Good (Open Source)</span>
+            <span class="stat-label">Weapon</span><span class="stat-value">Neovim + Arch Linux</span>
+            <span class="stat-label">Status</span><span class="stat-value">Surviving 7th Semester</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-section-title">Philosophy</div>
+      <div class="about-text">
+        <p><b>Models die in notebooks.</b> That's the hard truth. My value isn't just knowing the math behind a Neural Network — it's knowing how to wrap it in <b>Docker</b>, track it with <b>MLflow</b>, and serve it via <b>Next.js</b> without it crashing under load.</p>
+        <p style="margin-top:10px">I don't just build algorithms. I build <b>products</b>. I bridge the gap between "it works on my machine" and "it works in production."</p>
+      </div>
+
+      <div class="about-section-title">Links</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+        <a href="https://github.com/vadhh" target="_blank" class="resume-dl-btn" style="font-size:12px;padding:6px 14px;">GitHub</a>
+        <a href="https://linkedin.com/in/afr1dho" target="_blank" class="resume-dl-btn" style="font-size:12px;padding:6px 14px;">LinkedIn</a>
+        <a href="mailto:attridho@gmail.com" class="resume-dl-btn" style="font-size:12px;padding:6px 14px;">Email</a>
+      </div>
+    </div>
+    <div class="resize-handle rh-right"></div>
+    <div class="resize-handle rh-bottom"></div>
+    <div class="resize-handle rh-corner"></div>
+  </div>
+
+  <!-- PROJECTS WINDOW -->
+  <div class="window" id="win-projects" style="width:560px;height:520px;top:50px;left:250px;">
+    <div class="window-header" data-win="projects">
+      <div class="window-title"><span class="wt-icon">📁</span> Projects — File Explorer</div>
+      <div class="window-controls">
+        <button class="btn-minimize" onclick="minimizeWindow('projects')"></button>
+        <button class="btn-maximize" onclick="maximizeWindow('projects')"></button>
+        <button class="btn-close" onclick="closeWindow('projects')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="project-card">
+        <div class="project-header">
+          <div class="project-name">PulseStream — Real-Time AI Intel</div>
+          <span class="project-status status-live">◉ LIVE</span>
+        </div>
+        <div class="project-desc">Event-driven pipeline ingesting news via Redpanda, performing sentiment analysis with local Llama 3, and visualizing insights via WebSockets. Sub-25ms latency, self-healing containerized architecture.</div>
+        <div class="project-stack">
+          <span class="stack-tag">Redpanda</span><span class="stack-tag">Llama 3</span><span class="stack-tag">Redis</span><span class="stack-tag">Qdrant</span><span class="stack-tag">Docker</span>
+        </div>
+        <a href="https://github.com/vadhh/pulsestream" target="_blank" class="project-link">→ github.com/vadhh/pulsestream</a>
+      </div>
+
+      <div class="project-card">
+        <div class="project-header">
+          <div class="project-name">VaultSearch — Privacy-First RAG</div>
+          <span class="project-status status-deployed">✓ DEPLOYED</span>
+        </div>
+        <div class="project-desc">Secure offline RAG system using Llama 3 + Qdrant for semantic search with zero data leaks. FastAPI backend with sliding-window chunking for sub-second retrieval.</div>
+        <div class="project-stack">
+          <span class="stack-tag">Llama 3</span><span class="stack-tag">Qdrant</span><span class="stack-tag">LangChain</span><span class="stack-tag">FastAPI</span><span class="stack-tag">Next.js</span>
+        </div>
+        <a href="https://github.com/vadhh/vaultsearch" target="_blank" class="project-link">→ github.com/vadhh/vaultsearch</a>
+      </div>
+
+      <div class="project-card">
+        <div class="project-header">
+          <div class="project-name">Customer Segmentation Engine</div>
+          <span class="project-status status-active">◉ ACTIVE</span>
+        </div>
+        <div class="project-desc">K-Means clustering identifying $22.4M revenue uplift potential. End-to-end pipeline processing 500k+ transactions with interactive Streamlit dashboard.</div>
+        <div class="project-stack">
+          <span class="stack-tag">Python</span><span class="stack-tag">Scikit-Learn</span><span class="stack-tag">Streamlit</span><span class="stack-tag">Docker</span><span class="stack-tag">Pandas</span>
+        </div>
+        <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" class="project-link">→ github.com/vadhh/Capstone-Project-A25-CS286</a>
+      </div>
+
+      <div class="project-card">
+        <div class="project-header">
+          <div class="project-name">Telco Churn MLOps Pipeline</div>
+          <span class="project-status status-deployed">✓ DEPLOYED</span>
+        </div>
+        <div class="project-desc">Production-ready ML pipeline with MLflow experiment tracking and GitHub Actions CI/CD. 80.5% Recall on high-risk customers, prioritizing revenue retention.</div>
+        <div class="project-stack">
+          <span class="stack-tag">Docker</span><span class="stack-tag">MLflow</span><span class="stack-tag">GitHub Actions</span><span class="stack-tag">Scikit-Learn</span>
+        </div>
+        <a href="https://github.com/vadhh/telco-churn-mlops" target="_blank" class="project-link">→ github.com/vadhh/telco-churn-mlops</a>
+      </div>
+
+      <div class="project-card">
+        <div class="project-header">
+          <div class="project-name">Contactless Ordering Platform</div>
+          <span class="project-status status-active">◉ ACTIVE</span>
+        </div>
+        <div class="project-desc">Full-stack QR ordering system with dual-interface (Client vs Admin). JWT security, MongoDB schemas, SSR for dynamic routing optimized for mobile.</div>
+        <div class="project-stack">
+          <span class="stack-tag">Next.js 14</span><span class="stack-tag">TypeScript</span><span class="stack-tag">MongoDB</span><span class="stack-tag">NextAuth</span><span class="stack-tag">Tailwind</span>
+        </div>
+        <a href="https://github.com/vadhh/contactless-ordering-platform" target="_blank" class="project-link">→ github.com/vadhh/contactless-ordering-platform</a>
+      </div>
+
+      <div class="project-card">
+        <div class="project-header">
+          <div class="project-name">Retail POS Workflow System</div>
+          <span class="project-status status-deployed">✓ DEPLOYED</span>
+        </div>
+        <div class="project-desc">Hybrid monolith POS handling high-volume transactions. Custom Workflow Engine with state tracking and RBAC security.</div>
+        <div class="project-stack">
+          <span class="stack-tag">Laravel 10</span><span class="stack-tag">Vue.js</span><span class="stack-tag">MySQL</span><span class="stack-tag">State Machines</span>
+        </div>
+        <a href="https://github.com/vadhh/laravel-vue-pos-system" target="_blank" class="project-link">→ github.com/vadhh/laravel-vue-pos-system</a>
+      </div>
+    </div>
+    <div class="resize-handle rh-right"></div>
+    <div class="resize-handle rh-bottom"></div>
+    <div class="resize-handle rh-corner"></div>
+  </div>
+
+  <!-- SKILLS WINDOW -->
+  <div class="window" id="win-skills" style="width:440px;height:420px;top:100px;left:300px;">
+    <div class="window-header" data-win="skills">
+      <div class="window-title"><span class="wt-icon">⚙️</span> Skills — Package Manager</div>
+      <div class="window-controls">
+        <button class="btn-minimize" onclick="minimizeWindow('skills')"></button>
+        <button class="btn-maximize" onclick="maximizeWindow('skills')"></button>
+        <button class="btn-close" onclick="closeWindow('skills')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="skill-category cat-lang">
+        <div class="skill-cat-title">⬡ Languages</div>
+        <div class="skill-pills">
+          <span class="skill-pill">Python</span>
+          <span class="skill-pill">SQL</span>
+          <span class="skill-pill">Bash</span>
+          <span class="skill-pill">TypeScript</span>
+          <span class="skill-pill">PHP</span>
+        </div>
+      </div>
+      <div class="skill-category cat-ml">
+        <div class="skill-cat-title">◈ Data & ML</div>
+        <div class="skill-pills">
+          <span class="skill-pill">Pandas</span>
+          <span class="skill-pill">NumPy</span>
+          <span class="skill-pill">Scikit-Learn</span>
+          <span class="skill-pill">TensorFlow</span>
+          <span class="skill-pill">LangChain</span>
+          <span class="skill-pill">Matplotlib</span>
+          <span class="skill-pill">Seaborn</span>
+        </div>
+      </div>
+      <div class="skill-category cat-tools">
+        <div class="skill-cat-title">⚒ Tools & DevOps</div>
+        <div class="skill-pills">
+          <span class="skill-pill">Git</span>
+          <span class="skill-pill">Docker</span>
+          <span class="skill-pill">MLflow</span>
+          <span class="skill-pill">GitHub Actions</span>
+          <span class="skill-pill">Neovim</span>
+          <span class="skill-pill">Linux</span>
+        </div>
+      </div>
+      <div class="skill-category cat-concepts">
+        <div class="skill-cat-title">△ Concepts</div>
+        <div class="skill-pills">
+          <span class="skill-pill">ETL Pipelines</span>
+          <span class="skill-pill">K-Means</span>
+          <span class="skill-pill">SVM</span>
+          <span class="skill-pill">PCA</span>
+          <span class="skill-pill">RAG</span>
+          <span class="skill-pill">CI/CD</span>
+          <span class="skill-pill">Network Security</span>
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle rh-right"></div>
+    <div class="resize-handle rh-bottom"></div>
+    <div class="resize-handle rh-corner"></div>
+  </div>
+
+  <!-- SNAKE WINDOW -->
+  <div class="window" id="win-snake" style="width:440px;height:500px;top:40px;left:350px;">
+    <div class="window-header" data-win="snake">
+      <div class="window-title"><span class="wt-icon">🐍</span> Snake — Game</div>
+      <div class="window-controls">
+        <button class="btn-minimize" onclick="minimizeWindow('snake')"></button>
+        <button class="btn-maximize" onclick="maximizeWindow('snake')"></button>
+        <button class="btn-close" onclick="closeWindow('snake')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <canvas id="snake-canvas" width="400" height="400"></canvas>
+      <div id="snake-overlay">
+        <h3>SNAKE v2.0</h3>
+        <p>Arrow Keys to Move</p>
+        <p>Collect food, don't crash</p>
+        <button id="snake-start-btn" onclick="snakeStart()">[ START ]</button>
+      </div>
+      <div id="snake-score-bar">
+        <span>Score: <b id="snake-score">0</b></span>
+        <span>Status: <b id="snake-status">IDLE</b></span>
+      </div>
+    </div>
+    <div class="resize-handle rh-right"></div>
+    <div class="resize-handle rh-bottom"></div>
+    <div class="resize-handle rh-corner"></div>
+  </div>
+
+  <!-- RESUME WINDOW -->
+  <div class="window" id="win-resume" style="width:400px;height:280px;top:150px;left:400px;">
+    <div class="window-header" data-win="resume">
+      <div class="window-title"><span class="wt-icon">📄</span> Resume — Document Viewer</div>
+      <div class="window-controls">
+        <button class="btn-minimize" onclick="minimizeWindow('resume')"></button>
+        <button class="btn-maximize" onclick="maximizeWindow('resume')"></button>
+        <button class="btn-close" onclick="closeWindow('resume')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="resume-embed">
+        <p>📄 resume_afridho_tavadhu.pdf</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Data Analyst & ML Engineer — 2 pages</p>
+        <a href="resume.pdf" download class="resume-dl-btn">⬇ Download Resume</a>
+      </div>
+    </div>
+    <div class="resize-handle rh-right"></div>
+    <div class="resize-handle rh-bottom"></div>
+    <div class="resize-handle rh-corner"></div>
+  </div>
+
+  <!-- ═══════ START MENU ═══════ -->
+  <div id="start-menu">
+    <div class="start-menu-header">
+      <img src="me.jpg" alt="avatar" class="start-avatar">
+      <div class="start-user-info">
+        <div class="start-name">Afridho Tavadhu</div>
+        <div class="start-role">vadhh@VadhOS</div>
+      </div>
+    </div>
+    <div class="start-menu-items">
+      <div class="start-menu-item" onclick="openWindow('terminal');toggleStartMenu()"><span class="smi-icon">🖥️</span> Terminal</div>
+      <div class="start-menu-item" onclick="openWindow('about');toggleStartMenu()"><span class="smi-icon">👤</span> About Me</div>
+      <div class="start-menu-item" onclick="openWindow('projects');toggleStartMenu()"><span class="smi-icon">📁</span> Projects</div>
+      <div class="start-menu-item" onclick="openWindow('skills');toggleStartMenu()"><span class="smi-icon">⚙️</span> Skills</div>
+      <div class="start-menu-item" onclick="openWindow('snake');toggleStartMenu()"><span class="smi-icon">🐍</span> Snake</div>
+      <div class="start-menu-divider"></div>
+      <div class="start-menu-item" onclick="openWindow('resume');toggleStartMenu()"><span class="smi-icon">📄</span> Resume</div>
+      <div class="start-menu-item" onclick="window.open('https://github.com/vadhh','_blank');toggleStartMenu()"><span class="smi-icon">🔗</span> GitHub</div>
+      <div class="start-menu-item" onclick="window.open('https://linkedin.com/in/afr1dho','_blank');toggleStartMenu()"><span class="smi-icon">🔗</span> LinkedIn</div>
+    </div>
+  </div>
+
+  <!-- ═══════ TASKBAR ═══════ -->
+  <div id="taskbar">
+    <button id="start-btn" onclick="toggleStartMenu()">◆</button>
+    <div id="taskbar-windows"></div>
+    <div id="taskbar-tray">
+      <span id="clock"></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  VADHOS — WINDOW MANAGEMENT SYSTEM
+// ═══════════════════════════════════════
+
+const WIN_NAMES = {
+  terminal: { icon: '🖥️', title: 'Terminal' },
+  about:    { icon: '👤', title: 'About Me' },
+  projects: { icon: '📁', title: 'Projects' },
+  skills:   { icon: '⚙️', title: 'Skills' },
+  snake:    { icon: '🐍', title: 'Snake' },
+  resume:   { icon: '📄', title: 'Resume' },
+};
+
+let zCounter = 100;
+let openWindows = new Set();
+let activeWindow = null;
+
+// ─── Open / Close / Minimize / Maximize ───
+
+function openWindow(id) {
+  const win = document.getElementById('win-' + id);
+  if (!win) return;
+  win.style.display = 'flex';
+  openWindows.add(id);
+  focusWindow(id);
+  updateTaskbar();
+  if (id === 'terminal') document.getElementById('terminal-input').focus();
+}
+
+function closeWindow(id) {
+  const win = document.getElementById('win-' + id);
+  win.style.display = 'none';
+  win.classList.remove('maximized');
+  openWindows.delete(id);
+  if (activeWindow === id) activeWindow = null;
+  updateTaskbar();
+}
+
+function minimizeWindow(id) {
+  const win = document.getElementById('win-' + id);
+  win.style.display = 'none';
+  if (activeWindow === id) activeWindow = null;
+  updateTaskbar();
+}
+
+function maximizeWindow(id) {
+  const win = document.getElementById('win-' + id);
+  win.classList.toggle('maximized');
+}
+
+function focusWindow(id) {
+  document.querySelectorAll('.window').forEach(w => w.classList.remove('active'));
+  const win = document.getElementById('win-' + id);
+  win.style.zIndex = ++zCounter;
+  win.classList.add('active');
+  activeWindow = id;
+  updateTaskbar();
+}
+
+function updateTaskbar() {
+  const container = document.getElementById('taskbar-windows');
+  container.innerHTML = '';
+  openWindows.forEach(id => {
+    const info = WIN_NAMES[id];
+    const item = document.createElement('div');
+    item.className = 'taskbar-item' + (activeWindow === id ? ' active' : '');
+    item.innerHTML = `<span class="ti-icon">${info.icon}</span> ${info.title}`;
+    item.onclick = () => {
+      const win = document.getElementById('win-' + id);
+      if (win.style.display === 'none') {
+        win.style.display = 'flex';
+      }
+      focusWindow(id);
+      if (id === 'terminal') document.getElementById('terminal-input').focus();
+    };
+    container.appendChild(item);
+  });
+}
+
+// ─── Start Menu ───
+
+function toggleStartMenu() {
+  document.getElementById('start-menu').classList.toggle('visible');
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('start-menu');
+  const btn = document.getElementById('start-btn');
+  if (!menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('visible');
+  }
+});
+
+// ─── Clock ───
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Window Focus on Click ───
+
+document.querySelectorAll('.window').forEach(win => {
+  win.addEventListener('mousedown', () => {
+    const id = win.id.replace('win-', '');
+    focusWindow(id);
+  });
+});
+
+// ═══════════════════════════════════════
+//  DRAG & RESIZE SYSTEM
+// ═══════════════════════════════════════
+
+(function() {
+  let dragState = null;
+
+  // ─── Dragging ───
+  document.querySelectorAll('.window-header').forEach(header => {
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      const win = header.closest('.window');
+      if (win.classList.contains('maximized')) return;
+      dragState = {
+        type: 'drag',
+        el: win,
+        startX: e.clientX - win.offsetLeft,
+        startY: e.clientY - win.offsetTop,
+      };
+      e.preventDefault();
+    });
+  });
+
+  // ─── Resizing ───
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    handle.addEventListener('mousedown', (e) => {
+      const win = handle.closest('.window');
+      if (win.classList.contains('maximized')) return;
+      const rect = win.getBoundingClientRect();
+      let dir = '';
+      if (handle.classList.contains('rh-right')) dir = 'e';
+      else if (handle.classList.contains('rh-bottom')) dir = 's';
+      else if (handle.classList.contains('rh-corner')) dir = 'se';
+      dragState = {
+        type: 'resize',
+        el: win,
+        dir,
+        startX: e.clientX,
+        startY: e.clientY,
+        startW: rect.width,
+        startH: rect.height,
+      };
+      e.preventDefault();
+    });
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragState) return;
+    const { type, el } = dragState;
+    if (type === 'drag') {
+      el.style.left = (e.clientX - dragState.startX) + 'px';
+      el.style.top = (e.clientY - dragState.startY) + 'px';
+    } else if (type === 'resize') {
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      if (dragState.dir.includes('e')) {
+        el.style.width = Math.max(320, dragState.startW + dx) + 'px';
+      }
+      if (dragState.dir.includes('s')) {
+        el.style.height = Math.max(200, dragState.startH + dy) + 'px';
+      }
+    }
+  });
+
+  document.addEventListener('mouseup', () => { dragState = null; });
+})();
+
+// ═══════════════════════════════════════
+//  TERMINAL SYSTEM
+// ═══════════════════════════════════════
+
+const FS = {
+  '~': {
+    _type: 'dir',
+    'about.txt': `Name: Afridho Tattaq Tavadhu\nAlias: vadhh\nRole: AI Engineer | MLOps Specialist | Full-Stack Tinkerer\nLocation: Semarang, Indonesia\nEducation: B.Eng Informatics — Universitas Stikubank (Exp. Sep 2026)\nWeapon: Neovim on Arch Linux\nPhilosophy: "Models die in notebooks. I build products."`,
+    'skills.txt': `[ Languages ]   Python (Advanced), SQL, Bash, TypeScript, PHP\n[ Data & ML ]   Pandas, NumPy, Scikit-Learn, TensorFlow, LangChain, Matplotlib\n[ Tools ]       Git, Docker, MLflow, GitHub Actions, Neovim, Linux\n[ Concepts ]    ETL Pipelines, K-Means, SVM, PCA, RAG, CI/CD, Network Security`,
+    'contact.txt': `Email:    attridho@gmail.com\nGitHub:   github.com/vadhh\nLinkedIn: linkedin.com/in/afr1dho\nWeb:      stdhoom.neocities.org`,
+    'resume.pdf': '[Binary file — use "open resume" to view]',
+    'snake.exe': '[Executable — use "open snake" or "snake" to play]',
+    'projects': {
+      _type: 'dir',
+      'pulsestream.txt': `PulseStream — Real-Time AI Financial Market Intelligence\nStatus: LIVE\nStack: Redpanda, Llama 3, Redis, Qdrant, Docker\nRepo: github.com/vadhh/pulsestream\n\nEvent-driven pipeline ingesting news via Redpanda, performing\nsentiment analysis with local Llama 3. Sub-25ms latency.`,
+      'vaultsearch.txt': `VaultSearch — Privacy-First Document Search\nStatus: DEPLOYED\nStack: Llama 3, Qdrant, LangChain, FastAPI, Next.js\nRepo: github.com/vadhh/vaultsearch\n\nOffline RAG system. Zero data leaks. Sub-second retrieval.`,
+      'customer-segmentation.txt': `Customer Segmentation Engine\nStatus: ACTIVE\nStack: Python, Scikit-Learn, Streamlit, Docker, Pandas\nRepo: github.com/vadhh/Capstone-Project-A25-CS286\n\nK-Means clustering identifying $22.4M revenue uplift.\n500k+ transactions processed.`,
+      'telco-churn.txt': `Telco Churn MLOps Pipeline\nStatus: DEPLOYED\nStack: Docker, MLflow, GitHub Actions, Scikit-Learn\nRepo: github.com/vadhh/telco-churn-mlops\n\nProduction ML pipeline. 80.5% Recall on high-risk customers.`,
+      'ordering-platform.txt': `Contactless Ordering Platform\nStatus: ACTIVE\nStack: Next.js 14, TypeScript, MongoDB, NextAuth, Tailwind\nRepo: github.com/vadhh/contactless-ordering-platform\n\nFull-stack QR ordering with dual-interface architecture.`,
+      'retail-pos.txt': `Retail POS Workflow System\nStatus: DEPLOYED\nStack: Laravel 10, Vue.js, MySQL, State Machines\nRepo: github.com/vadhh/laravel-vue-pos-system\n\nHybrid monolith POS with custom Workflow Engine.`,
+    }
+  }
+};
+
+let termCwd = '~';
+let cmdHistory = [];
+let historyIndex = -1;
+
+function resolvePath(path) {
+  let parts;
+  if (path.startsWith('~') || path.startsWith('/')) {
+    parts = path.replace(/^~\/?/, '').split('/').filter(Boolean);
+  } else {
+    const cwdParts = termCwd.replace(/^~\/?/, '').split('/').filter(Boolean);
+    parts = [...cwdParts, ...path.split('/').filter(Boolean)];
+  }
+  // resolve .. and .
+  const resolved = [];
+  for (const p of parts) {
+    if (p === '..') resolved.pop();
+    else if (p !== '.') resolved.push(p);
+  }
+  return resolved;
+}
+
+function getNode(pathParts) {
+  let node = FS['~'];
+  for (const p of pathParts) {
+    if (node && typeof node === 'object' && node._type === 'dir' && p in node) {
+      node = node[p];
+    } else return null;
+  }
+  return node;
+}
+
+function getDisplayCwd() {
+  return termCwd;
+}
+
+const termOutput = document.getElementById('terminal-output');
+const termInput = document.getElementById('terminal-input');
+const termCwdEl = document.getElementById('term-cwd');
+
+function termPrint(html) {
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  div.innerHTML = html;
+  termOutput.appendChild(div);
+}
+
+function termPromptLine(cmd) {
+  termPrint(`<span class="term-prompt">vadhh</span><span class="term-output">@</span><span class="term-purple">VadhOS</span><span class="term-output">:</span><span class="term-path">${getDisplayCwd()}</span><span class="term-output">$ </span><span class="term-cmd">${escHtml(cmd)}</span>`);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function scrollTerminal() {
+  const t = document.getElementById('terminal');
+  t.scrollTop = t.scrollHeight;
+}
+
+function processCommand(raw) {
+  const cmd = raw.trim();
+  if (!cmd) return;
+  cmdHistory.unshift(cmd);
+  historyIndex = -1;
+  termPromptLine(cmd);
+
+  const [command, ...args] = cmd.split(/\s+/);
+  const arg = args.join(' ');
+
+  switch(command) {
+    case 'help':
+      termPrint(`<span class="term-accent">Available commands:</span>`);
+      termPrint(`<span class="term-output">  ls          List files in current directory</span>`);
+      termPrint(`<span class="term-output">  cd &lt;dir&gt;    Change directory</span>`);
+      termPrint(`<span class="term-output">  cat &lt;file&gt;  Print file contents</span>`);
+      termPrint(`<span class="term-output">  pwd         Print working directory</span>`);
+      termPrint(`<span class="term-output">  clear       Clear the terminal</span>`);
+      termPrint(`<span class="term-output">  whoami      Who are you?</span>`);
+      termPrint(`<span class="term-output">  neofetch    System info</span>`);
+      termPrint(`<span class="term-output">  cowsay      Moo</span>`);
+      termPrint(`<span class="term-output">  sudo &lt;cmd&gt;  Try it</span>`);
+      termPrint(`<span class="term-output">  open &lt;app&gt;  Open a window (about/projects/skills/snake/resume)</span>`);
+      termPrint(`<span class="term-output">  date        Current date/time</span>`);
+      termPrint(`<span class="term-output">  echo &lt;msg&gt;  Echo a message</span>`);
+      termPrint(`<span class="term-output">  snake       Launch snake game</span>`);
+      termPrint(`<span class="term-output">  help        Show this help</span>`);
+      break;
+
+    case 'ls': {
+      const pathParts = arg ? resolvePath(arg) : resolvePath(termCwd);
+      const node = arg ? getNode(pathParts) : getNode(resolvePath(termCwd));
+      if (!node || typeof node !== 'object' || node._type !== 'dir') {
+        termPrint(`<span class="term-error">ls: cannot access '${escHtml(arg)}': Not a directory</span>`);
+      } else {
+        const entries = Object.keys(node).filter(k => k !== '_type');
+        let out = '';
+        entries.forEach(e => {
+          const child = node[e];
+          if (typeof child === 'object' && child._type === 'dir') {
+            out += `<span class="term-dir">${e}/</span>  `;
+          } else if (e.endsWith('.exe')) {
+            out += `<span class="term-exe">${e}</span>  `;
+          } else {
+            out += `<span class="term-file">${e}</span>  `;
+          }
+        });
+        termPrint(`<span class="term-output">${out}</span>`);
+      }
+      break;
+    }
+
+    case 'cd': {
+      if (!arg || arg === '~') { termCwd = '~'; termCwdEl.textContent = '~'; break; }
+      const pathParts = resolvePath(arg);
+      const node = getNode(pathParts);
+      if (node && typeof node === 'object' && node._type === 'dir') {
+        termCwd = pathParts.length ? '~/' + pathParts.join('/') : '~';
+        termCwdEl.textContent = getDisplayCwd();
+      } else {
+        termPrint(`<span class="term-error">cd: no such directory: ${escHtml(arg)}</span>`);
+      }
+      break;
+    }
+
+    case 'cat': {
+      if (!arg) { termPrint(`<span class="term-error">cat: missing operand</span>`); break; }
+      const pathParts = resolvePath(arg);
+      const node = getNode(pathParts);
+      if (!node) {
+        termPrint(`<span class="term-error">cat: ${escHtml(arg)}: No such file</span>`);
+      } else if (typeof node === 'object' && node._type === 'dir') {
+        termPrint(`<span class="term-error">cat: ${escHtml(arg)}: Is a directory</span>`);
+      } else {
+        node.split('\n').forEach(line => {
+          termPrint(`<span class="term-output">${escHtml(line)}</span>`);
+        });
+      }
+      break;
+    }
+
+    case 'pwd':
+      termPrint(`<span class="term-output">/home/vadhh${termCwd === '~' ? '' : termCwd.slice(1)}</span>`);
+      break;
+
+    case 'clear':
+      termOutput.innerHTML = '';
+      break;
+
+    case 'whoami':
+      termPrint(`<span class="term-accent">vadhh</span> <span class="term-output">— Afridho Tattaq Tavadhu</span>`);
+      termPrint(`<span class="term-output">AI Engineer | MLOps Specialist | Cybersecurity Enthusiast</span>`);
+      termPrint(`<span class="term-output">Building privacy-first AI systems from Semarang, Indonesia 🇮🇩</span>`);
+      break;
+
+    case 'neofetch':
+      termPrint(`<span class="term-blue">        ╭──────────╮</span>    <span class="term-accent term-bold">vadhh@VadhOS</span>`);
+      termPrint(`<span class="term-blue">        │  ◆  ◆  ◆ │</span>    <span class="term-output">──────────────</span>`);
+      termPrint(`<span class="term-blue">        │   ╲___╱  │</span>    <span class="term-yellow">OS:</span>      <span class="term-output">VadhOS 2.0 (Arch btw)</span>`);
+      termPrint(`<span class="term-blue">        │  VadhOS   │</span>    <span class="term-yellow">Host:</span>    <span class="term-output">Browser/Web Engine</span>`);
+      termPrint(`<span class="term-blue">        ╰──────────╯</span>    <span class="term-yellow">Kernel:</span>  <span class="term-output">HTML5 + Vanilla JS</span>`);
+      termPrint(`<span class="term-blue">                    </span>    <span class="term-yellow">Shell:</span>   <span class="term-output">VadhShell 1.0</span>`);
+      termPrint(`<span class="term-blue">                    </span>    <span class="term-yellow">DE:</span>      <span class="term-output">VadhDE (Custom)</span>`);
+      termPrint(`<span class="term-blue">                    </span>    <span class="term-yellow">Theme:</span>  <span class="term-output"> Tokyo Night</span>`);
+      termPrint(`<span class="term-blue">                    </span>    <span class="term-yellow">Font:</span>    <span class="term-output">IBM Plex Mono</span>`);
+      termPrint(`<span class="term-blue">                    </span>    <span class="term-yellow">Uptime:</span>  <span class="term-output">1337 days</span>`);
+      termPrint(`<span class="term-blue">                    </span>    <span class="term-yellow">Memory:</span>  <span class="term-output">Caffeine dependent</span>`);
+      termPrint(``);
+      termPrint(`<span class="term-blue">    </span>  <span style="background:var(--accent-red);color:var(--accent-red)">██</span><span style="background:var(--accent-orange);color:var(--accent-orange)">██</span><span style="background:var(--accent-yellow);color:var(--accent-yellow)">██</span><span style="background:var(--accent-green);color:var(--accent-green)">██</span><span style="background:var(--accent-teal);color:var(--accent-teal)">██</span><span style="background:var(--accent-blue);color:var(--accent-blue)">██</span><span style="background:var(--accent-purple);color:var(--accent-purple)">██</span>`);
+      break;
+
+    case 'sudo':
+      termPrint(`<span class="term-error">[sudo] password for vadhh: </span>`);
+      termPrint(`<span class="term-error">Nice try. This incident will be reported. 🚨</span>`);
+      break;
+
+    case 'cowsay': {
+      const msg = arg || 'Moo! Hire vadhh!';
+      const border = '─'.repeat(msg.length + 2);
+      termPrint(`<span class="term-output"> ┌${border}┐</span>`);
+      termPrint(`<span class="term-output"> │ ${escHtml(msg)} │</span>`);
+      termPrint(`<span class="term-output"> └${border}┘</span>`);
+      termPrint(`<span class="term-output">        \\   ^__^</span>`);
+      termPrint(`<span class="term-output">         \\  (oo)\\_______</span>`);
+      termPrint(`<span class="term-output">            (__)\\       )\\/\\</span>`);
+      termPrint(`<span class="term-output">                ||----w |</span>`);
+      termPrint(`<span class="term-output">                ||     ||</span>`);
+      break;
+    }
+
+    case 'open':
+      if (['about','projects','skills','snake','resume','terminal'].includes(arg)) {
+        openWindow(arg);
+        termPrint(`<span class="term-green">Opening ${arg}...</span>`);
+      } else {
+        termPrint(`<span class="term-error">open: unknown application '${escHtml(arg)}'</span>`);
+        termPrint(`<span class="term-output">Available: about, projects, skills, snake, resume, terminal</span>`);
+      }
+      break;
+
+    case 'snake':
+      openWindow('snake');
+      termPrint(`<span class="term-green">Launching Snake...</span>`);
+      break;
+
+    case 'date':
+      termPrint(`<span class="term-output">${new Date().toString()}</span>`);
+      break;
+
+    case 'echo':
+      termPrint(`<span class="term-output">${escHtml(arg)}</span>`);
+      break;
+
+    case 'rm':
+      if (arg === '-rf' || arg === '-rf /' || arg === '-rf /*') {
+        termPrint(`<span class="term-error">Nice try. The portfolio survives.</span>`);
+      } else {
+        termPrint(`<span class="term-error">rm: operation not permitted</span>`);
+      }
+      break;
+
+    case 'exit':
+      closeWindow('terminal');
+      break;
+
+    case 'man':
+      termPrint(`<span class="term-output">RTFM? Try 'help' instead — this is VadhOS, not GNU.</span>`);
+      break;
+
+    case 'vim': case 'nvim': case 'nano':
+      termPrint(`<span class="term-green">${command}: I see you're a person of culture. 🤝</span>`);
+      termPrint(`<span class="term-output">(Editor not available in VadhShell. But respect.)</span>`);
+      break;
+
+    case 'ping':
+      termPrint(`<span class="term-output">PING ${arg || 'localhost'}: 64 bytes, time=0.042ms — it's alive.</span>`);
+      break;
+
+    default:
+      termPrint(`<span class="term-error">command not found: ${escHtml(command)}</span>`);
+      termPrint(`<span class="term-output">Type <span class="term-accent">help</span> for available commands.</span>`);
+  }
+
+  scrollTerminal();
+}
+
+termInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    processCommand(termInput.value);
+    termInput.value = '';
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (historyIndex < cmdHistory.length - 1) {
+      historyIndex++;
+      termInput.value = cmdHistory[historyIndex];
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIndex > 0) {
+      historyIndex--;
+      termInput.value = cmdHistory[historyIndex];
+    } else {
+      historyIndex = -1;
+      termInput.value = '';
+    }
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    // Simple tab completion for current directory
+    const val = termInput.value.trim();
+    const parts = val.split(/\s+/);
+    const partial = parts[parts.length - 1] || '';
+    const pathParts = resolvePath(termCwd);
+    const node = getNode(pathParts) || FS['~'];
+    if (typeof node === 'object' && node._type === 'dir') {
+      const matches = Object.keys(node).filter(k => k !== '_type' && k.startsWith(partial));
+      if (matches.length === 1) {
+        parts[parts.length - 1] = matches[0];
+        termInput.value = parts.join(' ');
+      }
+    }
+  } else if (e.key === 'l' && e.ctrlKey) {
+    e.preventDefault();
+    termOutput.innerHTML = '';
+  }
+});
+
+// Click terminal body to focus input
+document.getElementById('terminal').addEventListener('click', () => {
+  termInput.focus();
+});
+
+// ═══════════════════════════════════════
+//  SNAKE GAME
+// ═══════════════════════════════════════
+
+const snakeCanvas = document.getElementById('snake-canvas');
+const snakeCtx = snakeCanvas.getContext('2d');
+const GRID = 20;
+const TILES = 20;
+let snakeBody, snakeFood, snakeVx, snakeVy, snakeScore, snakeRunning, snakeInterval;
+
+function snakeStart() {
+  document.getElementById('snake-overlay').style.display = 'none';
+  snakeBody = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+  snakeVx = 1; snakeVy = 0;
+  snakeScore = 0;
+  document.getElementById('snake-score').textContent = '0';
+  document.getElementById('snake-status').textContent = 'RUNNING';
+  snakeRunning = true;
+  snakePlaceFood();
+  if (snakeInterval) clearInterval(snakeInterval);
+  snakeInterval = setInterval(snakeLoop, 100);
+}
+
+function snakePlaceFood() {
+  snakeFood = { x: Math.floor(Math.random()*TILES), y: Math.floor(Math.random()*TILES) };
+  for (const s of snakeBody) {
+    if (s.x === snakeFood.x && s.y === snakeFood.y) { snakePlaceFood(); return; }
+  }
+}
+
+function snakeLoop() {
+  if (!snakeRunning) return;
+  const head = { x: snakeBody[0].x + snakeVx, y: snakeBody[0].y + snakeVy };
+  if (head.x<0||head.x>=TILES||head.y<0||head.y>=TILES) { snakeGameOver(); return; }
+  for (const s of snakeBody) { if (head.x===s.x&&head.y===s.y) { snakeGameOver(); return; } }
+  snakeBody.unshift(head);
+  if (head.x===snakeFood.x&&head.y===snakeFood.y) {
+    snakeScore += 10;
+    document.getElementById('snake-score').textContent = snakeScore;
+    snakePlaceFood();
+  } else { snakeBody.pop(); }
+  snakeDraw();
+}
+
+function snakeDraw() {
+  snakeCtx.fillStyle = '#0a0a12';
+  snakeCtx.fillRect(0,0,400,400);
+  // grid
+  snakeCtx.strokeStyle = 'rgba(122,162,247,0.04)';
+  for (let i=0;i<=TILES;i++) {
+    snakeCtx.beginPath(); snakeCtx.moveTo(i*GRID,0); snakeCtx.lineTo(i*GRID,400); snakeCtx.stroke();
+    snakeCtx.beginPath(); snakeCtx.moveTo(0,i*GRID); snakeCtx.lineTo(400,i*GRID); snakeCtx.stroke();
+  }
+  // food
+  snakeCtx.shadowBlur=8; snakeCtx.shadowColor='#f7768e';
+  snakeCtx.fillStyle='#f7768e';
+  snakeCtx.fillRect(snakeFood.x*GRID+3,snakeFood.y*GRID+3,GRID-6,GRID-6);
+  snakeCtx.shadowBlur=0;
+  // snake
+  snakeBody.forEach((s,i)=>{
+    snakeCtx.shadowBlur=i===0?8:4; snakeCtx.shadowColor='#9ece6a';
+    snakeCtx.fillStyle=i===0?'#9ece6a':'#76b347';
+    snakeCtx.fillRect(s.x*GRID+2,s.y*GRID+2,GRID-4,GRID-4);
+  });
+  snakeCtx.shadowBlur=0;
+}
+
+function snakeGameOver() {
+  snakeRunning = false;
+  clearInterval(snakeInterval);
+  document.getElementById('snake-status').textContent = 'GAME OVER';
+  const overlay = document.getElementById('snake-overlay');
+  overlay.innerHTML = `
+    <h3 style="color:var(--accent-red)">GAME OVER</h3>
+    <p>Score: ${snakeScore}</p>
+    <button id="snake-start-btn" onclick="snakeStart()">[ RETRY ]</button>
+  `;
+  overlay.style.display = 'flex';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!snakeRunning) return;
+  if (activeWindow !== 'snake') return;
+  if (e.key==='ArrowUp'&&snakeVy!==1){snakeVx=0;snakeVy=-1;}
+  else if(e.key==='ArrowDown'&&snakeVy!==-1){snakeVx=0;snakeVy=1;}
+  else if(e.key==='ArrowLeft'&&snakeVx!==1){snakeVx=-1;snakeVy=0;}
+  else if(e.key==='ArrowRight'&&snakeVx!==-1){snakeVx=1;snakeVy=0;}
+});
+
+// ═══════════════════════════════════════
+//  BOOT SEQUENCE
+// ═══════════════════════════════════════
+
+const bootMessages = [
+  { text: 'BIOS: VadhOS Firmware v2.0', cls: '' },
+  { text: 'Initializing kernel...', cls: '' },
+  { text: '[  <span class="boot-ok">OK</span>  ] Loaded IBM Plex typefaces', cls: '' },
+  { text: '[  <span class="boot-ok">OK</span>  ] Started Window Manager', cls: '' },
+  { text: '[  <span class="boot-ok">OK</span>  ] Mounted /home/vadhh', cls: '' },
+  { text: '[  <span class="boot-ok">OK</span>  ] Portfolio data loaded (6 projects)', cls: '' },
+  { text: '[  <span class="boot-ok">OK</span>  ] Terminal shell ready', cls: '' },
+  { text: '[  <span class="boot-ok">OK</span>  ] Snake subsystem armed', cls: '' },
+  { text: '<span class="boot-warn">WARN</span>: Caffeine levels critical', cls: '' },
+  { text: '', cls: '' },
+  { text: '<span class="boot-label">Welcome to VadhOS. Starting desktop...</span>', cls: '' },
+];
+
+async function boot() {
+  const log = document.getElementById('boot-log');
+  const spinner = document.getElementById('boot-spinner');
+  const chars = ['▓','▒','░','▒'];
+  let si = 0;
+  const spinInterval = setInterval(()=>{
+    spinner.textContent = chars[si % chars.length];
+    si++;
+  }, 120);
+
+  for (const msg of bootMessages) {
+    const div = document.createElement('div');
+    div.innerHTML = msg.text;
+    log.appendChild(div);
+    await new Promise(r => setTimeout(r, 100 + Math.random()*120));
+  }
+
+  clearInterval(spinInterval);
+  spinner.textContent = '';
+
+  await new Promise(r => setTimeout(r, 400));
+  document.getElementById('boot-screen').classList.add('fade-out');
+  await new Promise(r => setTimeout(r, 500));
+  document.getElementById('boot-screen').style.display = 'none';
+
+  // Auto-open terminal
+  openWindow('terminal');
+
+  // Print welcome message
+  termPrint(`<span class="term-accent term-bold">Welcome to VadhOS 2.0</span>`);
+  termPrint(`<span class="term-output">Type <span class="term-accent">help</span> for available commands.</span>`);
+  termPrint(``);
+  scrollTerminal();
+}
+
+boot();
+
+</script>
 </body>
 </html>
