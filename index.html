@@ -1,642 +1,792 @@
 <!DOCTYPE html>
-<html class="scroll-smooth" lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Afridho Tavadhu | TUI Portfolio</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;700&display=swap" rel="stylesheet"/>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        'terminal-black': '#001324',
-        'phosphor-green': '#00f2ff',
-        'amber-accent': '#7fbfff',
-        'tui-bg': '#001b33',
-        'muted-text': '#a0aec0',
-      },
-      fontFamily: {
-        mono: ['Fira Code', 'monospace'],
-      },
-      animation: {
-        'blink': 'blink 1s step-end infinite',
-      },
-      keyframes: {
-        blink: {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0 },
-        }
-      }
-    }
-  }
-}
-</script>
 <style>
-body {
-  background-color: #001b33;
-  color: #00f2ff;
-  font-family: 'Fira Code', monospace;
-  margin: 0;
-  overflow-x: hidden;
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #001b33;
+  --bg-dark: #001324;
+  --cyan: #00f2ff;
+  --blue: #7fbfff;
+  --muted: #4a6a8a;
+  --text: #a0c4e8;
+  --white: #d0e8ff;
+  --red: #ff6b6b;
+  --green: #69ff94;
+  --yellow: #ffd93d;
+  --purple: #c084fc;
 }
 
-/* CRT Scanline Overlay */
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--cyan);
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  user-select: none;
+}
+
+/* CRT Scanlines */
 body::before {
-  content: " ";
-  display: block;
+  content: "";
   position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%);
-  z-index: 100;
+  inset: 0;
+  background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.08) 50%);
   background-size: 100% 4px;
   pointer-events: none;
-  opacity: 0.2;
+  z-index: 9999;
 }
 
-.tui-box {
-  border: 2px solid #00f2ff;
-  padding: 1rem;
-  position: relative;
+/* Layout */
+#tui {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
 }
 
-::-webkit-scrollbar { width: 12px; }
-::-webkit-scrollbar-track { background: #001324; border-left: 1px solid #00f2ff; }
-::-webkit-scrollbar-thumb { background: #00f2ff; }
-
-.cursor::after {
-  content: "█";
-  animation: blink 1s step-end infinite;
+/* Top Bar */
+#topbar {
+  height: 28px;
+  background: var(--cyan);
+  color: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-weight: bold;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
-.active-row {
-  background-color: #00f2ff;
-  color: #001324 !important;
+/* Main Area */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
 
-/* Terminal input styling */
-#tui-terminal-input {
+/* Menu Panel */
+#menu-panel {
+  width: 260px;
+  border-right: 2px solid var(--cyan);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: var(--bg-dark);
+}
+
+#menu-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--muted);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+#menu-list {
+  flex: 1;
+  padding: 4px 0;
+  overflow-y: auto;
+}
+
+.menu-item {
+  padding: 6px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+  transition: none;
+}
+
+.menu-item:hover {
+  background: rgba(0, 242, 255, 0.08);
+}
+
+.menu-item.active {
+  background: var(--cyan);
+  color: var(--bg-dark);
+  font-weight: bold;
+}
+
+.menu-item.active .mi-icon { color: var(--bg-dark); }
+
+.mi-icon {
+  color: var(--blue);
+  width: 20px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.mi-key {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.menu-item.active .mi-key { opacity: 0.7; }
+
+/* Content Panel */
+#content-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+#content-header {
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--muted);
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  background: var(--bg-dark);
+}
+
+#content-body {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  line-height: 1.7;
+}
+
+#content-body::-webkit-scrollbar { width: 10px; }
+#content-body::-webkit-scrollbar-track { background: var(--bg-dark); }
+#content-body::-webkit-scrollbar-thumb { background: var(--cyan); }
+
+/* Bottom Bar */
+#bottombar {
+  height: 24px;
+  background: var(--bg-dark);
+  border-top: 2px solid var(--cyan);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--muted);
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.bb-key {
+  color: var(--cyan);
+  font-weight: bold;
+}
+
+/* Content sections */
+.section { display: none; }
+.section.visible { display: block; }
+
+/* Shared content styles */
+.content-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+
+.content-subtitle {
+  font-size: 13px;
+  color: var(--blue);
+  margin-bottom: 16px;
+}
+
+.content-divider {
+  border: none;
+  border-top: 1px solid var(--muted);
+  margin: 16px 0;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  margin: 2px 4px 2px 0;
+  background: rgba(0,242,255,0.06);
+}
+
+.label {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.label-cyan { background: var(--cyan); color: var(--bg-dark); }
+.label-blue { background: var(--blue); color: var(--bg-dark); }
+.label-green { background: var(--green); color: var(--bg-dark); }
+.label-yellow { background: var(--yellow); color: var(--bg-dark); }
+.label-red { background: var(--red); color: var(--bg-dark); }
+
+.project-card {
+  border: 1px solid var(--muted);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.project-card:hover { border-color: var(--cyan); }
+
+.project-title { color: var(--blue); font-weight: bold; font-size: 15px; }
+.project-desc { color: var(--text); font-size: 12px; margin: 6px 0; line-height: 1.6; }
+.project-link { color: var(--cyan); font-size: 11px; text-decoration: none; }
+.project-link:hover { text-decoration: underline; }
+
+.stat-row {
+  display: flex;
+  gap: 16px;
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.stat-label { color: var(--muted); width: 120px; flex-shrink: 0; }
+.stat-value { color: var(--text); }
+
+.skill-group { margin-bottom: 14px; }
+.skill-group-title { color: var(--blue); font-weight: bold; font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Terminal */
+#term-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+#term-output {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+#term-output::-webkit-scrollbar { width: 8px; }
+#term-output::-webkit-scrollbar-track { background: transparent; }
+#term-output::-webkit-scrollbar-thumb { background: var(--muted); }
+
+.term-line { line-height: 1.6; white-space: pre-wrap; word-break: break-word; font-size: 13px; }
+.t-prompt { color: var(--green); font-weight: bold; }
+.t-path { color: var(--blue); }
+.t-cmd { color: var(--text); }
+.t-out { color: var(--text); }
+.t-err { color: var(--red); }
+.t-acc { color: var(--cyan); }
+.t-grn { color: var(--green); }
+.t-ylw { color: var(--yellow); }
+.t-blu { color: var(--blue); }
+.t-dir { color: var(--blue); font-weight: bold; }
+.t-file { color: var(--text); }
+.t-exe { color: var(--green); font-weight: bold; }
+.t-b { font-weight: bold; }
+
+#term-input-line {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+#term-input {
   background: transparent;
   border: none;
   outline: none;
-  color: #00f2ff;
+  color: var(--cyan);
   font-family: 'Fira Code', monospace;
-  font-size: 14px;
-  caret-color: #00f2ff;
-  width: calc(100% - 200px);
+  font-size: 13px;
+  caret-color: var(--cyan);
+  flex: 1;
 }
 
-#tui-terminal-output .term-line { line-height: 1.6; }
-.term-prompt { color: #7fbfff; font-weight: bold; }
-.term-path { color: #00f2ff; }
-.term-cmd { color: #a0aec0; }
-.term-accent { color: #00f2ff; }
-.term-error { color: #ff6b6b; }
-.term-green { color: #69ff94; }
-.term-dir { color: #7fbfff; font-weight: bold; }
-.term-file { color: #a0aec0; }
-.term-exe { color: #69ff94; font-weight: bold; }
-.term-bold { font-weight: bold; }
-.term-yellow { color: #ffd93d; }
-.term-blue { color: #7fbfff; }
-.term-output { color: #a0aec0; }
+/* Snake */
+#snake-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+}
 
-/* Sidebar link active override for dark bg */
-.nav-link.active-row .nav-icon { color: #001324 !important; }
+#snake-canvas { border: 1px solid var(--muted); display: block; }
 
-/* Mobile sidebar toggle */
-#sidebar-toggle {
-  display: none;
-  position: fixed;
-  top: 8px; left: 8px;
-  z-index: 60;
-  background: #00f2ff;
-  color: #001324;
+#snake-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,19,36,0.88);
+  z-index: 5;
+}
+
+#snake-overlay h3 { font-size: 20px; color: var(--cyan); margin-bottom: 8px; }
+#snake-overlay p { font-size: 12px; color: var(--text); margin-bottom: 4px; }
+
+#snake-start-btn {
+  margin-top: 12px;
+  padding: 8px 20px;
+  background: var(--cyan);
+  border: none;
+  color: var(--bg-dark);
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#snake-start-btn:hover { background: var(--blue); }
+
+#snake-info {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Contact form */
+.form-label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
+.form-input {
+  width: 100%;
+  max-width: 500px;
+  background: var(--bg-dark);
+  border: 1px solid var(--muted);
+  color: var(--cyan);
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  padding: 8px;
+  outline: none;
+  margin-bottom: 12px;
+}
+.form-input:focus { border-color: var(--cyan); }
+.form-btn {
+  background: var(--cyan);
+  color: var(--bg-dark);
   border: none;
   font-family: 'Fira Code', monospace;
+  font-size: 13px;
   font-weight: bold;
-  padding: 6px 12px;
+  padding: 10px 24px;
   cursor: pointer;
-  font-size: 14px;
 }
-#sidebar-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 45;
+.form-btn:hover { background: var(--blue); }
+
+/* Mobile */
+@media (max-width: 700px) {
+  #menu-panel { width: 200px; }
+  .menu-item { font-size: 12px; padding: 5px 10px; }
+  #content-body { padding: 12px; }
+  .mi-key { display: none; }
 }
 
-@media (max-width: 1023px) {
-  #sidebar-toggle { display: block; }
-  #tui-sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.2s;
-  }
-  #tui-sidebar.open {
-    transform: translateX(0);
-  }
-  #sidebar-overlay.open { display: block; }
+@media (max-width: 500px) {
+  #menu-panel { width: 160px; }
+  .mi-icon { display: none; }
 }
 </style>
 </head>
-<body class="flex min-h-screen">
+<body>
 
-<!-- Mobile sidebar toggle -->
-<button id="sidebar-toggle" onclick="toggleSidebar()">[ MENU ]</button>
-<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="tui">
 
-<!-- TUI Sidebar -->
-<aside id="tui-sidebar" class="fixed top-0 left-0 h-screen w-72 bg-terminal-black z-50 flex flex-col border-r-2 border-phosphor-green">
-  <div class="p-2 bg-phosphor-green text-terminal-black font-bold flex justify-between items-center text-sm">
-    <span>[ EXPLORER ]</span>
-    <span>v2.0</span>
+  <!-- Top Bar -->
+  <div id="topbar">
+    <span>AFRIDHO TAVADHU // TUI PORTFOLIO v2.0</span>
+    <span id="clock"></span>
   </div>
 
-  <nav class="flex-1 p-4 font-mono text-sm leading-relaxed overflow-y-auto">
-    <div class="mb-4 text-phosphor-green/60">┌── src/portfolio/</div>
-    <div class="space-y-1">
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#hero">
-        │ ├── <span class="nav-icon text-amber-accent">#</span> index.sh
-      </a>
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#about">
-        │ ├── <span class="nav-icon text-blue-300">M↓</span> about.md
-      </a>
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#skills">
-        │ ├── <span class="nav-icon text-blue-400">⚙</span> skills.log
-      </a>
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#projects">
-        │ ├── <span class="nav-icon text-indigo-400">Y</span> projects.yml
-      </a>
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#terminal">
-        │ ├── <span class="nav-icon text-cyan-400">></span> terminal.sh
-      </a>
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#contact">
-        │ └── <span class="nav-icon text-blue-200">@</span> contact.sh
-      </a>
+  <!-- Main -->
+  <div id="main">
+
+    <!-- Menu -->
+    <div id="menu-panel">
+      <div id="menu-header">┌── Navigate: ↑↓ | Enter ──┐</div>
+      <div id="menu-list">
+        <div class="menu-item active" data-section="home" onclick="selectMenu(0)">
+          <span class="mi-icon">#</span> Home
+          <span class="mi-key">F1</span>
+        </div>
+        <div class="menu-item" data-section="about" onclick="selectMenu(1)">
+          <span class="mi-icon">i</span> About
+          <span class="mi-key">F2</span>
+        </div>
+        <div class="menu-item" data-section="skills" onclick="selectMenu(2)">
+          <span class="mi-icon">⚙</span> Skills
+          <span class="mi-key">F3</span>
+        </div>
+        <div class="menu-item" data-section="projects" onclick="selectMenu(3)">
+          <span class="mi-icon">▸</span> Projects
+          <span class="mi-key">F4</span>
+        </div>
+        <div class="menu-item" data-section="terminal" onclick="selectMenu(4)">
+          <span class="mi-icon">></span> Terminal
+          <span class="mi-key">F5</span>
+        </div>
+        <div class="menu-item" data-section="snake" onclick="selectMenu(5)">
+          <span class="mi-icon">~</span> Snake
+          <span class="mi-key">F6</span>
+        </div>
+        <div class="menu-item" data-section="contact" onclick="selectMenu(6)">
+          <span class="mi-icon">@</span> Contact
+          <span class="mi-key">F7</span>
+        </div>
+        <div class="menu-item" data-section="resume" onclick="selectMenu(7)">
+          <span class="mi-icon">↓</span> Resume
+          <span class="mi-key">F8</span>
+        </div>
+      </div>
     </div>
 
-    <div class="mt-4 text-phosphor-green/60">├── games/</div>
-    <div class="space-y-1">
-      <a class="nav-link block px-2 hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#snake">
-        │ └── <span class="nav-icon text-green-400">🐍</span> snake.exe
-      </a>
+    <!-- Content -->
+    <div id="content-panel">
+      <div id="content-header">
+        <span id="content-path">~/index.sh</span>
+        <span id="content-info">1/8</span>
+      </div>
+      <div id="content-body">
+
+        <!-- HOME -->
+        <div class="section visible" id="sec-home">
+<pre style="color:var(--cyan);font-size:12px;line-height:1.3;margin-bottom:16px;">
+ ╔═══════════════════════════════════════════════════════╗
+ ║                                                       ║
+ ║   █████╗ ███████╗██████╗ ██╗██████╗ ██╗  ██╗ ██████╗  ║
+ ║  ██╔══██╗██╔════╝██╔══██╗██║██╔══██╗██║  ██║██╔═══██╗ ║
+ ║  ███████║█████╗  ██████╔╝██║██║  ██║███████║██║   ██║ ║
+ ║  ██╔══██║██╔══╝  ██╔══██╗██║██║  ██║██╔══██║██║   ██║ ║
+ ║  ██║  ██║██║     ██║  ██║██║██████╔╝██║  ██║╚██████╔╝ ║
+ ║  ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ║
+ ║                                                       ║
+ ╚═══════════════════════════════════════════════════════╝
+</pre>
+          <div style="color:var(--text);margin-bottom:8px;">$ whoami</div>
+          <div style="margin-bottom:16px;">
+            <span class="label label-cyan">ROLE</span> AI Engineer &amp; MLOps Specialist<br>
+            <span class="label label-blue">STACK</span> Full-Stack Tinkerer<br>
+            <span class="label label-green">LOC</span> Semarang, Indonesia<br>
+            <span class="label label-yellow">EDU</span> <span style="color:var(--text)">B.Eng Informatics — Univ. Stikubank</span>
+          </div>
+          <hr class="content-divider">
+          <div style="color:var(--muted);font-size:12px;font-style:italic;">
+            "Models die in notebooks. I build products.<br>
+             I bridge the gap between 'it works on my machine' and 'it works in production.'"
+          </div>
+          <hr class="content-divider">
+          <div style="font-size:12px;color:var(--muted);">
+            WEAPON: Neovim + Arch Linux &nbsp;│&nbsp; ALIGNMENT: Chaotic Good (Open Source)
+          </div>
+        </div>
+
+        <!-- ABOUT -->
+        <div class="section" id="sec-about">
+          <div class="content-title">~/README.md</div>
+          <p style="color:var(--text);margin-bottom:12px;">
+            Building bridges between high-performance <span style="color:var(--cyan);font-weight:bold">Machine Learning</span> models and robust,
+            production-grade <span style="color:var(--blue);font-weight:bold">Full Stack</span> architectures.
+          </p>
+          <hr class="content-divider">
+          <div class="stat-row"><span class="stat-label">Name</span><span class="stat-value">Afridho Tattaq Tavadhu</span></div>
+          <div class="stat-row"><span class="stat-label">Alias</span><span class="stat-value">vadhh</span></div>
+          <div class="stat-row"><span class="stat-label">Location</span><span class="stat-value">Semarang, Indonesia</span></div>
+          <div class="stat-row"><span class="stat-label">Education</span><span class="stat-value">B.Eng Informatics — Universitas Stikubank (Exp. Sep 2026)</span></div>
+          <div class="stat-row"><span class="stat-label">Weapon</span><span class="stat-value">Neovim on Arch Linux</span></div>
+          <div class="stat-row"><span class="stat-label">Alignment</span><span class="stat-value">Chaotic Good (Open Source)</span></div>
+          <hr class="content-divider">
+          <div class="content-subtitle">Philosophy</div>
+          <p style="color:var(--text);font-size:13px;line-height:1.7;">
+            My value isn't just knowing the math behind a Neural Network — it's knowing how to wrap it in
+            <span style="color:var(--cyan)">Docker</span>, track it with <span style="color:var(--cyan)">MLflow</span>,
+            and serve it via <span style="color:var(--cyan)">Next.js</span> without it crashing under load.
+            If it's broken, I trace it. If it's slow, I optimize it.
+          </p>
+        </div>
+
+        <!-- SKILLS -->
+        <div class="section" id="sec-skills">
+          <div class="content-title">skills.log</div>
+          <div class="skill-group">
+            <div class="skill-group-title">⬡ Languages</div>
+            <span class="tag">Python</span><span class="tag">SQL</span><span class="tag">Bash</span><span class="tag">TypeScript</span><span class="tag">PHP</span>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-title">◈ Data &amp; ML</div>
+            <span class="tag">Pandas</span><span class="tag">NumPy</span><span class="tag">Scikit-Learn</span><span class="tag">TensorFlow</span><span class="tag">LangChain</span><span class="tag">Matplotlib</span><span class="tag">Seaborn</span>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-title">⚒ Tools &amp; DevOps</div>
+            <span class="tag">Git</span><span class="tag">Docker</span><span class="tag">MLflow</span><span class="tag">GitHub Actions</span><span class="tag">Neovim</span><span class="tag">Linux</span>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-title">△ Concepts</div>
+            <span class="tag">ETL Pipelines</span><span class="tag">K-Means</span><span class="tag">SVM</span><span class="tag">PCA</span><span class="tag">RAG</span><span class="tag">CI/CD</span><span class="tag">Network Security</span>
+          </div>
+        </div>
+
+        <!-- PROJECTS -->
+        <div class="section" id="sec-projects">
+          <div class="content-title">projects.yml — ls -la</div>
+
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span class="project-title">PulseStream</span>
+              <span class="label label-green">LIVE</span>
+            </div>
+            <div class="project-desc">Event-driven pipeline ingesting news via Redpanda, performing sentiment analysis with local Llama 3. Sub-25ms latency.</div>
+            <div><span class="tag">Redpanda</span><span class="tag">Llama 3</span><span class="tag">Redis</span><span class="tag">Qdrant</span><span class="tag">Docker</span></div>
+            <a href="https://github.com/vadhh/pulsestream" target="_blank" class="project-link">→ github.com/vadhh/pulsestream</a>
+          </div>
+
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span class="project-title">VaultSearch</span>
+              <span class="label label-cyan">DEPLOYED</span>
+            </div>
+            <div class="project-desc">Secure offline RAG system using Llama 3 + Qdrant for semantic search with zero data leaks. Sub-second retrieval.</div>
+            <div><span class="tag">Llama 3</span><span class="tag">Qdrant</span><span class="tag">LangChain</span><span class="tag">FastAPI</span><span class="tag">Next.js</span></div>
+            <a href="https://github.com/vadhh/vaultsearch" target="_blank" class="project-link">→ github.com/vadhh/vaultsearch</a>
+          </div>
+
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span class="project-title">Customer Segmentation</span>
+              <span class="label label-blue">ACTIVE</span>
+            </div>
+            <div class="project-desc">K-Means clustering identifying $22.4M revenue uplift potential. 500k+ transactions with interactive Streamlit dashboard.</div>
+            <div><span class="tag">Python</span><span class="tag">Scikit-Learn</span><span class="tag">Streamlit</span><span class="tag">Docker</span></div>
+            <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" class="project-link">→ github.com/vadhh/Capstone-Project-A25-CS286</a>
+          </div>
+
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span class="project-title">Telco Churn MLOps</span>
+              <span class="label label-cyan">DEPLOYED</span>
+            </div>
+            <div class="project-desc">Production ML pipeline with MLflow experiment tracking and GitHub Actions CI/CD. 80.5% Recall on high-risk customers.</div>
+            <div><span class="tag">Docker</span><span class="tag">MLflow</span><span class="tag">GH Actions</span><span class="tag">Scikit-Learn</span></div>
+            <a href="https://github.com/vadhh/telco-churn-mlops" target="_blank" class="project-link">→ github.com/vadhh/telco-churn-mlops</a>
+          </div>
+
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span class="project-title">Contactless Ordering</span>
+              <span class="label label-blue">ACTIVE</span>
+            </div>
+            <div class="project-desc">Full-stack QR ordering system with dual-interface. JWT security, MongoDB, SSR optimized for mobile.</div>
+            <div><span class="tag">Next.js 14</span><span class="tag">TypeScript</span><span class="tag">MongoDB</span><span class="tag">NextAuth</span></div>
+            <a href="https://github.com/vadhh/contactless-ordering-platform" target="_blank" class="project-link">→ github.com/vadhh/contactless-ordering-platform</a>
+          </div>
+
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span class="project-title">Retail POS System</span>
+              <span class="label label-cyan">DEPLOYED</span>
+            </div>
+            <div class="project-desc">Hybrid monolith POS with custom Workflow Engine, state tracking, and RBAC security.</div>
+            <div><span class="tag">Laravel 10</span><span class="tag">Vue.js</span><span class="tag">MySQL</span><span class="tag">State Machines</span></div>
+            <a href="https://github.com/vadhh/laravel-vue-pos-system" target="_blank" class="project-link">→ github.com/vadhh/laravel-vue-pos-system</a>
+          </div>
+        </div>
+
+        <!-- TERMINAL -->
+        <div class="section" id="sec-terminal">
+          <div id="term-container">
+            <div id="term-output"></div>
+            <div id="term-input-line">
+              <span class="t-prompt">vadhh</span><span class="t-out">@</span><span class="t-blu">VadhOS</span><span class="t-out">:</span><span class="t-path" id="term-cwd">~</span><span class="t-out">$ </span>
+              <input type="text" id="term-input" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+        </div>
+
+        <!-- SNAKE -->
+        <div class="section" id="sec-snake">
+          <div id="snake-wrapper">
+            <canvas id="snake-canvas" width="400" height="400"></canvas>
+            <div id="snake-overlay">
+              <h3>SNAKE v2.0</h3>
+              <p>Arrow Keys / WASD to Move</p>
+              <p>Collect food, don't crash</p>
+              <button id="snake-start-btn" onclick="snakeStart()">[ START ]</button>
+            </div>
+            <div id="snake-info">
+              Score: <span id="snake-score-display" style="color:var(--cyan);font-weight:bold;">0</span>
+              &nbsp;│&nbsp;
+              Status: <span id="snake-status-display" style="color:var(--cyan);font-weight:bold;">IDLE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTACT -->
+        <div class="section" id="sec-contact">
+          <div class="content-title">TRANSMIT MESSAGE</div>
+          <div style="margin-bottom:16px;">
+            <span class="form-label">Destination</span>
+            <div style="border:1px solid var(--muted);padding:8px;max-width:500px;display:flex;gap:8px;">
+              <span style="color:var(--muted)">MAILTO:</span>
+              <a href="mailto:attridho@gmail.com" style="color:var(--blue);font-weight:bold;text-decoration:none;">attridho@gmail.com</a>
+            </div>
+          </div>
+          <div>
+            <span class="form-label">Subject</span>
+            <input type="text" class="form-input" placeholder="project_inquiry_01" id="contact-subject">
+          </div>
+          <div>
+            <span class="form-label">Payload</span>
+            <textarea class="form-input" rows="5" placeholder="Type your transmission here..." id="contact-body" style="resize:none;"></textarea>
+          </div>
+          <button class="form-btn" onclick="sendTransmission()">EXECUTE_TRANSMISSION [ENTER]</button>
+          <hr class="content-divider">
+          <div style="display:flex;gap:24px;font-size:12px;font-weight:bold;">
+            <a href="https://github.com/vadhh" target="_blank" style="color:var(--cyan);text-decoration:none;">[ GITHUB ]</a>
+            <a href="https://linkedin.com/in/afr1dho" target="_blank" style="color:var(--cyan);text-decoration:none;">[ LINKEDIN ]</a>
+            <a href="mailto:attridho@gmail.com" style="color:var(--cyan);text-decoration:none;">[ EMAIL ]</a>
+          </div>
+        </div>
+
+        <!-- RESUME -->
+        <div class="section" id="sec-resume">
+          <div class="content-title">resume_afridho_tavadhu.pdf</div>
+          <p style="color:var(--text);font-size:13px;margin-bottom:16px;">Data Analyst & ML Engineer — 2 pages</p>
+          <a href="resume.pdf" download class="form-btn" style="text-decoration:none;display:inline-block;">⬇ DOWNLOAD_RESUME</a>
+        </div>
+
+      </div>
     </div>
 
-    <div class="mt-8 text-xs space-y-2 opacity-60">
-      <p>┌─ STATS ──────────┐</p>
-      <p>│ CPU: <span id="stat-cpu">12</span>%         │</p>
-      <p>│ MEM: 1.2GB/16GB  │</p>
-      <p>│ NET: UP          │</p>
-      <p>└──────────────────┘</p>
-    </div>
-  </nav>
-
-  <div class="p-2 border-t-2 border-phosphor-green bg-terminal-black text-[10px] grid grid-cols-2">
-    <div class="border-r border-phosphor-green/30 px-2">GIT: master*</div>
-    <div class="px-2 text-right">UTF-8</div>
   </div>
-</aside>
 
-<!-- Main Content -->
-<main class="flex-1 lg:ml-72 w-full min-h-screen p-4 md:p-8 space-y-12">
+  <!-- Bottom Bar -->
+  <div id="bottombar">
+    <span><span class="bb-key">↑↓</span> Navigate</span>
+    <span><span class="bb-key">Enter</span> Select</span>
+    <span><span class="bb-key">F1-F8</span> Quick Jump</span>
+    <span><span class="bb-key">Tab</span> Focus Terminal</span>
+    <span style="margin-left:auto;color:var(--cyan);">vadhh@VadhOS</span>
+  </div>
 
-  <!-- HERO -->
-  <section class="min-h-[80vh] flex items-center justify-center" id="hero">
-    <div class="w-full max-w-5xl border-2 border-phosphor-green bg-terminal-black shadow-[8px_8px_0px_#00f2ff33]">
-      <div class="bg-phosphor-green text-terminal-black px-4 py-1 flex justify-between items-center font-bold text-sm">
-        <span>┌── Terminal Session: Main ───────────────────────────────────┐</span>
-        <div class="flex gap-4">
-          <a href="resume.pdf" download class="hover:underline">[↓] RESUME</a>
-          <a href="https://github.com/vadhh" target="_blank" class="hover:underline">[→] GITHUB</a>
-        </div>
-      </div>
-      <div class="p-8 md:p-12">
-        <div class="mb-6 opacity-50 text-sm">root@vadhh-dev:~$ ./initialize_persona.sh</div>
-        <h1 class="text-3xl md:text-6xl font-bold mb-8 leading-none">
-          &gt; AFRIDHO TAVADHU<span class="cursor"></span>
-        </h1>
-        <div class="grid md:grid-cols-2 gap-8">
-          <div class="space-y-4">
-            <div class="flex items-center gap-4">
-              <span class="bg-amber-accent text-terminal-black px-2 font-bold uppercase text-sm">ROLE</span>
-              <span class="font-bold">AI Engineer &amp; MLOps Specialist</span>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="bg-amber-accent text-terminal-black px-2 font-bold uppercase text-sm">STACK</span>
-              <span class="font-bold">Full-Stack Tinkerer</span>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="bg-blue-600 text-white px-2 font-bold uppercase text-sm">LOC</span>
-              <span class="font-bold text-cyan-200">Semarang, Indonesia</span>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="bg-green-700 text-white px-2 font-bold uppercase text-sm">EDU</span>
-              <span class="font-bold text-muted-text">B.Eng Informatics — Univ. Stikubank</span>
-            </div>
-          </div>
-          <div class="border border-phosphor-green/40 p-4 bg-phosphor-green/5">
-            <div class="text-[10px] mb-2 text-phosphor-green/60 uppercase tracking-widest">System Message</div>
-            <p class="text-sm italic text-muted-text">"Models die in notebooks. I build products. I bridge the gap between 'it works on my machine' and 'it works in production.'"</p>
-          </div>
-        </div>
-        <div class="mt-12 flex flex-wrap gap-4">
-          <a class="bg-phosphor-green text-terminal-black px-8 py-3 font-bold hover:bg-amber-accent transition-colors" href="#about">
-            F1: ENTER_SYSTEM
-          </a>
-          <a class="border-2 border-phosphor-green px-8 py-3 font-bold hover:bg-phosphor-green hover:text-terminal-black transition-colors" href="#contact">
-            F2: CONTACT_INIT
-          </a>
-          <a class="border-2 border-amber-accent text-amber-accent px-8 py-3 font-bold hover:bg-amber-accent hover:text-terminal-black transition-colors" href="#snake">
-            F3: SNAKE.EXE
-          </a>
-        </div>
-      </div>
-      <div class="bg-phosphor-green/10 border-t border-phosphor-green/20 p-2 text-[10px] flex justify-between text-muted-text">
-        <span>WEAPON: Neovim + Arch Linux</span>
-        <span>ALIGNMENT: Chaotic Good (Open Source)</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="max-w-4xl mx-auto w-full" id="about">
-    <div class="border-2 border-phosphor-green relative">
-      <div class="absolute -top-3 left-4 bg-tui-bg px-2 text-sm font-bold text-amber-accent">
-        ┌─ ~/README.md ─┐
-      </div>
-      <div class="p-8 space-y-6">
-        <p class="text-xl leading-relaxed text-muted-text">
-          Building bridges between high-performance <span class="bg-phosphor-green text-terminal-black px-1 font-bold">Machine Learning</span> models and robust,
-          production-grade <span class="bg-amber-accent text-terminal-black px-1 font-bold">Full Stack</span> architectures.
-        </p>
-        <div class="bg-phosphor-green/5 border border-dashed border-phosphor-green/30 p-4 font-mono text-sm leading-loose text-muted-text">
-          My value isn't just knowing the math behind a Neural Network — it's knowing how to wrap it in
-          <span class="text-phosphor-green font-bold">Docker</span>, track it with <span class="text-phosphor-green font-bold">MLflow</span>,
-          and serve it via <span class="text-phosphor-green font-bold">Next.js</span> without it crashing under load.
-          If it's broken, I trace it. If it's slow, I optimize it.
-        </div>
-      </div>
-      <div class="absolute -bottom-3 right-4 bg-tui-bg px-2 text-[10px] opacity-40">
-        └─ 100% WRITTEN ─┘
-      </div>
-    </div>
-  </section>
-
-  <!-- SKILLS -->
-  <section class="max-w-6xl mx-auto w-full" id="skills">
-    <div class="grid md:grid-cols-2 gap-8">
-      <!-- Languages & Data -->
-      <div class="border-2 border-phosphor-green flex flex-col">
-        <div class="bg-phosphor-green text-terminal-black p-2 font-bold flex justify-between text-sm">
-          <span>[ CORE_ENGINES.sys ]</span>
-          <span>(INSTALLED)</span>
-        </div>
-        <div class="p-6 space-y-6 flex-1">
-          <div>
-            <div class="text-xs text-phosphor-green/60 uppercase tracking-widest mb-3">⬡ Languages</div>
-            <div class="flex flex-wrap gap-2">
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Python</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">SQL</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Bash</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">TypeScript</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">PHP</span>
-            </div>
-          </div>
-          <div>
-            <div class="text-xs text-phosphor-green/60 uppercase tracking-widest mb-3">◈ Data & ML</div>
-            <div class="flex flex-wrap gap-2">
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Pandas</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">NumPy</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Scikit-Learn</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">TensorFlow</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">LangChain</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Matplotlib</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Seaborn</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tools & Concepts -->
-      <div class="border-2 border-phosphor-green flex flex-col">
-        <div class="bg-amber-accent text-terminal-black p-2 font-bold flex justify-between text-sm">
-          <span>[ DEVOPS_LAYER.bin ]</span>
-          <span>(LOADED)</span>
-        </div>
-        <div class="p-6 space-y-6 flex-1">
-          <div>
-            <div class="text-xs text-phosphor-green/60 uppercase tracking-widest mb-3">⚒ Tools & DevOps</div>
-            <div class="flex flex-wrap gap-2">
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Git</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Docker</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">MLflow</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">GitHub Actions</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Neovim</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Linux</span>
-            </div>
-          </div>
-          <div>
-            <div class="text-xs text-phosphor-green/60 uppercase tracking-widest mb-3">△ Concepts</div>
-            <div class="flex flex-wrap gap-2">
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">ETL Pipelines</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">K-Means</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">SVM</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">PCA</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">RAG</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">CI/CD</span>
-              <span class="bg-phosphor-green/10 border border-phosphor-green text-xs px-2 py-1">Network Security</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PROJECTS -->
-  <section class="max-w-6xl mx-auto w-full" id="projects">
-    <div class="text-center mb-6">
-      <span class="bg-phosphor-green text-terminal-black px-4 py-1 font-bold text-lg">PROJ_GALLERY (ls -la)</span>
-    </div>
-    <div class="grid md:grid-cols-3 gap-6">
-
-      <!-- PulseStream -->
-      <div class="border-2 border-phosphor-green bg-terminal-black flex flex-col group">
-        <div class="border-b border-phosphor-green p-2 text-[10px] flex justify-between group-hover:bg-phosphor-green group-hover:text-terminal-black transition-colors">
-          <span>STATUS: <span class="text-green-400 group-hover:text-terminal-black font-bold">◉ LIVE</span></span>
-          <span class="font-bold">MODE: 0755</span>
-        </div>
-        <div class="p-6 flex-1">
-          <h4 class="text-xl font-bold mb-3 text-amber-accent">PulseStream</h4>
-          <p class="text-sm text-muted-text mb-4">Event-driven pipeline ingesting news via Redpanda, performing sentiment analysis with local Llama 3. Sub-25ms latency.</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">REDPANDA</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">LLAMA 3</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">REDIS</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">QDRANT</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">DOCKER</span>
-          </div>
-          <a href="https://github.com/vadhh/pulsestream" target="_blank" class="text-xs text-phosphor-green hover:text-amber-accent">→ github.com/vadhh/pulsestream</a>
-        </div>
-      </div>
-
-      <!-- VaultSearch -->
-      <div class="border-2 border-phosphor-green bg-terminal-black flex flex-col group">
-        <div class="border-b border-phosphor-green p-2 text-[10px] flex justify-between group-hover:bg-phosphor-green group-hover:text-terminal-black transition-colors">
-          <span>STATUS: <span class="text-cyan-400 group-hover:text-terminal-black font-bold">✓ DEPLOYED</span></span>
-          <span class="font-bold">MODE: 0644</span>
-        </div>
-        <div class="p-6 flex-1">
-          <h4 class="text-xl font-bold mb-3 text-amber-accent">VaultSearch</h4>
-          <p class="text-sm text-muted-text mb-4">Secure offline RAG system using Llama 3 + Qdrant for semantic search with zero data leaks. Sub-second retrieval.</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">LLAMA 3</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">QDRANT</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">LANGCHAIN</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">FASTAPI</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">NEXT.JS</span>
-          </div>
-          <a href="https://github.com/vadhh/vaultsearch" target="_blank" class="text-xs text-phosphor-green hover:text-amber-accent">→ github.com/vadhh/vaultsearch</a>
-        </div>
-      </div>
-
-      <!-- Customer Segmentation -->
-      <div class="border-2 border-phosphor-green bg-terminal-black flex flex-col group">
-        <div class="border-b border-phosphor-green p-2 text-[10px] flex justify-between group-hover:bg-phosphor-green group-hover:text-terminal-black transition-colors">
-          <span>STATUS: <span class="text-green-400 group-hover:text-terminal-black font-bold">◉ ACTIVE</span></span>
-          <span class="font-bold">MODE: 0600</span>
-        </div>
-        <div class="p-6 flex-1">
-          <h4 class="text-xl font-bold mb-3 text-amber-accent">Customer Segmentation</h4>
-          <p class="text-sm text-muted-text mb-4">K-Means clustering identifying $22.4M revenue uplift potential. 500k+ transactions processed with interactive Streamlit dashboard.</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">PYTHON</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">SCIKIT-LEARN</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">STREAMLIT</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">DOCKER</span>
-          </div>
-          <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" class="text-xs text-phosphor-green hover:text-amber-accent">→ github.com/vadhh/Capstone-Project-A25-CS286</a>
-        </div>
-      </div>
-
-      <!-- Telco Churn -->
-      <div class="border-2 border-phosphor-green bg-terminal-black flex flex-col group">
-        <div class="border-b border-phosphor-green p-2 text-[10px] flex justify-between group-hover:bg-phosphor-green group-hover:text-terminal-black transition-colors">
-          <span>STATUS: <span class="text-cyan-400 group-hover:text-terminal-black font-bold">✓ DEPLOYED</span></span>
-          <span class="font-bold">MODE: 0644</span>
-        </div>
-        <div class="p-6 flex-1">
-          <h4 class="text-xl font-bold mb-3 text-amber-accent">Telco Churn MLOps</h4>
-          <p class="text-sm text-muted-text mb-4">Production ML pipeline with MLflow experiment tracking and GitHub Actions CI/CD. 80.5% Recall on high-risk customers.</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">DOCKER</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">MLFLOW</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">GH ACTIONS</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">SCIKIT-LEARN</span>
-          </div>
-          <a href="https://github.com/vadhh/telco-churn-mlops" target="_blank" class="text-xs text-phosphor-green hover:text-amber-accent">→ github.com/vadhh/telco-churn-mlops</a>
-        </div>
-      </div>
-
-      <!-- Contactless Ordering -->
-      <div class="border-2 border-phosphor-green bg-terminal-black flex flex-col group">
-        <div class="border-b border-phosphor-green p-2 text-[10px] flex justify-between group-hover:bg-phosphor-green group-hover:text-terminal-black transition-colors">
-          <span>STATUS: <span class="text-green-400 group-hover:text-terminal-black font-bold">◉ ACTIVE</span></span>
-          <span class="font-bold">MODE: 0755</span>
-        </div>
-        <div class="p-6 flex-1">
-          <h4 class="text-xl font-bold mb-3 text-amber-accent">Contactless Ordering</h4>
-          <p class="text-sm text-muted-text mb-4">Full-stack QR ordering system with dual-interface (Client vs Admin). JWT security, MongoDB, SSR optimized for mobile.</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">NEXT.JS 14</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">TYPESCRIPT</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">MONGODB</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">NEXTAUTH</span>
-          </div>
-          <a href="https://github.com/vadhh/contactless-ordering-platform" target="_blank" class="text-xs text-phosphor-green hover:text-amber-accent">→ github.com/vadhh/contactless-ordering-platform</a>
-        </div>
-      </div>
-
-      <!-- Retail POS -->
-      <div class="border-2 border-phosphor-green bg-terminal-black flex flex-col group">
-        <div class="border-b border-phosphor-green p-2 text-[10px] flex justify-between group-hover:bg-phosphor-green group-hover:text-terminal-black transition-colors">
-          <span>STATUS: <span class="text-cyan-400 group-hover:text-terminal-black font-bold">✓ DEPLOYED</span></span>
-          <span class="font-bold">MODE: 0644</span>
-        </div>
-        <div class="p-6 flex-1">
-          <h4 class="text-xl font-bold mb-3 text-amber-accent">Retail POS System</h4>
-          <p class="text-sm text-muted-text mb-4">Hybrid monolith POS handling high-volume transactions. Custom Workflow Engine with state tracking and RBAC security.</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">LARAVEL 10</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">VUE.JS</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">MYSQL</span>
-            <span class="bg-phosphor-green/10 border border-phosphor-green text-[10px] px-2 py-1">STATE MACHINES</span>
-          </div>
-          <a href="https://github.com/vadhh/laravel-vue-pos-system" target="_blank" class="text-xs text-phosphor-green hover:text-amber-accent">→ github.com/vadhh/laravel-vue-pos-system</a>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- INTERACTIVE TERMINAL -->
-  <section class="max-w-4xl mx-auto w-full" id="terminal">
-    <div class="border-2 border-phosphor-green bg-terminal-black">
-      <div class="bg-phosphor-green text-terminal-black p-2 font-bold text-sm flex justify-between">
-        <span>[ TERMINAL — vadhh@VadhOS ]</span>
-        <span>Type "help" for commands</span>
-      </div>
-      <div id="tui-terminal" class="p-4 h-80 overflow-y-auto font-mono text-sm cursor-text" onclick="document.getElementById('tui-terminal-input').focus()">
-        <div id="tui-terminal-output"></div>
-        <div class="flex items-center">
-          <span class="term-prompt">vadhh</span><span class="text-muted-text">@</span><span class="text-amber-accent">VadhOS</span><span class="text-muted-text">:</span><span class="term-path" id="tui-term-cwd">~</span><span class="text-muted-text">$ </span>
-          <input type="text" id="tui-terminal-input" autocomplete="off" spellcheck="false">
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SNAKE GAME -->
-  <section class="max-w-4xl mx-auto w-full" id="snake">
-    <div class="border-2 border-phosphor-green bg-terminal-black">
-      <div class="bg-amber-accent text-terminal-black p-2 font-bold text-sm flex justify-between">
-        <span>[ SNAKE.EXE — v2.0 ]</span>
-        <span>Score: <b id="snake-score-display">0</b> | <b id="snake-status-display">IDLE</b></span>
-      </div>
-      <div class="flex justify-center p-4 relative">
-        <canvas id="snake-canvas" width="400" height="400" class="border border-phosphor-green/30"></canvas>
-        <div id="snake-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-terminal-black/80 text-center">
-          <h3 class="text-2xl font-bold mb-2">SNAKE v2.0</h3>
-          <p class="text-sm text-muted-text mb-1">Arrow Keys / WASD to Move</p>
-          <p class="text-sm text-muted-text mb-4">Collect food, don't crash</p>
-          <button id="snake-start-btn" onclick="snakeStart()" class="bg-phosphor-green text-terminal-black px-6 py-2 font-bold hover:bg-amber-accent transition-colors">[ START ]</button>
-        </div>
-      </div>
-      <div class="border-t border-phosphor-green/30 p-2 text-[10px] text-muted-text text-center">
-        Mobile: Swipe to control | Desktop: Arrow Keys or WASD
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
-  <section class="max-w-2xl mx-auto w-full pb-20" id="contact">
-    <div class="border-2 border-phosphor-green bg-terminal-black">
-      <div class="bg-amber-accent text-terminal-black p-2 font-bold uppercase tracking-widest text-center text-sm">
-        ── TRANSMIT MESSAGE ──
-      </div>
-      <div class="p-8">
-        <form class="space-y-6" onsubmit="return false;">
-          <div class="space-y-2">
-            <label class="block text-xs font-bold uppercase text-phosphor-green/60">Destination URL</label>
-            <div class="flex items-center gap-2 border-2 border-phosphor-green/40 p-2">
-              <span class="opacity-40">MAILTO:</span>
-              <a href="mailto:attridho@gmail.com" class="text-amber-accent font-bold hover:text-phosphor-green">attridho@gmail.com</a>
-            </div>
-          </div>
-          <div class="space-y-2">
-            <label class="block text-xs font-bold uppercase text-phosphor-green/60">Subject Header</label>
-            <input class="w-full bg-terminal-black border-2 border-phosphor-green/40 focus:border-phosphor-green text-phosphor-green p-2 outline-none font-mono text-sm" placeholder="project_inquiry_01" type="text"/>
-          </div>
-          <div class="space-y-2">
-            <label class="block text-xs font-bold uppercase text-phosphor-green/60">Payload Content</label>
-            <textarea class="w-full bg-terminal-black border-2 border-phosphor-green/40 focus:border-phosphor-green text-phosphor-green p-2 outline-none resize-none font-mono text-sm" placeholder="Type your transmission here..." rows="5"></textarea>
-          </div>
-          <button type="button" onclick="sendTransmission()" class="w-full bg-phosphor-green text-terminal-black font-bold py-4 hover:bg-amber-accent transition-colors text-lg shadow-[4px_4px_0px_rgba(0,242,255,0.2)] active:translate-x-1 active:translate-y-1 active:shadow-none">
-            EXECUTE_TRANSMISSION [ENTER]
-          </button>
-        </form>
-        <div class="mt-8 flex justify-center gap-12 font-bold text-xs">
-          <a class="hover:text-amber-accent transition-colors" href="https://github.com/vadhh" target="_blank">[ GITHUB ]</a>
-          <a class="hover:text-amber-accent transition-colors" href="https://linkedin.com/in/afr1dho" target="_blank">[ LINKEDIN ]</a>
-          <a class="hover:text-amber-accent transition-colors" href="mailto:attridho@gmail.com">[ EMAIL ]</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Resume Download -->
-  <section class="max-w-2xl mx-auto w-full pb-8">
-    <div class="border-2 border-phosphor-green bg-terminal-black">
-      <div class="bg-phosphor-green text-terminal-black p-2 font-bold text-sm text-center">
-        [ RESUME — resume_afridho_tavadhu.pdf ]
-      </div>
-      <div class="p-6 text-center">
-        <p class="text-sm text-muted-text mb-4">Data Analyst & ML Engineer — 2 pages</p>
-        <a href="resume.pdf" download class="inline-block bg-phosphor-green text-terminal-black px-8 py-3 font-bold hover:bg-amber-accent transition-colors">
-          ⬇ DOWNLOAD_RESUME
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="border-t-2 border-phosphor-green/20 p-8 text-center text-[10px] space-y-4">
-    <div class="opacity-40 text-muted-text">
-      © 2024 Afridho Tavadhu // Kernel: 6.5.0-v7l+ // System: Online<br/>
-      01100001 01100110 01110010 01101001 01100100 01101000 01101111
-    </div>
-    <div class="flex justify-center gap-4 text-phosphor-green font-bold">
-      <span class="bg-phosphor-green/10 px-2 py-1">HOSTED ON NEOCITIES</span>
-      <span class="bg-phosphor-green/10 px-2 py-1">DEPLOY_ENV: PROD</span>
-    </div>
-  </footer>
-
-</main>
+</div>
 
 <script>
 // ═══════════════════════════════════════
-//  SIDEBAR
+//  TUI NAVIGATION
 // ═══════════════════════════════════════
 
-function toggleSidebar() {
-  document.getElementById('tui-sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open');
+const menuItems = document.querySelectorAll('.menu-item');
+const sections = ['home','about','skills','projects','terminal','snake','contact','resume'];
+const filenames = ['~/index.sh','~/about.md','~/skills.log','~/projects.yml','~/terminal.sh','~/snake.exe','~/contact.sh','~/resume.pdf'];
+let currentIndex = 0;
+let terminalFocused = false;
+
+function selectMenu(idx) {
+  if (idx < 0 || idx >= menuItems.length) return;
+  menuItems[currentIndex].classList.remove('active');
+  currentIndex = idx;
+  menuItems[currentIndex].classList.add('active');
+
+  // Show section
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('sec-' + sections[currentIndex]).classList.add('visible');
+
+  // Update header
+  document.getElementById('content-path').textContent = filenames[currentIndex];
+  document.getElementById('content-info').textContent = (currentIndex + 1) + '/' + sections.length;
+
+  // Scroll content to top
+  document.getElementById('content-body').scrollTop = 0;
+
+  // Focus terminal input if terminal selected
+  if (sections[currentIndex] === 'terminal') {
+    terminalFocused = true;
+    document.getElementById('term-input').focus();
+  } else {
+    terminalFocused = false;
+    document.getElementById('term-input').blur();
+  }
 }
 
-// ═══════════════════════════════════════
-//  SCROLL SPY — Highlight sidebar links
-// ═══════════════════════════════════════
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  // Don't intercept when typing in form fields (except terminal)
+  const tag = document.activeElement.tagName;
+  const isFormField = (tag === 'INPUT' || tag === 'TEXTAREA') && document.activeElement.id !== 'term-input';
+  if (isFormField) return;
 
-window.addEventListener('scroll', () => {
-  const sections = document.querySelectorAll('section');
-  const navLinks = document.querySelectorAll('.nav-link');
-  let current = '';
-  sections.forEach(section => {
-    const sectionTop = section.offsetTop;
-    if (pageYOffset >= sectionTop - 150) {
-      current = section.getAttribute('id');
+  // Terminal mode: only Escape exits
+  if (terminalFocused && document.activeElement.id === 'term-input') {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      terminalFocused = false;
+      document.getElementById('term-input').blur();
+      return;
     }
-  });
-  navLinks.forEach(link => {
-    link.classList.remove('active-row');
-    if (link.getAttribute('href').substring(1) === current) {
-      link.classList.add('active-row');
+    // Let terminal handle its own keys
+    return;
+  }
+
+  // Snake mode: let arrow keys control snake
+  if (sections[currentIndex] === 'snake' && snakeRunning) {
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) {
+      handleSnakeKey(e.key);
+      e.preventDefault();
+      return;
     }
-  });
+  }
+
+  switch(e.key) {
+    case 'ArrowUp':
+    case 'k':
+      e.preventDefault();
+      selectMenu(currentIndex - 1);
+      break;
+    case 'ArrowDown':
+    case 'j':
+      e.preventDefault();
+      selectMenu(currentIndex + 1);
+      break;
+    case 'Enter':
+      e.preventDefault();
+      if (sections[currentIndex] === 'terminal') {
+        terminalFocused = true;
+        document.getElementById('term-input').focus();
+      }
+      break;
+    case 'Tab':
+      e.preventDefault();
+      selectMenu(sections.indexOf('terminal'));
+      break;
+    case 'Escape':
+      e.preventDefault();
+      terminalFocused = false;
+      document.getElementById('term-input').blur();
+      break;
+    case 'F1': e.preventDefault(); selectMenu(0); break;
+    case 'F2': e.preventDefault(); selectMenu(1); break;
+    case 'F3': e.preventDefault(); selectMenu(2); break;
+    case 'F4': e.preventDefault(); selectMenu(3); break;
+    case 'F5': e.preventDefault(); selectMenu(4); break;
+    case 'F6': e.preventDefault(); selectMenu(5); break;
+    case 'F7': e.preventDefault(); selectMenu(6); break;
+    case 'F8': e.preventDefault(); selectMenu(7); break;
+  }
 });
 
-// Close sidebar on nav click (mobile)
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', () => {
-    if (window.innerWidth < 1024) {
-      document.getElementById('tui-sidebar').classList.remove('open');
-      document.getElementById('sidebar-overlay').classList.remove('open');
-    }
-  });
-});
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
 
 // ═══════════════════════════════════════
-//  FAKE CPU STAT
-// ═══════════════════════════════════════
-
-setInterval(() => {
-  const el = document.getElementById('stat-cpu');
-  if (el) el.textContent = Math.floor(Math.random() * 30 + 5);
-}, 3000);
-
-// ═══════════════════════════════════════
-//  TERMINAL SYSTEM
+//  TERMINAL
 // ═══════════════════════════════════════
 
 const FS = {
@@ -645,15 +795,15 @@ const FS = {
     'about.txt': 'Name: Afridho Tattaq Tavadhu\nAlias: vadhh\nRole: AI Engineer | MLOps Specialist | Full-Stack Tinkerer\nLocation: Semarang, Indonesia\nEducation: B.Eng Informatics — Universitas Stikubank (Exp. Sep 2026)\nWeapon: Neovim on Arch Linux\nPhilosophy: "Models die in notebooks. I build products."',
     'skills.txt': '[ Languages ]   Python (Advanced), SQL, Bash, TypeScript, PHP\n[ Data & ML ]   Pandas, NumPy, Scikit-Learn, TensorFlow, LangChain, Matplotlib\n[ Tools ]       Git, Docker, MLflow, GitHub Actions, Neovim, Linux\n[ Concepts ]    ETL Pipelines, K-Means, SVM, PCA, RAG, CI/CD, Network Security',
     'contact.txt': 'Email:    attridho@gmail.com\nGitHub:   github.com/vadhh\nLinkedIn: linkedin.com/in/afr1dho\nWeb:      stdhoom.neocities.org',
-    'resume.pdf': '[Binary file — scroll down to download]',
+    'resume.pdf': '[Binary file — use F8 to download]',
     'projects': {
       _type: 'dir',
-      'pulsestream.txt': 'PulseStream — Real-Time AI Financial Market Intelligence\nStatus: LIVE\nStack: Redpanda, Llama 3, Redis, Qdrant, Docker\nRepo: github.com/vadhh/pulsestream\n\nEvent-driven pipeline ingesting news via Redpanda, performing\nsentiment analysis with local Llama 3. Sub-25ms latency.',
-      'vaultsearch.txt': 'VaultSearch — Privacy-First Document Search\nStatus: DEPLOYED\nStack: Llama 3, Qdrant, LangChain, FastAPI, Next.js\nRepo: github.com/vadhh/vaultsearch\n\nOffline RAG system. Zero data leaks. Sub-second retrieval.',
-      'customer-segmentation.txt': 'Customer Segmentation Engine\nStatus: ACTIVE\nStack: Python, Scikit-Learn, Streamlit, Docker, Pandas\nRepo: github.com/vadhh/Capstone-Project-A25-CS286\n\nK-Means clustering identifying $22.4M revenue uplift.\n500k+ transactions processed.',
-      'telco-churn.txt': 'Telco Churn MLOps Pipeline\nStatus: DEPLOYED\nStack: Docker, MLflow, GitHub Actions, Scikit-Learn\nRepo: github.com/vadhh/telco-churn-mlops\n\nProduction ML pipeline. 80.5% Recall on high-risk customers.',
-      'ordering-platform.txt': 'Contactless Ordering Platform\nStatus: ACTIVE\nStack: Next.js 14, TypeScript, MongoDB, NextAuth, Tailwind\nRepo: github.com/vadhh/contactless-ordering-platform\n\nFull-stack QR ordering with dual-interface architecture.',
-      'retail-pos.txt': 'Retail POS Workflow System\nStatus: DEPLOYED\nStack: Laravel 10, Vue.js, MySQL, State Machines\nRepo: github.com/vadhh/laravel-vue-pos-system\n\nHybrid monolith POS with custom Workflow Engine.',
+      'pulsestream.txt': 'PulseStream — Real-Time AI Intelligence\nStatus: LIVE\nStack: Redpanda, Llama 3, Redis, Qdrant, Docker\nRepo: github.com/vadhh/pulsestream',
+      'vaultsearch.txt': 'VaultSearch — Privacy-First Document Search\nStatus: DEPLOYED\nStack: Llama 3, Qdrant, LangChain, FastAPI, Next.js\nRepo: github.com/vadhh/vaultsearch',
+      'customer-segmentation.txt': 'Customer Segmentation Engine\nStatus: ACTIVE\nStack: Python, Scikit-Learn, Streamlit, Docker, Pandas\nRepo: github.com/vadhh/Capstone-Project-A25-CS286',
+      'telco-churn.txt': 'Telco Churn MLOps Pipeline\nStatus: DEPLOYED\nStack: Docker, MLflow, GitHub Actions, Scikit-Learn\nRepo: github.com/vadhh/telco-churn-mlops',
+      'ordering-platform.txt': 'Contactless Ordering Platform\nStatus: ACTIVE\nStack: Next.js 14, TypeScript, MongoDB, NextAuth, Tailwind\nRepo: github.com/vadhh/contactless-ordering-platform',
+      'retail-pos.txt': 'Retail POS Workflow System\nStatus: DEPLOYED\nStack: Laravel 10, Vue.js, MySQL, State Machines\nRepo: github.com/vadhh/laravel-vue-pos-system',
     }
   }
 };
@@ -661,10 +811,9 @@ const FS = {
 let termCwd = '~';
 let cmdHistory = [];
 let historyIndex = -1;
-
-const termOutput = document.getElementById('tui-terminal-output');
-const termInput = document.getElementById('tui-terminal-input');
-const termCwdEl = document.getElementById('tui-term-cwd');
+const termOutput = document.getElementById('term-output');
+const termInput = document.getElementById('term-input');
+const termCwdEl = document.getElementById('term-cwd');
 
 function resolvePath(path) {
   let parts;
@@ -692,24 +841,23 @@ function getNode(pathParts) {
   return node;
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function termPrint(html) {
+function tP(html) {
   const div = document.createElement('div');
   div.className = 'term-line';
   div.innerHTML = html;
   termOutput.appendChild(div);
 }
 
-function termPromptLine(cmd) {
-  termPrint('<span class="term-prompt">vadhh</span><span class="text-muted-text">@</span><span class="text-amber-accent">VadhOS</span><span class="text-muted-text">:</span><span class="term-path">' + termCwd + '</span><span class="text-muted-text">$ </span><span class="term-cmd">' + escHtml(cmd) + '</span>');
+function tPrompt(cmd) {
+  tP('<span class="t-prompt">vadhh</span><span class="t-out">@</span><span class="t-blu">VadhOS</span><span class="t-out">:</span><span class="t-path">' + termCwd + '</span><span class="t-out">$ </span><span class="t-cmd">' + escHtml(cmd) + '</span>');
 }
 
-function scrollTerminal() {
-  const t = document.getElementById('tui-terminal');
-  t.scrollTop = t.scrollHeight;
+function tScroll() {
+  termOutput.scrollTop = termOutput.scrollHeight;
+  const container = document.getElementById('content-body');
+  container.scrollTop = container.scrollHeight;
 }
 
 function processCommand(raw) {
@@ -717,207 +865,151 @@ function processCommand(raw) {
   if (!cmd) return;
   cmdHistory.unshift(cmd);
   historyIndex = -1;
-  termPromptLine(cmd);
+  tPrompt(cmd);
 
   const [command, ...args] = cmd.split(/\s+/);
   const arg = args.join(' ');
 
   switch(command) {
     case 'help':
-      termPrint('<span class="term-accent font-bold">Available commands:</span>');
-      termPrint('<span class="term-output">  ls          List files in current directory</span>');
-      termPrint('<span class="term-output">  cd &lt;dir&gt;    Change directory</span>');
-      termPrint('<span class="term-output">  cat &lt;file&gt;  Print file contents</span>');
-      termPrint('<span class="term-output">  pwd         Print working directory</span>');
-      termPrint('<span class="term-output">  clear       Clear the terminal</span>');
-      termPrint('<span class="term-output">  whoami      Who are you?</span>');
-      termPrint('<span class="term-output">  neofetch    System info</span>');
-      termPrint('<span class="term-output">  cowsay      Moo</span>');
-      termPrint('<span class="term-output">  sudo &lt;cmd&gt;  Try it</span>');
-      termPrint('<span class="term-output">  date        Current date/time</span>');
-      termPrint('<span class="term-output">  echo &lt;msg&gt;  Echo a message</span>');
-      termPrint('<span class="term-output">  help        Show this help</span>');
+      tP('<span class="t-acc t-b">Available commands:</span>');
+      tP('<span class="t-out">  ls          List files</span>');
+      tP('<span class="t-out">  cd &lt;dir&gt;    Change directory</span>');
+      tP('<span class="t-out">  cat &lt;file&gt;  Print file</span>');
+      tP('<span class="t-out">  pwd         Working directory</span>');
+      tP('<span class="t-out">  clear       Clear terminal</span>');
+      tP('<span class="t-out">  whoami      Identity</span>');
+      tP('<span class="t-out">  neofetch    System info</span>');
+      tP('<span class="t-out">  cowsay      Moo</span>');
+      tP('<span class="t-out">  date        Current time</span>');
+      tP('<span class="t-out">  echo &lt;msg&gt;  Echo message</span>');
+      tP('<span class="t-out">  sudo &lt;cmd&gt;  Try it</span>');
+      tP('<span class="t-out">  help        This help</span>');
+      tP('<span class="t-out" style="color:var(--muted)">  [Esc] to exit terminal</span>');
       break;
 
     case 'ls': {
-      const pathParts = arg ? resolvePath(arg) : resolvePath(termCwd);
-      const node = arg ? getNode(pathParts) : getNode(resolvePath(termCwd));
+      const pp = arg ? resolvePath(arg) : resolvePath(termCwd);
+      const node = arg ? getNode(pp) : getNode(resolvePath(termCwd));
       if (!node || typeof node !== 'object' || node._type !== 'dir') {
-        termPrint('<span class="term-error">ls: cannot access \'' + escHtml(arg) + '\': Not a directory</span>');
+        tP('<span class="t-err">ls: cannot access \'' + escHtml(arg) + '\': Not a directory</span>');
       } else {
-        const entries = Object.keys(node).filter(k => k !== '_type');
         let out = '';
-        entries.forEach(e => {
+        Object.keys(node).filter(k => k !== '_type').forEach(e => {
           const child = node[e];
-          if (typeof child === 'object' && child._type === 'dir') {
-            out += '<span class="term-dir">' + e + '/</span>  ';
-          } else if (e.endsWith('.exe')) {
-            out += '<span class="term-exe">' + e + '</span>  ';
-          } else {
-            out += '<span class="term-file">' + e + '</span>  ';
-          }
+          if (typeof child === 'object' && child._type === 'dir') out += '<span class="t-dir">' + e + '/</span>  ';
+          else if (e.endsWith('.exe')) out += '<span class="t-exe">' + e + '</span>  ';
+          else out += '<span class="t-file">' + e + '</span>  ';
         });
-        termPrint('<span class="term-output">' + out + '</span>');
+        tP(out);
       }
       break;
     }
 
-    case 'cd': {
+    case 'cd':
       if (!arg || arg === '~') { termCwd = '~'; termCwdEl.textContent = '~'; break; }
-      const pathParts = resolvePath(arg);
-      const node = getNode(pathParts);
+      { const pp = resolvePath(arg); const node = getNode(pp);
       if (node && typeof node === 'object' && node._type === 'dir') {
-        termCwd = pathParts.length ? '~/' + pathParts.join('/') : '~';
+        termCwd = pp.length ? '~/' + pp.join('/') : '~';
         termCwdEl.textContent = termCwd;
-      } else {
-        termPrint('<span class="term-error">cd: no such directory: ' + escHtml(arg) + '</span>');
-      }
+      } else { tP('<span class="t-err">cd: no such directory: ' + escHtml(arg) + '</span>'); } }
       break;
-    }
 
-    case 'cat': {
-      if (!arg) { termPrint('<span class="term-error">cat: missing operand</span>'); break; }
-      const pathParts = resolvePath(arg);
-      const node = getNode(pathParts);
-      if (!node) {
-        termPrint('<span class="term-error">cat: ' + escHtml(arg) + ': No such file</span>');
-      } else if (typeof node === 'object' && node._type === 'dir') {
-        termPrint('<span class="term-error">cat: ' + escHtml(arg) + ': Is a directory</span>');
-      } else {
-        node.split('\n').forEach(line => {
-          termPrint('<span class="term-output">' + escHtml(line) + '</span>');
-        });
-      }
+    case 'cat':
+      if (!arg) { tP('<span class="t-err">cat: missing operand</span>'); break; }
+      { const pp = resolvePath(arg); const node = getNode(pp);
+      if (!node) tP('<span class="t-err">cat: ' + escHtml(arg) + ': No such file</span>');
+      else if (typeof node === 'object' && node._type === 'dir') tP('<span class="t-err">cat: ' + escHtml(arg) + ': Is a directory</span>');
+      else node.split('\n').forEach(l => tP('<span class="t-out">' + escHtml(l) + '</span>')); }
       break;
-    }
 
     case 'pwd':
-      termPrint('<span class="term-output">/home/vadhh' + (termCwd === '~' ? '' : termCwd.slice(1)) + '</span>');
+      tP('<span class="t-out">/home/vadhh' + (termCwd === '~' ? '' : termCwd.slice(1)) + '</span>');
       break;
 
-    case 'clear':
-      termOutput.innerHTML = '';
-      break;
+    case 'clear': termOutput.innerHTML = ''; break;
 
     case 'whoami':
-      termPrint('<span class="term-accent font-bold">vadhh</span> <span class="term-output">— Afridho Tattaq Tavadhu</span>');
-      termPrint('<span class="term-output">AI Engineer | MLOps Specialist | Full-Stack Tinkerer</span>');
-      termPrint('<span class="term-output">Building privacy-first AI systems from Semarang, Indonesia</span>');
+      tP('<span class="t-acc t-b">vadhh</span> <span class="t-out">— Afridho Tattaq Tavadhu</span>');
+      tP('<span class="t-out">AI Engineer | MLOps Specialist | Full-Stack Tinkerer</span>');
       break;
 
     case 'neofetch':
-      termPrint('<span class="term-blue">        ╭──────────╮</span>    <span class="term-accent term-bold">vadhh@VadhOS</span>');
-      termPrint('<span class="term-blue">        │  ◆  ◆  ◆ │</span>    <span class="term-output">──────────────</span>');
-      termPrint('<span class="term-blue">        │   ╲___╱  │</span>    <span class="term-yellow">OS:</span>      <span class="term-output">VadhOS 2.0 (Arch btw)</span>');
-      termPrint('<span class="term-blue">        │  VadhOS   │</span>    <span class="term-yellow">Host:</span>    <span class="term-output">Browser/Web Engine</span>');
-      termPrint('<span class="term-blue">        ╰──────────╯</span>    <span class="term-yellow">Kernel:</span>  <span class="term-output">HTML5 + Tailwind CSS</span>');
-      termPrint('<span class="term-blue">                    </span>    <span class="term-yellow">Shell:</span>   <span class="term-output">VadhShell 1.0</span>');
-      termPrint('<span class="term-blue">                    </span>    <span class="term-yellow">DE:</span>      <span class="term-output">TUI (Navy/Cyan)</span>');
-      termPrint('<span class="term-blue">                    </span>    <span class="term-yellow">Font:</span>    <span class="term-output">Fira Code</span>');
-      termPrint('<span class="term-blue">                    </span>    <span class="term-yellow">Uptime:</span>  <span class="term-output">1337 days</span>');
-      termPrint('<span class="term-blue">                    </span>    <span class="term-yellow">Memory:</span>  <span class="term-output">Caffeine dependent</span>');
+      tP('<span class="t-blu">    ╭──────────╮</span>    <span class="t-acc t-b">vadhh@VadhOS</span>');
+      tP('<span class="t-blu">    │  ◆  ◆  ◆ │</span>    <span class="t-out">──────────────</span>');
+      tP('<span class="t-blu">    │   ╲___╱  │</span>    <span class="t-ylw">OS:</span>      <span class="t-out">VadhOS 2.0 (Arch btw)</span>');
+      tP('<span class="t-blu">    │  VadhOS   │</span>    <span class="t-ylw">Host:</span>    <span class="t-out">Browser/Web Engine</span>');
+      tP('<span class="t-blu">    ╰──────────╯</span>    <span class="t-ylw">Kernel:</span>  <span class="t-out">HTML5 + Vanilla JS</span>');
+      tP('                        <span class="t-ylw">Shell:</span>   <span class="t-out">VadhShell 1.0</span>');
+      tP('                        <span class="t-ylw">Font:</span>    <span class="t-out">Fira Code</span>');
+      tP('                        <span class="t-ylw">Uptime:</span>  <span class="t-out">1337 days</span>');
       break;
 
     case 'sudo':
-      termPrint('<span class="term-error">[sudo] password for vadhh: </span>');
-      termPrint('<span class="term-error">Nice try. This incident will be reported.</span>');
+      tP('<span class="t-err">[sudo] password for vadhh: </span>');
+      tP('<span class="t-err">Nice try. This incident will be reported.</span>');
       break;
 
     case 'cowsay': {
       const msg = arg || 'Moo! Hire vadhh!';
-      const border = '─'.repeat(msg.length + 2);
-      termPrint('<span class="term-output"> ┌' + border + '┐</span>');
-      termPrint('<span class="term-output"> │ ' + escHtml(msg) + ' │</span>');
-      termPrint('<span class="term-output"> └' + border + '┘</span>');
-      termPrint('<span class="term-output">        \\   ^__^</span>');
-      termPrint('<span class="term-output">         \\  (oo)\\_______</span>');
-      termPrint('<span class="term-output">            (__)\\       )\\/\\</span>');
-      termPrint('<span class="term-output">                ||----w |</span>');
-      termPrint('<span class="term-output">                ||     ||</span>');
+      const b = '─'.repeat(msg.length + 2);
+      tP('<span class="t-out"> ┌' + b + '┐</span>');
+      tP('<span class="t-out"> │ ' + escHtml(msg) + ' │</span>');
+      tP('<span class="t-out"> └' + b + '┘</span>');
+      tP('<span class="t-out">        \\   ^__^</span>');
+      tP('<span class="t-out">         \\  (oo)\\_______</span>');
+      tP('<span class="t-out">            (__)\\       )\\/\\</span>');
+      tP('<span class="t-out">                ||----w |</span>');
+      tP('<span class="t-out">                ||     ||</span>');
       break;
     }
 
-    case 'date':
-      termPrint('<span class="term-output">' + new Date().toString() + '</span>');
-      break;
-
-    case 'echo':
-      termPrint('<span class="term-output">' + escHtml(arg) + '</span>');
-      break;
+    case 'date': tP('<span class="t-out">' + new Date().toString() + '</span>'); break;
+    case 'echo': tP('<span class="t-out">' + escHtml(arg) + '</span>'); break;
 
     case 'rm':
-      if (arg.includes('-rf')) {
-        termPrint('<span class="term-error">Nice try. The portfolio survives.</span>');
-      } else {
-        termPrint('<span class="term-error">rm: operation not permitted</span>');
-      }
+      tP('<span class="t-err">Nice try. The portfolio survives.</span>');
       break;
 
-    case 'man':
-      termPrint('<span class="term-output">RTFM? Try \'help\' instead — this is VadhOS, not GNU.</span>');
-      break;
-
+    case 'man': tP('<span class="t-out">Try \'help\' instead — this is VadhOS, not GNU.</span>'); break;
     case 'vim': case 'nvim': case 'nano':
-      termPrint('<span class="term-green">' + command + ': I see you\'re a person of culture.</span>');
-      termPrint('<span class="term-output">(Editor not available in VadhShell. But respect.)</span>');
+      tP('<span class="t-grn">' + command + ': I see you\'re a person of culture.</span>');
       break;
-
-    case 'ping':
-      termPrint('<span class="term-output">PING ' + (arg || 'localhost') + ': 64 bytes, time=0.042ms — it\'s alive.</span>');
-      break;
+    case 'ping': tP('<span class="t-out">PING ' + (arg || 'localhost') + ': 64 bytes, time=0.042ms</span>'); break;
 
     default:
-      termPrint('<span class="term-error">command not found: ' + escHtml(command) + '</span>');
-      termPrint('<span class="term-output">Type <span class="term-accent">help</span> for available commands.</span>');
+      tP('<span class="t-err">command not found: ' + escHtml(command) + '</span>');
+      tP('<span class="t-out">Type <span class="t-acc">help</span> for commands.</span>');
   }
-
-  scrollTerminal();
+  tScroll();
 }
 
-// Terminal input handling
 termInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    processCommand(termInput.value);
-    termInput.value = '';
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (historyIndex < cmdHistory.length - 1) {
-      historyIndex++;
-      termInput.value = cmdHistory[historyIndex];
-    }
+  if (e.key === 'Enter') { processCommand(termInput.value); termInput.value = ''; }
+  else if (e.key === 'ArrowUp') {
+    e.preventDefault(); e.stopPropagation();
+    if (historyIndex < cmdHistory.length - 1) { historyIndex++; termInput.value = cmdHistory[historyIndex]; }
   } else if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    if (historyIndex > 0) {
-      historyIndex--;
-      termInput.value = cmdHistory[historyIndex];
-    } else {
-      historyIndex = -1;
-      termInput.value = '';
-    }
+    e.preventDefault(); e.stopPropagation();
+    if (historyIndex > 0) { historyIndex--; termInput.value = cmdHistory[historyIndex]; }
+    else { historyIndex = -1; termInput.value = ''; }
   } else if (e.key === 'Tab') {
-    e.preventDefault();
+    e.preventDefault(); e.stopPropagation();
     const val = termInput.value.trim();
     const parts = val.split(/\s+/);
     const partial = parts[parts.length - 1] || '';
-    const pathParts = resolvePath(termCwd);
-    const node = getNode(pathParts) || FS['~'];
+    const node = getNode(resolvePath(termCwd)) || FS['~'];
     if (typeof node === 'object' && node._type === 'dir') {
       const matches = Object.keys(node).filter(k => k !== '_type' && k.startsWith(partial));
-      if (matches.length === 1) {
-        parts[parts.length - 1] = matches[0];
-        termInput.value = parts.join(' ');
-      }
+      if (matches.length === 1) { parts[parts.length - 1] = matches[0]; termInput.value = parts.join(' '); }
     }
-  } else if (e.key === 'l' && e.ctrlKey) {
-    e.preventDefault();
-    termOutput.innerHTML = '';
-  }
+  } else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); termOutput.innerHTML = ''; }
 });
 
-// Welcome message
-termPrint('<span class="term-accent term-bold">Welcome to VadhOS 2.0</span>');
-termPrint('<span class="term-output">Type <span class="term-accent">help</span> for available commands.</span>');
-termPrint('');
+// Welcome
+tP('<span class="t-acc t-b">Welcome to VadhOS 2.0</span>');
+tP('<span class="t-out">Type <span class="t-acc">help</span> for commands. Press <span class="t-acc">Esc</span> to exit terminal.</span>');
+tP('');
 
 // ═══════════════════════════════════════
 //  SNAKE GAME
@@ -925,16 +1017,13 @@ termPrint('');
 
 const snakeCanvas = document.getElementById('snake-canvas');
 const snakeCtx = snakeCanvas.getContext('2d');
-const GRID = 20;
-const TILES = 20;
-let snakeBody, snakeFood, snakeVx, snakeVy, snakeScore, snakeRunning, snakeInterval;
-let touchStartX, touchStartY;
+const GRID = 20, TILES = 20;
+let snakeBody, snakeFood, snakeVx, snakeVy, snakeScore, snakeRunning = false, snakeInterval;
 
 function snakeStart() {
   document.getElementById('snake-overlay').style.display = 'none';
   snakeBody = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-  snakeVx = 1; snakeVy = 0;
-  snakeScore = 0;
+  snakeVx = 1; snakeVy = 0; snakeScore = 0;
   document.getElementById('snake-score-display').textContent = '0';
   document.getElementById('snake-status-display').textContent = 'RUNNING';
   snakeRunning = true;
@@ -945,9 +1034,7 @@ function snakeStart() {
 
 function snakePlaceFood() {
   snakeFood = { x: Math.floor(Math.random()*TILES), y: Math.floor(Math.random()*TILES) };
-  for (const s of snakeBody) {
-    if (s.x === snakeFood.x && s.y === snakeFood.y) { snakePlaceFood(); return; }
-  }
+  for (const s of snakeBody) { if (s.x === snakeFood.x && s.y === snakeFood.y) { snakePlaceFood(); return; } }
 }
 
 function snakeLoop() {
@@ -960,25 +1047,22 @@ function snakeLoop() {
     snakeScore += 10;
     document.getElementById('snake-score-display').textContent = snakeScore;
     snakePlaceFood();
-  } else { snakeBody.pop(); }
+  } else snakeBody.pop();
   snakeDraw();
 }
 
 function snakeDraw() {
   snakeCtx.fillStyle = '#001324';
   snakeCtx.fillRect(0,0,400,400);
-  // grid
   snakeCtx.strokeStyle = 'rgba(0,242,255,0.04)';
   for (let i=0;i<=TILES;i++) {
     snakeCtx.beginPath(); snakeCtx.moveTo(i*GRID,0); snakeCtx.lineTo(i*GRID,400); snakeCtx.stroke();
     snakeCtx.beginPath(); snakeCtx.moveTo(0,i*GRID); snakeCtx.lineTo(400,i*GRID); snakeCtx.stroke();
   }
-  // food
   snakeCtx.shadowBlur=8; snakeCtx.shadowColor='#ff6b6b';
   snakeCtx.fillStyle='#ff6b6b';
   snakeCtx.fillRect(snakeFood.x*GRID+3,snakeFood.y*GRID+3,GRID-6,GRID-6);
   snakeCtx.shadowBlur=0;
-  // snake
   snakeBody.forEach((s,i)=>{
     snakeCtx.shadowBlur=i===0?8:4; snakeCtx.shadowColor='#00f2ff';
     snakeCtx.fillStyle=i===0?'#00f2ff':'#0099aa';
@@ -992,30 +1076,21 @@ function snakeGameOver() {
   clearInterval(snakeInterval);
   document.getElementById('snake-status-display').textContent = 'GAME OVER';
   const overlay = document.getElementById('snake-overlay');
-  overlay.innerHTML = '<h3 class="text-2xl font-bold mb-2 text-red-400">GAME OVER</h3><p class="text-muted-text mb-4">Score: ' + snakeScore + '</p><button onclick="snakeStart()" class="bg-phosphor-green text-terminal-black px-6 py-2 font-bold hover:bg-amber-accent transition-colors">[ RETRY ]</button>';
+  overlay.innerHTML = '<h3 style="color:var(--red)">GAME OVER</h3><p>Score: ' + snakeScore + '</p><button id="snake-start-btn" onclick="snakeStart()">[ RETRY ]</button>';
   overlay.style.display = 'flex';
 }
 
-// Keyboard controls for snake
-document.addEventListener('keydown', (e) => {
+function handleSnakeKey(key) {
   if (!snakeRunning) return;
-  const snakeSection = document.getElementById('snake');
-  const rect = snakeSection.getBoundingClientRect();
-  const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-  if (!isVisible) return;
-
-  if ((e.key==='ArrowUp'||e.key==='w')&&snakeVy!==1){snakeVx=0;snakeVy=-1;e.preventDefault();}
-  else if((e.key==='ArrowDown'||e.key==='s')&&snakeVy!==-1){snakeVx=0;snakeVy=1;e.preventDefault();}
-  else if((e.key==='ArrowLeft'||e.key==='a')&&snakeVx!==1){snakeVx=-1;snakeVy=0;e.preventDefault();}
-  else if((e.key==='ArrowRight'||e.key==='d')&&snakeVx!==-1){snakeVx=1;snakeVy=0;e.preventDefault();}
-});
+  if ((key==='ArrowUp'||key==='w')&&snakeVy!==1){snakeVx=0;snakeVy=-1;}
+  else if((key==='ArrowDown'||key==='s')&&snakeVy!==-1){snakeVx=0;snakeVy=1;}
+  else if((key==='ArrowLeft'||key==='a')&&snakeVx!==1){snakeVx=-1;snakeVy=0;}
+  else if((key==='ArrowRight'||key==='d')&&snakeVx!==-1){snakeVx=1;snakeVy=0;}
+}
 
 // Touch controls for snake
-snakeCanvas.addEventListener('touchstart', (e) => {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
+let touchStartX, touchStartY;
+snakeCanvas.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }, { passive: true });
 snakeCanvas.addEventListener('touchend', (e) => {
   if (!snakeRunning || !touchStartX) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
@@ -1030,14 +1105,12 @@ snakeCanvas.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 // ═══════════════════════════════════════
-//  CONTACT FORM
+//  CONTACT
 // ═══════════════════════════════════════
 
 function sendTransmission() {
-  const subjectEl = document.querySelector('#contact input[type="text"]');
-  const bodyEl = document.querySelector('#contact textarea');
-  const subject = subjectEl.value || 'Hello from your portfolio';
-  const body = bodyEl.value || '';
+  const subject = document.getElementById('contact-subject').value || 'Hello from your portfolio';
+  const body = document.getElementById('contact-body').value || '';
   window.location.href = 'mailto:attridho@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
 </script>
