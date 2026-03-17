@@ -25,10 +25,14 @@ There are no build, lint, or test commands — the site is pure static HTML/CSS/
 
 ## Architecture
 
-Each page is a self-contained HTML file with inline CSS and JS:
+Each page is a self-contained HTML file with inline `<style>` and `<script>` blocks (no external CSS/JS files):
 
-- **index.html** — Main portfolio page: ASCII banner, skills tree, project logs, contact links
-- **about.html** — Profile page with interactive animations (CTF-style decrypt reveal, traceroute simulation)
-- **snake.html** — Canvas-based Snake game with keyboard and mobile touch controls
+- **index.html** — TUI-style scrolling portfolio using Tailwind CSS (via CDN). Features a fixed sidebar file explorer with scroll-spy navigation, sections for hero/about/skills/projects/terminal/snake/contact, an inline interactive terminal (fake shell with virtual filesystem supporting `ls`, `cd`, `cat`, `help`, etc.), an embedded Snake game (canvas), and a contact form that opens mailto. Uses a deep navy/cyan color scheme (`#001b33` bg, `#00f2ff` primary, `#7fbfff` accent) with CRT scanline overlay.
+- **about.html** — Profile page with green-on-black terminal aesthetic, CRT scanline overlay, CTF-style decrypt animation, and traceroute simulation.
+- **snake.html** — Standalone canvas Snake game with the same green-on-black CRT theme, keyboard and mobile touch controls.
 
-All styling follows a shared retro terminal theme (CRT scanline effects, green-on-dark color scheme, Fira Code monospace font). Styles and scripts are embedded directly in each HTML file rather than shared via external files.
+### Style notes
+
+- `index.html` uses **Tailwind CSS** (CDN) + custom Tailwind config with a navy/cyan palette; `about.html` and `snake.html` use only vanilla CSS with green-on-black.
+- All three pages independently import Fira Code from Google Fonts and define their own styles — there are no shared stylesheets.
+- All three pages use a CRT scanline overlay effect.
