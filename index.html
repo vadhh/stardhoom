@@ -9,17 +9,17 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #001b33;
-  --bg-dark: #001324;
+  --bg: #0a0e14;
+  --bg-card: #0d1520;
+  --bg-header: #00f2ff;
   --cyan: #00f2ff;
   --blue: #7fbfff;
-  --muted: #4a6a8a;
+  --muted: #3a5068;
   --text: #a0c4e8;
-  --white: #d0e8ff;
+  --dim: #1a2a3a;
   --red: #ff6b6b;
   --green: #69ff94;
   --yellow: #ffd93d;
-  --purple: #c084fc;
 }
 
 html, body {
@@ -33,616 +33,475 @@ html, body {
 }
 
 /* CRT Scanlines */
-body::before {
+body::after {
   content: "";
   position: fixed;
   inset: 0;
-  background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.08) 50%);
+  background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.06) 50%);
   background-size: 100% 4px;
   pointer-events: none;
   z-index: 9999;
 }
 
-/* Layout */
-#tui {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
+/* ═══════ TERMINAL BACKGROUND ═══════ */
+#terminal-bg {
+  position: fixed;
+  inset: 0;
+  padding: 20px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  z-index: 0;
+  opacity: 0.35;
 }
 
-/* Top Bar */
-#topbar {
-  height: 28px;
-  background: var(--cyan);
-  color: var(--bg-dark);
+#terminal-bg .line { white-space: pre; }
+#terminal-bg .prompt { color: #1a6a5a; }
+#terminal-bg .cmd { color: #2a5a7a; }
+#terminal-bg .out { color: #1a3a4a; }
+#terminal-bg .ok { color: #1a5a2a; }
+
+/* ═══════ CARD OVERLAY ═══════ */
+#card {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 900px;
+  max-width: calc(100vw - 32px);
+  height: 600px;
+  max-height: calc(100vh - 32px);
+  border: 2px solid var(--cyan);
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  box-shadow:
+    0 0 40px rgba(0, 242, 255, 0.08),
+    0 0 120px rgba(0, 242, 255, 0.04),
+    inset 0 0 60px rgba(0, 242, 255, 0.02);
+}
+
+/* Card Top Bar */
+#card-topbar {
+  height: 26px;
+  background: var(--bg-header);
+  color: var(--bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
-/* Main Area */
-#main {
+/* Card Body */
+#card-body {
   flex: 1;
   display: flex;
   overflow: hidden;
 }
 
-/* Menu Panel */
-#menu-panel {
-  width: 260px;
-  border-right: 2px solid var(--cyan);
+/* Menu */
+#menu {
+  width: 200px;
+  border-right: 1px solid var(--muted);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  background: var(--bg-dark);
+  background: rgba(0,0,0,0.2);
 }
 
-#menu-header {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--muted);
-  font-size: 11px;
+#menu-label {
+  padding: 6px 10px;
+  font-size: 10px;
   color: var(--muted);
+  border-bottom: 1px solid var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-#menu-list {
-  flex: 1;
-  padding: 4px 0;
-  overflow-y: auto;
-}
+#menu-list { flex: 1; padding: 2px 0; overflow-y: auto; }
 
-.menu-item {
-  padding: 6px 16px;
+.mi {
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--text);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--text);
-  transition: none;
+  gap: 8px;
 }
 
-.menu-item:hover {
-  background: rgba(0, 242, 255, 0.08);
-}
+.mi:hover { background: rgba(0,242,255,0.06); }
 
-.menu-item.active {
+.mi.active {
   background: var(--cyan);
-  color: var(--bg-dark);
+  color: var(--bg);
   font-weight: bold;
 }
 
-.menu-item.active .mi-icon { color: var(--bg-dark); }
+.mi.active .mi-i { color: var(--bg); }
 
-.mi-icon {
-  color: var(--blue);
-  width: 20px;
-  text-align: center;
-  font-size: 12px;
-}
+.mi-i { color: var(--blue); width: 16px; text-align: center; font-size: 11px; }
+.mi-k { margin-left: auto; font-size: 9px; opacity: 0.4; }
+.mi.active .mi-k { opacity: 0.6; }
 
-.mi-key {
-  margin-left: auto;
-  font-size: 10px;
-  opacity: 0.5;
-}
-
-.menu-item.active .mi-key { opacity: 0.7; }
-
-/* Content Panel */
-#content-panel {
+/* Content */
+#content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg);
 }
 
-#content-header {
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--muted);
-  font-size: 11px;
+#content-bar {
+  padding: 4px 12px;
+  font-size: 10px;
   color: var(--muted);
+  border-bottom: 1px solid var(--dim);
   display: flex;
   justify-content: space-between;
-  background: var(--bg-dark);
+  background: rgba(0,0,0,0.15);
 }
 
-#content-body {
+#content-area {
   flex: 1;
-  padding: 16px 20px;
+  padding: 14px 16px;
   overflow-y: auto;
-  line-height: 1.7;
+  line-height: 1.65;
 }
 
-#content-body::-webkit-scrollbar { width: 10px; }
-#content-body::-webkit-scrollbar-track { background: var(--bg-dark); }
-#content-body::-webkit-scrollbar-thumb { background: var(--cyan); }
+#content-area::-webkit-scrollbar { width: 8px; }
+#content-area::-webkit-scrollbar-track { background: transparent; }
+#content-area::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 0; }
 
-/* Bottom Bar */
-#bottombar {
-  height: 24px;
-  background: var(--bg-dark);
-  border-top: 2px solid var(--cyan);
+/* Card Bottom Bar */
+#card-bottombar {
+  height: 22px;
+  border-top: 1px solid var(--muted);
   display: flex;
   align-items: center;
   padding: 0 12px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
-  gap: 24px;
+  gap: 16px;
+  background: rgba(0,0,0,0.2);
   flex-shrink: 0;
 }
 
-.bb-key {
-  color: var(--cyan);
-  font-weight: bold;
-}
+.bb-k { color: var(--cyan); font-weight: bold; }
 
-/* Content sections */
-.section { display: none; }
-.section.visible { display: block; }
+/* ═══════ CONTENT STYLES ═══════ */
+.sec { display: none; }
+.sec.vis { display: block; }
 
-/* Shared content styles */
-.content-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--cyan);
-  margin-bottom: 12px;
-}
-
-.content-subtitle {
-  font-size: 13px;
-  color: var(--blue);
-  margin-bottom: 16px;
-}
-
-.content-divider {
-  border: none;
-  border-top: 1px solid var(--muted);
-  margin: 16px 0;
-}
+.c-title { font-size: 16px; font-weight: bold; color: var(--cyan); margin-bottom: 10px; }
+.c-sub { font-size: 12px; color: var(--blue); margin-bottom: 12px; }
+.c-hr { border: none; border-top: 1px solid var(--dim); margin: 12px 0; }
 
 .tag {
   display: inline-block;
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 10px;
+  padding: 1px 6px;
   border: 1px solid var(--cyan);
   color: var(--cyan);
-  margin: 2px 4px 2px 0;
-  background: rgba(0,242,255,0.06);
+  margin: 2px 3px 2px 0;
+  background: rgba(0,242,255,0.05);
 }
 
-.label {
+.lbl {
   display: inline-block;
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 10px;
+  padding: 1px 7px;
   font-weight: bold;
-  margin-right: 8px;
+  margin-right: 6px;
 }
 
-.label-cyan { background: var(--cyan); color: var(--bg-dark); }
-.label-blue { background: var(--blue); color: var(--bg-dark); }
-.label-green { background: var(--green); color: var(--bg-dark); }
-.label-yellow { background: var(--yellow); color: var(--bg-dark); }
-.label-red { background: var(--red); color: var(--bg-dark); }
+.lbl-c { background: var(--cyan); color: var(--bg); }
+.lbl-b { background: var(--blue); color: var(--bg); }
+.lbl-g { background: var(--green); color: var(--bg); }
+.lbl-y { background: var(--yellow); color: var(--bg); }
+.lbl-r { background: var(--red); color: var(--bg); }
 
-.project-card {
-  border: 1px solid var(--muted);
-  padding: 12px;
-  margin-bottom: 12px;
-}
+.sr { display: flex; gap: 12px; margin: 3px 0; font-size: 12px; }
+.sr-l { color: var(--muted); width: 110px; flex-shrink: 0; }
+.sr-v { color: var(--text); }
 
-.project-card:hover { border-color: var(--cyan); }
+.sg { margin-bottom: 12px; }
+.sg-t { color: var(--blue); font-weight: bold; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
 
-.project-title { color: var(--blue); font-weight: bold; font-size: 15px; }
-.project-desc { color: var(--text); font-size: 12px; margin: 6px 0; line-height: 1.6; }
-.project-link { color: var(--cyan); font-size: 11px; text-decoration: none; }
-.project-link:hover { text-decoration: underline; }
+.pc { border: 1px solid var(--dim); padding: 10px; margin-bottom: 8px; font-size: 12px; }
+.pc:hover { border-color: var(--cyan); }
+.pc-t { color: var(--blue); font-weight: bold; font-size: 13px; }
+.pc-d { color: var(--text); margin: 4px 0; line-height: 1.5; }
+.pc-l { color: var(--cyan); font-size: 11px; text-decoration: none; }
+.pc-l:hover { text-decoration: underline; }
 
-.stat-row {
-  display: flex;
-  gap: 16px;
-  margin: 4px 0;
-  font-size: 13px;
-}
+/* Terminal section */
+#tc { height: 100%; display: flex; flex-direction: column; }
+#to { flex: 1; overflow-y: auto; padding-bottom: 6px; }
+#to::-webkit-scrollbar { width: 6px; }
+#to::-webkit-scrollbar-track { background: transparent; }
+#to::-webkit-scrollbar-thumb { background: var(--muted); }
 
-.stat-label { color: var(--muted); width: 120px; flex-shrink: 0; }
-.stat-value { color: var(--text); }
+.tl { line-height: 1.5; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+.tp { color: var(--green); font-weight: bold; }
+.ta { color: var(--cyan); }
+.te { color: var(--red); }
+.tg { color: var(--green); }
+.ty { color: var(--yellow); }
+.tb { color: var(--blue); }
+.to { color: var(--text); }
+.td { color: var(--blue); font-weight: bold; }
+.tf { color: var(--text); }
+.tx { color: var(--green); font-weight: bold; }
+.tw { font-weight: bold; }
 
-.skill-group { margin-bottom: 14px; }
-.skill-group-title { color: var(--blue); font-weight: bold; font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
-
-/* Terminal */
-#term-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-#term-output {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 8px;
-}
-#term-output::-webkit-scrollbar { width: 8px; }
-#term-output::-webkit-scrollbar-track { background: transparent; }
-#term-output::-webkit-scrollbar-thumb { background: var(--muted); }
-
-.term-line { line-height: 1.6; white-space: pre-wrap; word-break: break-word; font-size: 13px; }
-.t-prompt { color: var(--green); font-weight: bold; }
-.t-path { color: var(--blue); }
-.t-cmd { color: var(--text); }
-.t-out { color: var(--text); }
-.t-err { color: var(--red); }
-.t-acc { color: var(--cyan); }
-.t-grn { color: var(--green); }
-.t-ylw { color: var(--yellow); }
-.t-blu { color: var(--blue); }
-.t-dir { color: var(--blue); font-weight: bold; }
-.t-file { color: var(--text); }
-.t-exe { color: var(--green); font-weight: bold; }
-.t-b { font-weight: bold; }
-
-#term-input-line {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-#term-input {
+#til { display: flex; align-items: center; font-size: 12px; flex-shrink: 0; }
+#ti {
   background: transparent;
   border: none;
   outline: none;
   color: var(--cyan);
   font-family: 'Fira Code', monospace;
-  font-size: 13px;
+  font-size: 12px;
   caret-color: var(--cyan);
   flex: 1;
 }
 
 /* Snake */
-#snake-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: center;
-  position: relative;
+#sw { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: center; position: relative; }
+#snake-canvas { border: 1px solid var(--dim); display: block; }
+#so {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10,14,20,0.88); z-index: 5;
 }
-
-#snake-canvas { border: 1px solid var(--muted); display: block; }
-
-#snake-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,19,36,0.88);
-  z-index: 5;
+#so h3 { font-size: 18px; color: var(--cyan); margin-bottom: 6px; }
+#so p { font-size: 11px; color: var(--text); margin-bottom: 3px; }
+#ssb {
+  margin-top: 10px; padding: 6px 18px;
+  background: var(--cyan); border: none; color: var(--bg);
+  font-family: 'Fira Code', monospace; font-size: 12px; font-weight: bold; cursor: pointer;
 }
+#ssb:hover { background: var(--blue); }
+#si { margin-top: 8px; font-size: 11px; color: var(--muted); }
 
-#snake-overlay h3 { font-size: 20px; color: var(--cyan); margin-bottom: 8px; }
-#snake-overlay p { font-size: 12px; color: var(--text); margin-bottom: 4px; }
-
-#snake-start-btn {
-  margin-top: 12px;
-  padding: 8px 20px;
-  background: var(--cyan);
-  border: none;
-  color: var(--bg-dark);
-  font-family: 'Fira Code', monospace;
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
+/* Contact */
+.fl { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; letter-spacing: 1px; }
+.fi {
+  width: 100%; max-width: 420px;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--dim);
+  color: var(--cyan); font-family: 'Fira Code', monospace; font-size: 12px;
+  padding: 6px 8px; outline: none; margin-bottom: 10px;
 }
-
-#snake-start-btn:hover { background: var(--blue); }
-
-#snake-info {
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--muted);
+.fi:focus { border-color: var(--cyan); }
+.fb {
+  background: var(--cyan); color: var(--bg); border: none;
+  font-family: 'Fira Code', monospace; font-size: 12px; font-weight: bold;
+  padding: 8px 20px; cursor: pointer;
 }
-
-/* Contact form */
-.form-label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
-.form-input {
-  width: 100%;
-  max-width: 500px;
-  background: var(--bg-dark);
-  border: 1px solid var(--muted);
-  color: var(--cyan);
-  font-family: 'Fira Code', monospace;
-  font-size: 13px;
-  padding: 8px;
-  outline: none;
-  margin-bottom: 12px;
-}
-.form-input:focus { border-color: var(--cyan); }
-.form-btn {
-  background: var(--cyan);
-  color: var(--bg-dark);
-  border: none;
-  font-family: 'Fira Code', monospace;
-  font-size: 13px;
-  font-weight: bold;
-  padding: 10px 24px;
-  cursor: pointer;
-}
-.form-btn:hover { background: var(--blue); }
+.fb:hover { background: var(--blue); }
 
 /* Mobile */
 @media (max-width: 700px) {
-  #menu-panel { width: 200px; }
-  .menu-item { font-size: 12px; padding: 5px 10px; }
-  #content-body { padding: 12px; }
-  .mi-key { display: none; }
+  #card { width: calc(100vw - 16px); height: calc(100vh - 16px); }
+  #menu { width: 150px; }
+  .mi { font-size: 11px; padding: 4px 8px; }
+  .mi-k { display: none; }
+  #content-area { padding: 10px; }
 }
 
-@media (max-width: 500px) {
-  #menu-panel { width: 160px; }
-  .mi-icon { display: none; }
+@media (max-width: 480px) {
+  #menu { width: 120px; }
+  .mi-i { display: none; }
 }
 </style>
 </head>
 <body>
 
-<div id="tui">
+<!-- ═══════ TERMINAL BACKGROUND ═══════ -->
+<div id="terminal-bg"></div>
 
-  <!-- Top Bar -->
-  <div id="topbar">
-    <span>AFRIDHO TAVADHU // TUI PORTFOLIO v2.0</span>
+<!-- ═══════ FLOATING TUI CARD ═══════ -->
+<div id="card">
+
+  <div id="card-topbar">
+    <span>AFRIDHO TAVADHU // PORTFOLIO v2.0</span>
     <span id="clock"></span>
   </div>
 
-  <!-- Main -->
-  <div id="main">
+  <div id="card-body">
 
     <!-- Menu -->
-    <div id="menu-panel">
-      <div id="menu-header">┌── Navigate: ↑↓ | Enter ──┐</div>
+    <div id="menu">
+      <div id="menu-label">↑↓ Navigate &middot; Enter</div>
       <div id="menu-list">
-        <div class="menu-item active" data-section="home" onclick="selectMenu(0)">
-          <span class="mi-icon">#</span> Home
-          <span class="mi-key">F1</span>
-        </div>
-        <div class="menu-item" data-section="about" onclick="selectMenu(1)">
-          <span class="mi-icon">i</span> About
-          <span class="mi-key">F2</span>
-        </div>
-        <div class="menu-item" data-section="skills" onclick="selectMenu(2)">
-          <span class="mi-icon">⚙</span> Skills
-          <span class="mi-key">F3</span>
-        </div>
-        <div class="menu-item" data-section="projects" onclick="selectMenu(3)">
-          <span class="mi-icon">▸</span> Projects
-          <span class="mi-key">F4</span>
-        </div>
-        <div class="menu-item" data-section="terminal" onclick="selectMenu(4)">
-          <span class="mi-icon">></span> Terminal
-          <span class="mi-key">F5</span>
-        </div>
-        <div class="menu-item" data-section="snake" onclick="selectMenu(5)">
-          <span class="mi-icon">~</span> Snake
-          <span class="mi-key">F6</span>
-        </div>
-        <div class="menu-item" data-section="contact" onclick="selectMenu(6)">
-          <span class="mi-icon">@</span> Contact
-          <span class="mi-key">F7</span>
-        </div>
-        <div class="menu-item" data-section="resume" onclick="selectMenu(7)">
-          <span class="mi-icon">↓</span> Resume
-          <span class="mi-key">F8</span>
-        </div>
+        <div class="mi active" data-s="home" onclick="sel(0)"><span class="mi-i">#</span>Home<span class="mi-k">F1</span></div>
+        <div class="mi" data-s="about" onclick="sel(1)"><span class="mi-i">i</span>About<span class="mi-k">F2</span></div>
+        <div class="mi" data-s="skills" onclick="sel(2)"><span class="mi-i">⚙</span>Skills<span class="mi-k">F3</span></div>
+        <div class="mi" data-s="projects" onclick="sel(3)"><span class="mi-i">▸</span>Projects<span class="mi-k">F4</span></div>
+        <div class="mi" data-s="terminal" onclick="sel(4)"><span class="mi-i">></span>Terminal<span class="mi-k">F5</span></div>
+        <div class="mi" data-s="snake" onclick="sel(5)"><span class="mi-i">~</span>Snake<span class="mi-k">F6</span></div>
+        <div class="mi" data-s="contact" onclick="sel(6)"><span class="mi-i">@</span>Contact<span class="mi-k">F7</span></div>
+        <div class="mi" data-s="resume" onclick="sel(7)"><span class="mi-i">↓</span>Resume<span class="mi-k">F8</span></div>
       </div>
     </div>
 
     <!-- Content -->
-    <div id="content-panel">
-      <div id="content-header">
-        <span id="content-path">~/index.sh</span>
-        <span id="content-info">1/8</span>
+    <div id="content">
+      <div id="content-bar">
+        <span id="c-path">~/index.sh</span>
+        <span id="c-info">1/8</span>
       </div>
-      <div id="content-body">
+      <div id="content-area">
 
         <!-- HOME -->
-        <div class="section visible" id="sec-home">
-<pre style="color:var(--cyan);font-size:12px;line-height:1.3;margin-bottom:16px;">
- ╔═══════════════════════════════════════════════════════╗
- ║                                                       ║
- ║   █████╗ ███████╗██████╗ ██╗██████╗ ██╗  ██╗ ██████╗  ║
- ║  ██╔══██╗██╔════╝██╔══██╗██║██╔══██╗██║  ██║██╔═══██╗ ║
- ║  ███████║█████╗  ██████╔╝██║██║  ██║███████║██║   ██║ ║
- ║  ██╔══██║██╔══╝  ██╔══██╗██║██║  ██║██╔══██║██║   ██║ ║
- ║  ██║  ██║██║     ██║  ██║██║██████╔╝██║  ██║╚██████╔╝ ║
- ║  ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ║
- ║                                                       ║
- ╚═══════════════════════════════════════════════════════╝
-</pre>
-          <div style="color:var(--text);margin-bottom:8px;">$ whoami</div>
-          <div style="margin-bottom:16px;">
-            <span class="label label-cyan">ROLE</span> AI Engineer &amp; MLOps Specialist<br>
-            <span class="label label-blue">STACK</span> Full-Stack Tinkerer<br>
-            <span class="label label-green">LOC</span> Semarang, Indonesia<br>
-            <span class="label label-yellow">EDU</span> <span style="color:var(--text)">B.Eng Informatics — Univ. Stikubank</span>
+        <div class="sec vis" id="s-home">
+<pre style="color:var(--cyan);font-size:11px;line-height:1.2;margin-bottom:14px;">
+ ╔══════════════════════════════════════════════════════╗
+ ║  █████╗ ███████╗██████╗ ██╗██████╗ ██╗  ██╗ ██████╗ ║
+ ║ ██╔══██╗██╔════╝██╔══██╗██║██╔══██╗██║  ██║██╔═══██╗║
+ ║ ███████║█████╗  ██████╔╝██║██║  ██║███████║██║   ██║║
+ ║ ██╔══██║██╔══╝  ██╔══██╗██║██║  ██║██╔══██║██║   ██║║
+ ║ ██║  ██║██║     ██║  ██║██║██████╔╝██║  ██║╚██████╔╝║
+ ║ ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ║
+ ╚══════════════════════════════════════════════════════╝</pre>
+          <div style="color:var(--muted);font-size:11px;margin-bottom:10px;">$ whoami</div>
+          <div style="margin-bottom:12px;font-size:13px;">
+            <span class="lbl lbl-c">ROLE</span> AI Engineer &amp; MLOps Specialist<br>
+            <span class="lbl lbl-b">STACK</span> Full-Stack Tinkerer<br>
+            <span class="lbl lbl-g">LOC</span> Semarang, Indonesia<br>
+            <span class="lbl lbl-y">EDU</span> <span style="color:var(--text)">B.Eng Informatics — Univ. Stikubank</span>
           </div>
-          <hr class="content-divider">
-          <div style="color:var(--muted);font-size:12px;font-style:italic;">
+          <hr class="c-hr">
+          <div style="color:var(--muted);font-size:11px;font-style:italic;line-height:1.6;">
             "Models die in notebooks. I build products.<br>
              I bridge the gap between 'it works on my machine' and 'it works in production.'"
           </div>
-          <hr class="content-divider">
-          <div style="font-size:12px;color:var(--muted);">
+          <hr class="c-hr">
+          <div style="font-size:11px;color:var(--dim);">
             WEAPON: Neovim + Arch Linux &nbsp;│&nbsp; ALIGNMENT: Chaotic Good (Open Source)
           </div>
         </div>
 
         <!-- ABOUT -->
-        <div class="section" id="sec-about">
-          <div class="content-title">~/README.md</div>
-          <p style="color:var(--text);margin-bottom:12px;">
+        <div class="sec" id="s-about">
+          <div class="c-title">~/README.md</div>
+          <p style="color:var(--text);font-size:12px;margin-bottom:10px;line-height:1.6;">
             Building bridges between high-performance <span style="color:var(--cyan);font-weight:bold">Machine Learning</span> models and robust,
             production-grade <span style="color:var(--blue);font-weight:bold">Full Stack</span> architectures.
           </p>
-          <hr class="content-divider">
-          <div class="stat-row"><span class="stat-label">Name</span><span class="stat-value">Afridho Tattaq Tavadhu</span></div>
-          <div class="stat-row"><span class="stat-label">Alias</span><span class="stat-value">vadhh</span></div>
-          <div class="stat-row"><span class="stat-label">Location</span><span class="stat-value">Semarang, Indonesia</span></div>
-          <div class="stat-row"><span class="stat-label">Education</span><span class="stat-value">B.Eng Informatics — Universitas Stikubank (Exp. Sep 2026)</span></div>
-          <div class="stat-row"><span class="stat-label">Weapon</span><span class="stat-value">Neovim on Arch Linux</span></div>
-          <div class="stat-row"><span class="stat-label">Alignment</span><span class="stat-value">Chaotic Good (Open Source)</span></div>
-          <hr class="content-divider">
-          <div class="content-subtitle">Philosophy</div>
-          <p style="color:var(--text);font-size:13px;line-height:1.7;">
+          <hr class="c-hr">
+          <div class="sr"><span class="sr-l">Name</span><span class="sr-v">Afridho Tattaq Tavadhu</span></div>
+          <div class="sr"><span class="sr-l">Alias</span><span class="sr-v">vadhh</span></div>
+          <div class="sr"><span class="sr-l">Location</span><span class="sr-v">Semarang, Indonesia</span></div>
+          <div class="sr"><span class="sr-l">Education</span><span class="sr-v">B.Eng Informatics — Univ. Stikubank (Exp. Sep 2026)</span></div>
+          <div class="sr"><span class="sr-l">Weapon</span><span class="sr-v">Neovim on Arch Linux</span></div>
+          <div class="sr"><span class="sr-l">Alignment</span><span class="sr-v">Chaotic Good (Open Source)</span></div>
+          <hr class="c-hr">
+          <div class="c-sub">Philosophy</div>
+          <p style="color:var(--text);font-size:12px;line-height:1.6;">
             My value isn't just knowing the math behind a Neural Network — it's knowing how to wrap it in
             <span style="color:var(--cyan)">Docker</span>, track it with <span style="color:var(--cyan)">MLflow</span>,
             and serve it via <span style="color:var(--cyan)">Next.js</span> without it crashing under load.
-            If it's broken, I trace it. If it's slow, I optimize it.
           </p>
         </div>
 
         <!-- SKILLS -->
-        <div class="section" id="sec-skills">
-          <div class="content-title">skills.log</div>
-          <div class="skill-group">
-            <div class="skill-group-title">⬡ Languages</div>
-            <span class="tag">Python</span><span class="tag">SQL</span><span class="tag">Bash</span><span class="tag">TypeScript</span><span class="tag">PHP</span>
-          </div>
-          <div class="skill-group">
-            <div class="skill-group-title">◈ Data &amp; ML</div>
-            <span class="tag">Pandas</span><span class="tag">NumPy</span><span class="tag">Scikit-Learn</span><span class="tag">TensorFlow</span><span class="tag">LangChain</span><span class="tag">Matplotlib</span><span class="tag">Seaborn</span>
-          </div>
-          <div class="skill-group">
-            <div class="skill-group-title">⚒ Tools &amp; DevOps</div>
-            <span class="tag">Git</span><span class="tag">Docker</span><span class="tag">MLflow</span><span class="tag">GitHub Actions</span><span class="tag">Neovim</span><span class="tag">Linux</span>
-          </div>
-          <div class="skill-group">
-            <div class="skill-group-title">△ Concepts</div>
-            <span class="tag">ETL Pipelines</span><span class="tag">K-Means</span><span class="tag">SVM</span><span class="tag">PCA</span><span class="tag">RAG</span><span class="tag">CI/CD</span><span class="tag">Network Security</span>
-          </div>
+        <div class="sec" id="s-skills">
+          <div class="c-title">skills.log</div>
+          <div class="sg"><div class="sg-t">⬡ Languages</div><span class="tag">Python</span><span class="tag">SQL</span><span class="tag">Bash</span><span class="tag">TypeScript</span><span class="tag">PHP</span></div>
+          <div class="sg"><div class="sg-t">◈ Data &amp; ML</div><span class="tag">Pandas</span><span class="tag">NumPy</span><span class="tag">Scikit-Learn</span><span class="tag">TensorFlow</span><span class="tag">LangChain</span><span class="tag">Matplotlib</span><span class="tag">Seaborn</span></div>
+          <div class="sg"><div class="sg-t">⚒ Tools &amp; DevOps</div><span class="tag">Git</span><span class="tag">Docker</span><span class="tag">MLflow</span><span class="tag">GitHub Actions</span><span class="tag">Neovim</span><span class="tag">Linux</span></div>
+          <div class="sg"><div class="sg-t">△ Concepts</div><span class="tag">ETL Pipelines</span><span class="tag">K-Means</span><span class="tag">SVM</span><span class="tag">PCA</span><span class="tag">RAG</span><span class="tag">CI/CD</span><span class="tag">Network Security</span></div>
         </div>
 
         <!-- PROJECTS -->
-        <div class="section" id="sec-projects">
-          <div class="content-title">projects.yml — ls -la</div>
-
-          <div class="project-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span class="project-title">PulseStream</span>
-              <span class="label label-green">LIVE</span>
-            </div>
-            <div class="project-desc">Event-driven pipeline ingesting news via Redpanda, performing sentiment analysis with local Llama 3. Sub-25ms latency.</div>
+        <div class="sec" id="s-projects">
+          <div class="c-title">projects.yml</div>
+          <div class="pc">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-t">PulseStream</span><span class="lbl lbl-g">LIVE</span></div>
+            <div class="pc-d">Event-driven pipeline ingesting news via Redpanda, sentiment analysis with Llama 3. Sub-25ms latency.</div>
             <div><span class="tag">Redpanda</span><span class="tag">Llama 3</span><span class="tag">Redis</span><span class="tag">Qdrant</span><span class="tag">Docker</span></div>
-            <a href="https://github.com/vadhh/pulsestream" target="_blank" class="project-link">→ github.com/vadhh/pulsestream</a>
+            <a href="https://github.com/vadhh/pulsestream" target="_blank" class="pc-l">→ github.com/vadhh/pulsestream</a>
           </div>
-
-          <div class="project-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span class="project-title">VaultSearch</span>
-              <span class="label label-cyan">DEPLOYED</span>
-            </div>
-            <div class="project-desc">Secure offline RAG system using Llama 3 + Qdrant for semantic search with zero data leaks. Sub-second retrieval.</div>
+          <div class="pc">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-t">VaultSearch</span><span class="lbl lbl-c">DEPLOYED</span></div>
+            <div class="pc-d">Offline RAG system using Llama 3 + Qdrant. Zero data leaks. Sub-second retrieval.</div>
             <div><span class="tag">Llama 3</span><span class="tag">Qdrant</span><span class="tag">LangChain</span><span class="tag">FastAPI</span><span class="tag">Next.js</span></div>
-            <a href="https://github.com/vadhh/vaultsearch" target="_blank" class="project-link">→ github.com/vadhh/vaultsearch</a>
+            <a href="https://github.com/vadhh/vaultsearch" target="_blank" class="pc-l">→ github.com/vadhh/vaultsearch</a>
           </div>
-
-          <div class="project-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span class="project-title">Customer Segmentation</span>
-              <span class="label label-blue">ACTIVE</span>
-            </div>
-            <div class="project-desc">K-Means clustering identifying $22.4M revenue uplift potential. 500k+ transactions with interactive Streamlit dashboard.</div>
+          <div class="pc">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-t">Customer Segmentation</span><span class="lbl lbl-b">ACTIVE</span></div>
+            <div class="pc-d">K-Means clustering identifying $22.4M revenue uplift. 500k+ transactions processed.</div>
             <div><span class="tag">Python</span><span class="tag">Scikit-Learn</span><span class="tag">Streamlit</span><span class="tag">Docker</span></div>
-            <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" class="project-link">→ github.com/vadhh/Capstone-Project-A25-CS286</a>
+            <a href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" class="pc-l">→ github.com/vadhh/Capstone-Project-A25-CS286</a>
           </div>
-
-          <div class="project-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span class="project-title">Telco Churn MLOps</span>
-              <span class="label label-cyan">DEPLOYED</span>
-            </div>
-            <div class="project-desc">Production ML pipeline with MLflow experiment tracking and GitHub Actions CI/CD. 80.5% Recall on high-risk customers.</div>
+          <div class="pc">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-t">Telco Churn MLOps</span><span class="lbl lbl-c">DEPLOYED</span></div>
+            <div class="pc-d">Production ML pipeline with MLflow tracking. 80.5% Recall on high-risk customers.</div>
             <div><span class="tag">Docker</span><span class="tag">MLflow</span><span class="tag">GH Actions</span><span class="tag">Scikit-Learn</span></div>
-            <a href="https://github.com/vadhh/telco-churn-mlops" target="_blank" class="project-link">→ github.com/vadhh/telco-churn-mlops</a>
+            <a href="https://github.com/vadhh/telco-churn-mlops" target="_blank" class="pc-l">→ github.com/vadhh/telco-churn-mlops</a>
           </div>
-
-          <div class="project-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span class="project-title">Contactless Ordering</span>
-              <span class="label label-blue">ACTIVE</span>
-            </div>
-            <div class="project-desc">Full-stack QR ordering system with dual-interface. JWT security, MongoDB, SSR optimized for mobile.</div>
+          <div class="pc">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-t">Contactless Ordering</span><span class="lbl lbl-b">ACTIVE</span></div>
+            <div class="pc-d">Full-stack QR ordering with dual-interface. JWT security, MongoDB, SSR.</div>
             <div><span class="tag">Next.js 14</span><span class="tag">TypeScript</span><span class="tag">MongoDB</span><span class="tag">NextAuth</span></div>
-            <a href="https://github.com/vadhh/contactless-ordering-platform" target="_blank" class="project-link">→ github.com/vadhh/contactless-ordering-platform</a>
+            <a href="https://github.com/vadhh/contactless-ordering-platform" target="_blank" class="pc-l">→ github.com/vadhh/contactless-ordering-platform</a>
           </div>
-
-          <div class="project-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span class="project-title">Retail POS System</span>
-              <span class="label label-cyan">DEPLOYED</span>
-            </div>
-            <div class="project-desc">Hybrid monolith POS with custom Workflow Engine, state tracking, and RBAC security.</div>
+          <div class="pc">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-t">Retail POS System</span><span class="lbl lbl-c">DEPLOYED</span></div>
+            <div class="pc-d">Hybrid monolith POS with custom Workflow Engine, RBAC security.</div>
             <div><span class="tag">Laravel 10</span><span class="tag">Vue.js</span><span class="tag">MySQL</span><span class="tag">State Machines</span></div>
-            <a href="https://github.com/vadhh/laravel-vue-pos-system" target="_blank" class="project-link">→ github.com/vadhh/laravel-vue-pos-system</a>
+            <a href="https://github.com/vadhh/laravel-vue-pos-system" target="_blank" class="pc-l">→ github.com/vadhh/laravel-vue-pos-system</a>
           </div>
         </div>
 
         <!-- TERMINAL -->
-        <div class="section" id="sec-terminal">
-          <div id="term-container">
-            <div id="term-output"></div>
-            <div id="term-input-line">
-              <span class="t-prompt">vadhh</span><span class="t-out">@</span><span class="t-blu">VadhOS</span><span class="t-out">:</span><span class="t-path" id="term-cwd">~</span><span class="t-out">$ </span>
-              <input type="text" id="term-input" autocomplete="off" spellcheck="false">
+        <div class="sec" id="s-terminal">
+          <div id="tc">
+            <div id="to"></div>
+            <div id="til">
+              <span class="tp">vadhh</span><span class="to">@</span><span class="tb">VadhOS</span><span class="to">:</span><span class="tb" id="tcwd">~</span><span class="to">$ </span>
+              <input type="text" id="ti" autocomplete="off" spellcheck="false">
             </div>
           </div>
         </div>
 
         <!-- SNAKE -->
-        <div class="section" id="sec-snake">
-          <div id="snake-wrapper">
+        <div class="sec" id="s-snake">
+          <div id="sw">
             <canvas id="snake-canvas" width="400" height="400"></canvas>
-            <div id="snake-overlay">
+            <div id="so">
               <h3>SNAKE v2.0</h3>
               <p>Arrow Keys / WASD to Move</p>
               <p>Collect food, don't crash</p>
-              <button id="snake-start-btn" onclick="snakeStart()">[ START ]</button>
+              <button id="ssb" onclick="snakeStart()">[ START ]</button>
             </div>
-            <div id="snake-info">
-              Score: <span id="snake-score-display" style="color:var(--cyan);font-weight:bold;">0</span>
-              &nbsp;│&nbsp;
-              Status: <span id="snake-status-display" style="color:var(--cyan);font-weight:bold;">IDLE</span>
-            </div>
+            <div id="si">Score: <span id="ssd" style="color:var(--cyan);font-weight:bold">0</span> │ <span id="sst" style="color:var(--cyan);font-weight:bold">IDLE</span></div>
           </div>
         </div>
 
         <!-- CONTACT -->
-        <div class="section" id="sec-contact">
-          <div class="content-title">TRANSMIT MESSAGE</div>
-          <div style="margin-bottom:16px;">
-            <span class="form-label">Destination</span>
-            <div style="border:1px solid var(--muted);padding:8px;max-width:500px;display:flex;gap:8px;">
+        <div class="sec" id="s-contact">
+          <div class="c-title">TRANSMIT MESSAGE</div>
+          <div style="margin-bottom:12px;">
+            <span class="fl">Destination</span>
+            <div style="border:1px solid var(--dim);padding:6px 8px;max-width:420px;display:flex;gap:8px;font-size:12px;">
               <span style="color:var(--muted)">MAILTO:</span>
               <a href="mailto:attridho@gmail.com" style="color:var(--blue);font-weight:bold;text-decoration:none;">attridho@gmail.com</a>
             </div>
           </div>
-          <div>
-            <span class="form-label">Subject</span>
-            <input type="text" class="form-input" placeholder="project_inquiry_01" id="contact-subject">
-          </div>
-          <div>
-            <span class="form-label">Payload</span>
-            <textarea class="form-input" rows="5" placeholder="Type your transmission here..." id="contact-body" style="resize:none;"></textarea>
-          </div>
-          <button class="form-btn" onclick="sendTransmission()">EXECUTE_TRANSMISSION [ENTER]</button>
-          <hr class="content-divider">
-          <div style="display:flex;gap:24px;font-size:12px;font-weight:bold;">
+          <span class="fl">Subject</span>
+          <input type="text" class="fi" placeholder="project_inquiry_01" id="cs">
+          <span class="fl">Payload</span>
+          <textarea class="fi" rows="4" placeholder="Type your transmission..." id="cb" style="resize:none;"></textarea>
+          <button class="fb" onclick="sendMsg()">EXECUTE_TRANSMISSION</button>
+          <hr class="c-hr">
+          <div style="display:flex;gap:20px;font-size:11px;font-weight:bold;">
             <a href="https://github.com/vadhh" target="_blank" style="color:var(--cyan);text-decoration:none;">[ GITHUB ]</a>
             <a href="https://linkedin.com/in/afr1dho" target="_blank" style="color:var(--cyan);text-decoration:none;">[ LINKEDIN ]</a>
             <a href="mailto:attridho@gmail.com" style="color:var(--cyan);text-decoration:none;">[ EMAIL ]</a>
@@ -650,10 +509,10 @@ body::before {
         </div>
 
         <!-- RESUME -->
-        <div class="section" id="sec-resume">
-          <div class="content-title">resume_afridho_tavadhu.pdf</div>
-          <p style="color:var(--text);font-size:13px;margin-bottom:16px;">Data Analyst & ML Engineer — 2 pages</p>
-          <a href="resume.pdf" download class="form-btn" style="text-decoration:none;display:inline-block;">⬇ DOWNLOAD_RESUME</a>
+        <div class="sec" id="s-resume">
+          <div class="c-title">resume_afridho_tavadhu.pdf</div>
+          <p style="color:var(--text);font-size:12px;margin-bottom:14px;">Data Analyst & ML Engineer — 2 pages</p>
+          <a href="resume.pdf" download class="fb" style="text-decoration:none;display:inline-block;">⬇ DOWNLOAD RESUME</a>
         </div>
 
       </div>
@@ -661,12 +520,12 @@ body::before {
 
   </div>
 
-  <!-- Bottom Bar -->
-  <div id="bottombar">
-    <span><span class="bb-key">↑↓</span> Navigate</span>
-    <span><span class="bb-key">Enter</span> Select</span>
-    <span><span class="bb-key">F1-F8</span> Quick Jump</span>
-    <span><span class="bb-key">Tab</span> Focus Terminal</span>
+  <div id="card-bottombar">
+    <span><span class="bb-k">↑↓</span> Nav</span>
+    <span><span class="bb-k">Enter</span> Select</span>
+    <span><span class="bb-k">F1-F8</span> Jump</span>
+    <span><span class="bb-k">Tab</span> Terminal</span>
+    <span><span class="bb-k">Esc</span> Back</span>
     <span style="margin-left:auto;color:var(--cyan);">vadhh@VadhOS</span>
   </div>
 
@@ -674,113 +533,145 @@ body::before {
 
 <script>
 // ═══════════════════════════════════════
+//  TERMINAL BACKGROUND (ambient)
+// ═══════════════════════════════════════
+const bgEl = document.getElementById('terminal-bg');
+const bgLines = [
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ systemctl status portfolio.service',
+  '<span class="ok">● portfolio.service - Afridho Tavadhu Portfolio</span>',
+  '   Loaded: loaded (/etc/systemd/system/portfolio.service; enabled)',
+  '   Active: <span class="ok">active (running)</span> since Mon 2024-01-01 00:00:00 UTC',
+  '   Main PID: 1337 (node)',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ docker ps --format "table {{.Names}}\\t{{.Status}}"',
+  'NAMES               STATUS',
+  'portfolio-web       Up 324 days',
+  'redis-cache         Up 324 days',
+  'qdrant-vector       Up 290 days',
+  'mlflow-tracker      Up 180 days',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ cat /proc/loadavg',
+  '0.12 0.08 0.05 1/128 4201',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ uptime',
+  ' 14:02:11 up 324 days, 12:44, 1 user, load average: 0.12, 0.08, 0.05',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ free -h',
+  '              total        used        free      shared  buff/cache   available',
+  'Mem:           16Gi       1.2Gi        12Gi       128Mi       2.8Gi        14Gi',
+  'Swap:         2.0Gi          0B       2.0Gi',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ git log --oneline -5',
+  '<span class="ok">a1b2c3d</span> feat: add real-time sentiment pipeline',
+  '<span class="ok">e4f5g6h</span> fix: optimize vector search latency',
+  '<span class="ok">i7j8k9l</span> chore: update MLflow tracking config',
+  '<span class="ok">m0n1o2p</span> feat: implement RAG with sliding window',
+  '<span class="ok">q3r4s5t</span> refactor: modularize FastAPI routes',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ nvidia-smi --query-gpu=name,temperature.gpu,utilization.gpu --format=csv',
+  'name, temperature.gpu, utilization.gpu [%]',
+  'NVIDIA RTX 4090, 42, 8 %',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ kubectl get pods -n production',
+  'NAME                          READY   STATUS    RESTARTS   AGE',
+  'api-gateway-7d8f9b6c5-x2k4l  1/1     Running   0          42d',
+  'ml-inference-5c4d3b2a1-n7m8   1/1     Running   0          42d',
+  'vector-db-9a8b7c6d5-p3q4r     1/1     Running   0          42d',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ echo "All systems operational."',
+  'All systems operational.',
+  '',
+  '<span class="prompt">root@server</span>:<span class="cmd">~</span>$ tail -f /var/log/portfolio/access.log',
+  '[2024-05-20 14:02:12] GET / 200 12ms',
+  '[2024-05-20 14:02:13] GET /api/projects 200 8ms',
+  '[2024-05-20 14:02:15] GET /api/skills 200 3ms',
+  '[2024-05-20 14:02:18] POST /api/contact 201 45ms',
+  '[2024-05-20 14:02:22] GET /health 200 1ms',
+];
+
+let bgHTML = '';
+bgLines.forEach(l => { bgHTML += '<div class="line">' + l + '</div>'; });
+// Repeat to fill screen
+bgEl.innerHTML = bgHTML + bgHTML + bgHTML;
+
+// Slow scroll effect
+let bgScroll = 0;
+function scrollBg() {
+  bgScroll += 0.3;
+  if (bgScroll > bgEl.scrollHeight / 2) bgScroll = 0;
+  bgEl.style.transform = 'translateY(-' + bgScroll + 'px)';
+  requestAnimationFrame(scrollBg);
+}
+scrollBg();
+
+// ═══════════════════════════════════════
 //  TUI NAVIGATION
 // ═══════════════════════════════════════
+const mis = document.querySelectorAll('.mi');
+const secs = ['home','about','skills','projects','terminal','snake','contact','resume'];
+const fns = ['~/index.sh','~/about.md','~/skills.log','~/projects.yml','~/terminal.sh','~/snake.exe','~/contact.sh','~/resume.pdf'];
+let ci = 0;
+let tFocus = false;
 
-const menuItems = document.querySelectorAll('.menu-item');
-const sections = ['home','about','skills','projects','terminal','snake','contact','resume'];
-const filenames = ['~/index.sh','~/about.md','~/skills.log','~/projects.yml','~/terminal.sh','~/snake.exe','~/contact.sh','~/resume.pdf'];
-let currentIndex = 0;
-let terminalFocused = false;
-
-function selectMenu(idx) {
-  if (idx < 0 || idx >= menuItems.length) return;
-  menuItems[currentIndex].classList.remove('active');
-  currentIndex = idx;
-  menuItems[currentIndex].classList.add('active');
-
-  // Show section
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
-  document.getElementById('sec-' + sections[currentIndex]).classList.add('visible');
-
-  // Update header
-  document.getElementById('content-path').textContent = filenames[currentIndex];
-  document.getElementById('content-info').textContent = (currentIndex + 1) + '/' + sections.length;
-
-  // Scroll content to top
-  document.getElementById('content-body').scrollTop = 0;
-
-  // Focus terminal input if terminal selected
-  if (sections[currentIndex] === 'terminal') {
-    terminalFocused = true;
-    document.getElementById('term-input').focus();
+function sel(idx) {
+  if (idx < 0 || idx >= mis.length) return;
+  mis[ci].classList.remove('active');
+  ci = idx;
+  mis[ci].classList.add('active');
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('vis'));
+  document.getElementById('s-' + secs[ci]).classList.add('vis');
+  document.getElementById('c-path').textContent = fns[ci];
+  document.getElementById('c-info').textContent = (ci + 1) + '/' + secs.length;
+  document.getElementById('content-area').scrollTop = 0;
+  if (secs[ci] === 'terminal') {
+    tFocus = true;
+    document.getElementById('ti').focus();
   } else {
-    terminalFocused = false;
-    document.getElementById('term-input').blur();
+    tFocus = false;
+    document.getElementById('ti').blur();
   }
 }
 
-// Keyboard navigation
 document.addEventListener('keydown', (e) => {
-  // Don't intercept when typing in form fields (except terminal)
   const tag = document.activeElement.tagName;
-  const isFormField = (tag === 'INPUT' || tag === 'TEXTAREA') && document.activeElement.id !== 'term-input';
-  if (isFormField) return;
+  const isForm = (tag === 'INPUT' || tag === 'TEXTAREA') && document.activeElement.id !== 'ti';
+  if (isForm) return;
 
-  // Terminal mode: only Escape exits
-  if (terminalFocused && document.activeElement.id === 'term-input') {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      terminalFocused = false;
-      document.getElementById('term-input').blur();
-      return;
-    }
-    // Let terminal handle its own keys
+  if (tFocus && document.activeElement.id === 'ti') {
+    if (e.key === 'Escape') { e.preventDefault(); tFocus = false; document.getElementById('ti').blur(); }
     return;
   }
 
-  // Snake mode: let arrow keys control snake
-  if (sections[currentIndex] === 'snake' && snakeRunning) {
+  if (secs[ci] === 'snake' && snakeRunning) {
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) {
-      handleSnakeKey(e.key);
-      e.preventDefault();
-      return;
+      handleSnakeKey(e.key); e.preventDefault(); return;
     }
   }
 
   switch(e.key) {
-    case 'ArrowUp':
-    case 'k':
-      e.preventDefault();
-      selectMenu(currentIndex - 1);
-      break;
-    case 'ArrowDown':
-    case 'j':
-      e.preventDefault();
-      selectMenu(currentIndex + 1);
-      break;
+    case 'ArrowUp': case 'k': e.preventDefault(); sel(ci - 1); break;
+    case 'ArrowDown': case 'j': e.preventDefault(); sel(ci + 1); break;
     case 'Enter':
       e.preventDefault();
-      if (sections[currentIndex] === 'terminal') {
-        terminalFocused = true;
-        document.getElementById('term-input').focus();
-      }
+      if (secs[ci] === 'terminal') { tFocus = true; document.getElementById('ti').focus(); }
       break;
-    case 'Tab':
-      e.preventDefault();
-      selectMenu(sections.indexOf('terminal'));
-      break;
-    case 'Escape':
-      e.preventDefault();
-      terminalFocused = false;
-      document.getElementById('term-input').blur();
-      break;
-    case 'F1': e.preventDefault(); selectMenu(0); break;
-    case 'F2': e.preventDefault(); selectMenu(1); break;
-    case 'F3': e.preventDefault(); selectMenu(2); break;
-    case 'F4': e.preventDefault(); selectMenu(3); break;
-    case 'F5': e.preventDefault(); selectMenu(4); break;
-    case 'F6': e.preventDefault(); selectMenu(5); break;
-    case 'F7': e.preventDefault(); selectMenu(6); break;
-    case 'F8': e.preventDefault(); selectMenu(7); break;
+    case 'Tab': e.preventDefault(); sel(secs.indexOf('terminal')); break;
+    case 'Escape': e.preventDefault(); tFocus = false; document.getElementById('ti').blur(); break;
+    case 'F1': e.preventDefault(); sel(0); break;
+    case 'F2': e.preventDefault(); sel(1); break;
+    case 'F3': e.preventDefault(); sel(2); break;
+    case 'F4': e.preventDefault(); sel(3); break;
+    case 'F5': e.preventDefault(); sel(4); break;
+    case 'F6': e.preventDefault(); sel(5); break;
+    case 'F7': e.preventDefault(); sel(6); break;
+    case 'F8': e.preventDefault(); sel(7); break;
   }
 });
 
 // Clock
 function updateClock() {
-  const now = new Date();
   document.getElementById('clock').textContent =
-    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -788,330 +679,147 @@ updateClock();
 // ═══════════════════════════════════════
 //  TERMINAL
 // ═══════════════════════════════════════
-
 const FS = {
   '~': {
-    _type: 'dir',
-    'about.txt': 'Name: Afridho Tattaq Tavadhu\nAlias: vadhh\nRole: AI Engineer | MLOps Specialist | Full-Stack Tinkerer\nLocation: Semarang, Indonesia\nEducation: B.Eng Informatics — Universitas Stikubank (Exp. Sep 2026)\nWeapon: Neovim on Arch Linux\nPhilosophy: "Models die in notebooks. I build products."',
-    'skills.txt': '[ Languages ]   Python (Advanced), SQL, Bash, TypeScript, PHP\n[ Data & ML ]   Pandas, NumPy, Scikit-Learn, TensorFlow, LangChain, Matplotlib\n[ Tools ]       Git, Docker, MLflow, GitHub Actions, Neovim, Linux\n[ Concepts ]    ETL Pipelines, K-Means, SVM, PCA, RAG, CI/CD, Network Security',
-    'contact.txt': 'Email:    attridho@gmail.com\nGitHub:   github.com/vadhh\nLinkedIn: linkedin.com/in/afr1dho\nWeb:      stdhoom.neocities.org',
-    'resume.pdf': '[Binary file — use F8 to download]',
-    'projects': {
-      _type: 'dir',
-      'pulsestream.txt': 'PulseStream — Real-Time AI Intelligence\nStatus: LIVE\nStack: Redpanda, Llama 3, Redis, Qdrant, Docker\nRepo: github.com/vadhh/pulsestream',
-      'vaultsearch.txt': 'VaultSearch — Privacy-First Document Search\nStatus: DEPLOYED\nStack: Llama 3, Qdrant, LangChain, FastAPI, Next.js\nRepo: github.com/vadhh/vaultsearch',
-      'customer-segmentation.txt': 'Customer Segmentation Engine\nStatus: ACTIVE\nStack: Python, Scikit-Learn, Streamlit, Docker, Pandas\nRepo: github.com/vadhh/Capstone-Project-A25-CS286',
-      'telco-churn.txt': 'Telco Churn MLOps Pipeline\nStatus: DEPLOYED\nStack: Docker, MLflow, GitHub Actions, Scikit-Learn\nRepo: github.com/vadhh/telco-churn-mlops',
-      'ordering-platform.txt': 'Contactless Ordering Platform\nStatus: ACTIVE\nStack: Next.js 14, TypeScript, MongoDB, NextAuth, Tailwind\nRepo: github.com/vadhh/contactless-ordering-platform',
-      'retail-pos.txt': 'Retail POS Workflow System\nStatus: DEPLOYED\nStack: Laravel 10, Vue.js, MySQL, State Machines\nRepo: github.com/vadhh/laravel-vue-pos-system',
+    _type:'dir',
+    'about.txt':'Name: Afridho Tattaq Tavadhu\nAlias: vadhh\nRole: AI Engineer | MLOps Specialist | Full-Stack Tinkerer\nLocation: Semarang, Indonesia\nEducation: B.Eng Informatics — Universitas Stikubank (Exp. Sep 2026)\nWeapon: Neovim on Arch Linux',
+    'skills.txt':'[ Languages ]   Python, SQL, Bash, TypeScript, PHP\n[ Data & ML ]   Pandas, NumPy, Scikit-Learn, TensorFlow, LangChain\n[ Tools ]       Git, Docker, MLflow, GitHub Actions, Neovim, Linux\n[ Concepts ]    ETL, K-Means, SVM, PCA, RAG, CI/CD, Net Security',
+    'contact.txt':'Email:    attridho@gmail.com\nGitHub:   github.com/vadhh\nLinkedIn: linkedin.com/in/afr1dho',
+    'resume.pdf':'[Binary file — press F8 to download]',
+    'projects':{
+      _type:'dir',
+      'pulsestream.txt':'PulseStream — Real-Time AI Intelligence\nStatus: LIVE | Stack: Redpanda, Llama 3, Redis, Qdrant, Docker',
+      'vaultsearch.txt':'VaultSearch — Privacy-First Search\nStatus: DEPLOYED | Stack: Llama 3, Qdrant, LangChain, FastAPI',
+      'segmentation.txt':'Customer Segmentation Engine\nStatus: ACTIVE | Stack: Python, Scikit-Learn, Streamlit, Docker',
+      'telco-churn.txt':'Telco Churn MLOps\nStatus: DEPLOYED | Stack: Docker, MLflow, GitHub Actions',
+      'ordering.txt':'Contactless Ordering Platform\nStatus: ACTIVE | Stack: Next.js 14, TypeScript, MongoDB',
+      'retail-pos.txt':'Retail POS System\nStatus: DEPLOYED | Stack: Laravel 10, Vue.js, MySQL',
     }
   }
 };
 
-let termCwd = '~';
-let cmdHistory = [];
-let historyIndex = -1;
-const termOutput = document.getElementById('term-output');
-const termInput = document.getElementById('term-input');
-const termCwdEl = document.getElementById('term-cwd');
+let cwd='~', hist=[], hi=-1;
+const toEl=document.getElementById('to'), tiEl=document.getElementById('ti'), cwdEl=document.getElementById('tcwd');
 
-function resolvePath(path) {
-  let parts;
-  if (path.startsWith('~') || path.startsWith('/')) {
-    parts = path.replace(/^~\/?/, '').split('/').filter(Boolean);
-  } else {
-    const cwdParts = termCwd.replace(/^~\/?/, '').split('/').filter(Boolean);
-    parts = [...cwdParts, ...path.split('/').filter(Boolean)];
+function rp(p){let a;if(p.startsWith('~')||p.startsWith('/'))a=p.replace(/^~\/?/,'').split('/').filter(Boolean);else{const c=cwd.replace(/^~\/?/,'').split('/').filter(Boolean);a=[...c,...p.split('/').filter(Boolean)];}const r=[];for(const x of a){if(x==='..')r.pop();else if(x!=='.')r.push(x);}return r;}
+function gn(pp){let n=FS['~'];for(const p of pp){if(n&&typeof n==='object'&&n._type==='dir'&&p in n)n=n[p];else return null;}return n;}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function tp(h){const d=document.createElement('div');d.className='tl';d.innerHTML=h;toEl.appendChild(d);}
+function tpr(c){tp('<span class="tp">vadhh</span><span class="to">@</span><span class="tb">VadhOS</span><span class="to">:</span><span class="tb">'+cwd+'</span><span class="to">$ </span><span class="to">'+esc(c)+'</span>');}
+function tsc(){toEl.scrollTop=toEl.scrollHeight;document.getElementById('content-area').scrollTop=document.getElementById('content-area').scrollHeight;}
+
+function proc(raw){
+  const c=raw.trim();if(!c)return;hist.unshift(c);hi=-1;tpr(c);
+  const[cmd,...args]=c.split(/\s+/);const arg=args.join(' ');
+  switch(cmd){
+    case'help':
+      tp('<span class="ta tw">Commands:</span>');
+      tp('<span class="to">  ls, cd, cat, pwd, clear, whoami, neofetch, cowsay, date, echo, sudo, help</span>');
+      tp('<span class="to" style="color:var(--muted)">  [Esc] exit terminal</span>');
+      break;
+    case'ls':{const pp=arg?rp(arg):rp(cwd);const n=arg?gn(pp):gn(rp(cwd));
+      if(!n||typeof n!=='object'||n._type!=='dir'){tp('<span class="te">ls: not a directory</span>');}
+      else{let o='';Object.keys(n).filter(k=>k!=='_type').forEach(e=>{const ch=n[e];if(typeof ch==='object'&&ch._type==='dir')o+='<span class="td">'+e+'/</span>  ';else o+='<span class="tf">'+e+'</span>  ';});tp(o);}break;}
+    case'cd':if(!arg||arg==='~'){cwd='~';cwdEl.textContent='~';break;}
+      {const pp=rp(arg);const n=gn(pp);if(n&&typeof n==='object'&&n._type==='dir'){cwd=pp.length?'~/'+pp.join('/'):'~';cwdEl.textContent=cwd;}else tp('<span class="te">cd: no such directory</span>');}break;
+    case'cat':if(!arg){tp('<span class="te">cat: missing operand</span>');break;}
+      {const pp=rp(arg);const n=gn(pp);if(!n)tp('<span class="te">cat: no such file</span>');else if(typeof n==='object'&&n._type==='dir')tp('<span class="te">cat: is a directory</span>');else n.split('\n').forEach(l=>tp('<span class="to">'+esc(l)+'</span>'));}break;
+    case'pwd':tp('<span class="to">/home/vadhh'+(cwd==='~'?'':cwd.slice(1))+'</span>');break;
+    case'clear':toEl.innerHTML='';break;
+    case'whoami':tp('<span class="ta tw">vadhh</span> <span class="to">— Afridho Tattaq Tavadhu</span>');tp('<span class="to">AI Engineer | MLOps Specialist</span>');break;
+    case'neofetch':
+      tp('<span class="tb">    ╭──────────╮</span>    <span class="ta tw">vadhh@VadhOS</span>');
+      tp('<span class="tb">    │  ◆  ◆  ◆ │</span>    <span class="to">──────────────</span>');
+      tp('<span class="tb">    │   ╲___╱  │</span>    <span class="ty">OS:</span>      <span class="to">VadhOS 2.0 (Arch btw)</span>');
+      tp('<span class="tb">    │  VadhOS   │</span>    <span class="ty">Host:</span>    <span class="to">Browser/Web</span>');
+      tp('<span class="tb">    ╰──────────╯</span>    <span class="ty">Kernel:</span>  <span class="to">HTML5 + Vanilla JS</span>');
+      tp('                        <span class="ty">Font:</span>    <span class="to">Fira Code</span>');
+      tp('                        <span class="ty">Uptime:</span>  <span class="to">1337 days</span>');
+      break;
+    case'sudo':tp('<span class="te">[sudo] password for vadhh:</span>');tp('<span class="te">Nice try. This incident will be reported.</span>');break;
+    case'cowsay':{const m=arg||'Hire vadhh!';const b='─'.repeat(m.length+2);tp('<span class="to"> ┌'+b+'┐</span>');tp('<span class="to"> │ '+esc(m)+' │</span>');tp('<span class="to"> └'+b+'┘</span>');tp('<span class="to">        \\   ^__^</span>');tp('<span class="to">         \\  (oo)\\_______</span>');tp('<span class="to">            (__)\\       )\\/\\</span>');break;}
+    case'date':tp('<span class="to">'+new Date().toString()+'</span>');break;
+    case'echo':tp('<span class="to">'+esc(arg)+'</span>');break;
+    case'rm':tp('<span class="te">Nice try. The portfolio survives.</span>');break;
+    case'vim':case'nvim':case'nano':tp('<span class="tg">'+cmd+': person of culture.</span>');break;
+    case'ping':tp('<span class="to">PING '+(arg||'localhost')+': 64 bytes, time=0.042ms</span>');break;
+    default:tp('<span class="te">command not found: '+esc(cmd)+'</span>');tp('<span class="to">Type <span class="ta">help</span> for commands.</span>');
   }
-  const resolved = [];
-  for (const p of parts) {
-    if (p === '..') resolved.pop();
-    else if (p !== '.') resolved.push(p);
+  tsc();
+}
+
+tiEl.addEventListener('keydown',(e)=>{
+  e.stopPropagation();
+  if(e.key==='Enter'){proc(tiEl.value);tiEl.value='';}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(hi<hist.length-1){hi++;tiEl.value=hist[hi];}}
+  else if(e.key==='ArrowDown'){e.preventDefault();if(hi>0){hi--;tiEl.value=hist[hi];}else{hi=-1;tiEl.value='';}}
+  else if(e.key==='Tab'){e.preventDefault();
+    const v=tiEl.value.trim(),pts=v.split(/\s+/),par=pts[pts.length-1]||'';
+    const nd=gn(rp(cwd))||FS['~'];
+    if(typeof nd==='object'&&nd._type==='dir'){const m=Object.keys(nd).filter(k=>k!=='_type'&&k.startsWith(par));if(m.length===1){pts[pts.length-1]=m[0];tiEl.value=pts.join(' ');}}
   }
-  return resolved;
-}
-
-function getNode(pathParts) {
-  let node = FS['~'];
-  for (const p of pathParts) {
-    if (node && typeof node === 'object' && node._type === 'dir' && p in node) {
-      node = node[p];
-    } else return null;
-  }
-  return node;
-}
-
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function tP(html) {
-  const div = document.createElement('div');
-  div.className = 'term-line';
-  div.innerHTML = html;
-  termOutput.appendChild(div);
-}
-
-function tPrompt(cmd) {
-  tP('<span class="t-prompt">vadhh</span><span class="t-out">@</span><span class="t-blu">VadhOS</span><span class="t-out">:</span><span class="t-path">' + termCwd + '</span><span class="t-out">$ </span><span class="t-cmd">' + escHtml(cmd) + '</span>');
-}
-
-function tScroll() {
-  termOutput.scrollTop = termOutput.scrollHeight;
-  const container = document.getElementById('content-body');
-  container.scrollTop = container.scrollHeight;
-}
-
-function processCommand(raw) {
-  const cmd = raw.trim();
-  if (!cmd) return;
-  cmdHistory.unshift(cmd);
-  historyIndex = -1;
-  tPrompt(cmd);
-
-  const [command, ...args] = cmd.split(/\s+/);
-  const arg = args.join(' ');
-
-  switch(command) {
-    case 'help':
-      tP('<span class="t-acc t-b">Available commands:</span>');
-      tP('<span class="t-out">  ls          List files</span>');
-      tP('<span class="t-out">  cd &lt;dir&gt;    Change directory</span>');
-      tP('<span class="t-out">  cat &lt;file&gt;  Print file</span>');
-      tP('<span class="t-out">  pwd         Working directory</span>');
-      tP('<span class="t-out">  clear       Clear terminal</span>');
-      tP('<span class="t-out">  whoami      Identity</span>');
-      tP('<span class="t-out">  neofetch    System info</span>');
-      tP('<span class="t-out">  cowsay      Moo</span>');
-      tP('<span class="t-out">  date        Current time</span>');
-      tP('<span class="t-out">  echo &lt;msg&gt;  Echo message</span>');
-      tP('<span class="t-out">  sudo &lt;cmd&gt;  Try it</span>');
-      tP('<span class="t-out">  help        This help</span>');
-      tP('<span class="t-out" style="color:var(--muted)">  [Esc] to exit terminal</span>');
-      break;
-
-    case 'ls': {
-      const pp = arg ? resolvePath(arg) : resolvePath(termCwd);
-      const node = arg ? getNode(pp) : getNode(resolvePath(termCwd));
-      if (!node || typeof node !== 'object' || node._type !== 'dir') {
-        tP('<span class="t-err">ls: cannot access \'' + escHtml(arg) + '\': Not a directory</span>');
-      } else {
-        let out = '';
-        Object.keys(node).filter(k => k !== '_type').forEach(e => {
-          const child = node[e];
-          if (typeof child === 'object' && child._type === 'dir') out += '<span class="t-dir">' + e + '/</span>  ';
-          else if (e.endsWith('.exe')) out += '<span class="t-exe">' + e + '</span>  ';
-          else out += '<span class="t-file">' + e + '</span>  ';
-        });
-        tP(out);
-      }
-      break;
-    }
-
-    case 'cd':
-      if (!arg || arg === '~') { termCwd = '~'; termCwdEl.textContent = '~'; break; }
-      { const pp = resolvePath(arg); const node = getNode(pp);
-      if (node && typeof node === 'object' && node._type === 'dir') {
-        termCwd = pp.length ? '~/' + pp.join('/') : '~';
-        termCwdEl.textContent = termCwd;
-      } else { tP('<span class="t-err">cd: no such directory: ' + escHtml(arg) + '</span>'); } }
-      break;
-
-    case 'cat':
-      if (!arg) { tP('<span class="t-err">cat: missing operand</span>'); break; }
-      { const pp = resolvePath(arg); const node = getNode(pp);
-      if (!node) tP('<span class="t-err">cat: ' + escHtml(arg) + ': No such file</span>');
-      else if (typeof node === 'object' && node._type === 'dir') tP('<span class="t-err">cat: ' + escHtml(arg) + ': Is a directory</span>');
-      else node.split('\n').forEach(l => tP('<span class="t-out">' + escHtml(l) + '</span>')); }
-      break;
-
-    case 'pwd':
-      tP('<span class="t-out">/home/vadhh' + (termCwd === '~' ? '' : termCwd.slice(1)) + '</span>');
-      break;
-
-    case 'clear': termOutput.innerHTML = ''; break;
-
-    case 'whoami':
-      tP('<span class="t-acc t-b">vadhh</span> <span class="t-out">— Afridho Tattaq Tavadhu</span>');
-      tP('<span class="t-out">AI Engineer | MLOps Specialist | Full-Stack Tinkerer</span>');
-      break;
-
-    case 'neofetch':
-      tP('<span class="t-blu">    ╭──────────╮</span>    <span class="t-acc t-b">vadhh@VadhOS</span>');
-      tP('<span class="t-blu">    │  ◆  ◆  ◆ │</span>    <span class="t-out">──────────────</span>');
-      tP('<span class="t-blu">    │   ╲___╱  │</span>    <span class="t-ylw">OS:</span>      <span class="t-out">VadhOS 2.0 (Arch btw)</span>');
-      tP('<span class="t-blu">    │  VadhOS   │</span>    <span class="t-ylw">Host:</span>    <span class="t-out">Browser/Web Engine</span>');
-      tP('<span class="t-blu">    ╰──────────╯</span>    <span class="t-ylw">Kernel:</span>  <span class="t-out">HTML5 + Vanilla JS</span>');
-      tP('                        <span class="t-ylw">Shell:</span>   <span class="t-out">VadhShell 1.0</span>');
-      tP('                        <span class="t-ylw">Font:</span>    <span class="t-out">Fira Code</span>');
-      tP('                        <span class="t-ylw">Uptime:</span>  <span class="t-out">1337 days</span>');
-      break;
-
-    case 'sudo':
-      tP('<span class="t-err">[sudo] password for vadhh: </span>');
-      tP('<span class="t-err">Nice try. This incident will be reported.</span>');
-      break;
-
-    case 'cowsay': {
-      const msg = arg || 'Moo! Hire vadhh!';
-      const b = '─'.repeat(msg.length + 2);
-      tP('<span class="t-out"> ┌' + b + '┐</span>');
-      tP('<span class="t-out"> │ ' + escHtml(msg) + ' │</span>');
-      tP('<span class="t-out"> └' + b + '┘</span>');
-      tP('<span class="t-out">        \\   ^__^</span>');
-      tP('<span class="t-out">         \\  (oo)\\_______</span>');
-      tP('<span class="t-out">            (__)\\       )\\/\\</span>');
-      tP('<span class="t-out">                ||----w |</span>');
-      tP('<span class="t-out">                ||     ||</span>');
-      break;
-    }
-
-    case 'date': tP('<span class="t-out">' + new Date().toString() + '</span>'); break;
-    case 'echo': tP('<span class="t-out">' + escHtml(arg) + '</span>'); break;
-
-    case 'rm':
-      tP('<span class="t-err">Nice try. The portfolio survives.</span>');
-      break;
-
-    case 'man': tP('<span class="t-out">Try \'help\' instead — this is VadhOS, not GNU.</span>'); break;
-    case 'vim': case 'nvim': case 'nano':
-      tP('<span class="t-grn">' + command + ': I see you\'re a person of culture.</span>');
-      break;
-    case 'ping': tP('<span class="t-out">PING ' + (arg || 'localhost') + ': 64 bytes, time=0.042ms</span>'); break;
-
-    default:
-      tP('<span class="t-err">command not found: ' + escHtml(command) + '</span>');
-      tP('<span class="t-out">Type <span class="t-acc">help</span> for commands.</span>');
-  }
-  tScroll();
-}
-
-termInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { processCommand(termInput.value); termInput.value = ''; }
-  else if (e.key === 'ArrowUp') {
-    e.preventDefault(); e.stopPropagation();
-    if (historyIndex < cmdHistory.length - 1) { historyIndex++; termInput.value = cmdHistory[historyIndex]; }
-  } else if (e.key === 'ArrowDown') {
-    e.preventDefault(); e.stopPropagation();
-    if (historyIndex > 0) { historyIndex--; termInput.value = cmdHistory[historyIndex]; }
-    else { historyIndex = -1; termInput.value = ''; }
-  } else if (e.key === 'Tab') {
-    e.preventDefault(); e.stopPropagation();
-    const val = termInput.value.trim();
-    const parts = val.split(/\s+/);
-    const partial = parts[parts.length - 1] || '';
-    const node = getNode(resolvePath(termCwd)) || FS['~'];
-    if (typeof node === 'object' && node._type === 'dir') {
-      const matches = Object.keys(node).filter(k => k !== '_type' && k.startsWith(partial));
-      if (matches.length === 1) { parts[parts.length - 1] = matches[0]; termInput.value = parts.join(' '); }
-    }
-  } else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); termOutput.innerHTML = ''; }
+  else if(e.key==='l'&&e.ctrlKey){e.preventDefault();toEl.innerHTML='';}
 });
 
-// Welcome
-tP('<span class="t-acc t-b">Welcome to VadhOS 2.0</span>');
-tP('<span class="t-out">Type <span class="t-acc">help</span> for commands. Press <span class="t-acc">Esc</span> to exit terminal.</span>');
-tP('');
+tp('<span class="ta tw">Welcome to VadhOS 2.0</span>');
+tp('<span class="to">Type <span class="ta">help</span> for commands. <span class="ta">Esc</span> to exit.</span>');
+tp('');
 
 // ═══════════════════════════════════════
-//  SNAKE GAME
+//  SNAKE
 // ═══════════════════════════════════════
+const sc=document.getElementById('snake-canvas'),sx=sc.getContext('2d'),G=20,T=20;
+let sb,sf,svx,svy,ss,sr=false,si2;
 
-const snakeCanvas = document.getElementById('snake-canvas');
-const snakeCtx = snakeCanvas.getContext('2d');
-const GRID = 20, TILES = 20;
-let snakeBody, snakeFood, snakeVx, snakeVy, snakeScore, snakeRunning = false, snakeInterval;
-
-function snakeStart() {
-  document.getElementById('snake-overlay').style.display = 'none';
-  snakeBody = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-  snakeVx = 1; snakeVy = 0; snakeScore = 0;
-  document.getElementById('snake-score-display').textContent = '0';
-  document.getElementById('snake-status-display').textContent = 'RUNNING';
-  snakeRunning = true;
-  snakePlaceFood();
-  if (snakeInterval) clearInterval(snakeInterval);
-  snakeInterval = setInterval(snakeLoop, 100);
+function snakeStart(){
+  document.getElementById('so').style.display='none';
+  sb=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];svx=1;svy=0;ss=0;
+  document.getElementById('ssd').textContent='0';
+  document.getElementById('sst').textContent='RUNNING';
+  sr=true;spf();if(si2)clearInterval(si2);si2=setInterval(slp,100);
 }
-
-function snakePlaceFood() {
-  snakeFood = { x: Math.floor(Math.random()*TILES), y: Math.floor(Math.random()*TILES) };
-  for (const s of snakeBody) { if (s.x === snakeFood.x && s.y === snakeFood.y) { snakePlaceFood(); return; } }
+function spf(){sf={x:Math.floor(Math.random()*T),y:Math.floor(Math.random()*T)};for(const s of sb)if(s.x===sf.x&&s.y===sf.y){spf();return;}}
+function slp(){
+  if(!sr)return;const h={x:sb[0].x+svx,y:sb[0].y+svy};
+  if(h.x<0||h.x>=T||h.y<0||h.y>=T){sgo();return;}
+  for(const s of sb)if(h.x===s.x&&h.y===s.y){sgo();return;}
+  sb.unshift(h);
+  if(h.x===sf.x&&h.y===sf.y){ss+=10;document.getElementById('ssd').textContent=ss;spf();}
+  else sb.pop();sdr();
 }
-
-function snakeLoop() {
-  if (!snakeRunning) return;
-  const head = { x: snakeBody[0].x + snakeVx, y: snakeBody[0].y + snakeVy };
-  if (head.x<0||head.x>=TILES||head.y<0||head.y>=TILES) { snakeGameOver(); return; }
-  for (const s of snakeBody) { if (head.x===s.x&&head.y===s.y) { snakeGameOver(); return; } }
-  snakeBody.unshift(head);
-  if (head.x===snakeFood.x&&head.y===snakeFood.y) {
-    snakeScore += 10;
-    document.getElementById('snake-score-display').textContent = snakeScore;
-    snakePlaceFood();
-  } else snakeBody.pop();
-  snakeDraw();
+function sdr(){
+  sx.fillStyle='#0a0e14';sx.fillRect(0,0,400,400);
+  sx.strokeStyle='rgba(0,242,255,0.03)';
+  for(let i=0;i<=T;i++){sx.beginPath();sx.moveTo(i*G,0);sx.lineTo(i*G,400);sx.stroke();sx.beginPath();sx.moveTo(0,i*G);sx.lineTo(400,i*G);sx.stroke();}
+  sx.shadowBlur=8;sx.shadowColor='#ff6b6b';sx.fillStyle='#ff6b6b';
+  sx.fillRect(sf.x*G+3,sf.y*G+3,G-6,G-6);sx.shadowBlur=0;
+  sb.forEach((s,i)=>{sx.shadowBlur=i===0?8:4;sx.shadowColor='#00f2ff';sx.fillStyle=i===0?'#00f2ff':'#0099aa';sx.fillRect(s.x*G+2,s.y*G+2,G-4,G-4);});
+  sx.shadowBlur=0;
 }
-
-function snakeDraw() {
-  snakeCtx.fillStyle = '#001324';
-  snakeCtx.fillRect(0,0,400,400);
-  snakeCtx.strokeStyle = 'rgba(0,242,255,0.04)';
-  for (let i=0;i<=TILES;i++) {
-    snakeCtx.beginPath(); snakeCtx.moveTo(i*GRID,0); snakeCtx.lineTo(i*GRID,400); snakeCtx.stroke();
-    snakeCtx.beginPath(); snakeCtx.moveTo(0,i*GRID); snakeCtx.lineTo(400,i*GRID); snakeCtx.stroke();
-  }
-  snakeCtx.shadowBlur=8; snakeCtx.shadowColor='#ff6b6b';
-  snakeCtx.fillStyle='#ff6b6b';
-  snakeCtx.fillRect(snakeFood.x*GRID+3,snakeFood.y*GRID+3,GRID-6,GRID-6);
-  snakeCtx.shadowBlur=0;
-  snakeBody.forEach((s,i)=>{
-    snakeCtx.shadowBlur=i===0?8:4; snakeCtx.shadowColor='#00f2ff';
-    snakeCtx.fillStyle=i===0?'#00f2ff':'#0099aa';
-    snakeCtx.fillRect(s.x*GRID+2,s.y*GRID+2,GRID-4,GRID-4);
-  });
-  snakeCtx.shadowBlur=0;
+function sgo(){
+  sr=false;clearInterval(si2);document.getElementById('sst').textContent='GAME OVER';
+  const o=document.getElementById('so');
+  o.innerHTML='<h3 style="color:var(--red)">GAME OVER</h3><p>Score: '+ss+'</p><button id="ssb" onclick="snakeStart()">[ RETRY ]</button>';
+  o.style.display='flex';
 }
-
-function snakeGameOver() {
-  snakeRunning = false;
-  clearInterval(snakeInterval);
-  document.getElementById('snake-status-display').textContent = 'GAME OVER';
-  const overlay = document.getElementById('snake-overlay');
-  overlay.innerHTML = '<h3 style="color:var(--red)">GAME OVER</h3><p>Score: ' + snakeScore + '</p><button id="snake-start-btn" onclick="snakeStart()">[ RETRY ]</button>';
-  overlay.style.display = 'flex';
+function handleSnakeKey(k){
+  if(!sr)return;
+  if((k==='ArrowUp'||k==='w')&&svy!==1){svx=0;svy=-1;}
+  else if((k==='ArrowDown'||k==='s')&&svy!==-1){svx=0;svy=1;}
+  else if((k==='ArrowLeft'||k==='a')&&svx!==1){svx=-1;svy=0;}
+  else if((k==='ArrowRight'||k==='d')&&svx!==-1){svx=1;svy=0;}
 }
-
-function handleSnakeKey(key) {
-  if (!snakeRunning) return;
-  if ((key==='ArrowUp'||key==='w')&&snakeVy!==1){snakeVx=0;snakeVy=-1;}
-  else if((key==='ArrowDown'||key==='s')&&snakeVy!==-1){snakeVx=0;snakeVy=1;}
-  else if((key==='ArrowLeft'||key==='a')&&snakeVx!==1){snakeVx=-1;snakeVy=0;}
-  else if((key==='ArrowRight'||key==='d')&&snakeVx!==-1){snakeVx=1;snakeVy=0;}
-}
-
-// Touch controls for snake
-let touchStartX, touchStartY;
-snakeCanvas.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }, { passive: true });
-snakeCanvas.addEventListener('touchend', (e) => {
-  if (!snakeRunning || !touchStartX) return;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx > 0 && snakeVx !== -1) { snakeVx = 1; snakeVy = 0; }
-    else if (dx < 0 && snakeVx !== 1) { snakeVx = -1; snakeVy = 0; }
-  } else {
-    if (dy > 0 && snakeVy !== -1) { snakeVx = 0; snakeVy = 1; }
-    else if (dy < 0 && snakeVy !== 1) { snakeVx = 0; snakeVy = -1; }
-  }
-}, { passive: true });
+let tsx,tsy;
+sc.addEventListener('touchstart',(e)=>{tsx=e.touches[0].clientX;tsy=e.touches[0].clientY;},{passive:true});
+sc.addEventListener('touchend',(e)=>{if(!sr||!tsx)return;const dx=e.changedTouches[0].clientX-tsx,dy=e.changedTouches[0].clientY-tsy;if(Math.abs(dx)>Math.abs(dy)){if(dx>0&&svx!==-1){svx=1;svy=0;}else if(dx<0&&svx!==1){svx=-1;svy=0;}}else{if(dy>0&&svy!==-1){svx=0;svy=1;}else if(dy<0&&svy!==1){svx=0;svy=-1;}}},{passive:true});
 
 // ═══════════════════════════════════════
 //  CONTACT
 // ═══════════════════════════════════════
-
-function sendTransmission() {
-  const subject = document.getElementById('contact-subject').value || 'Hello from your portfolio';
-  const body = document.getElementById('contact-body').value || '';
-  window.location.href = 'mailto:attridho@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+function sendMsg(){
+  const s=document.getElementById('cs').value||'Hello from portfolio';
+  const b=document.getElementById('cb').value||'';
+  window.location.href='mailto:attridho@gmail.com?subject='+encodeURIComponent(s)+'&body='+encodeURIComponent(b);
 }
 </script>
 </body>
