@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta name="description" content="Afridho Tavadhu (vadhh) — AI Engineer & MLOps Specialist. Building bridges between ML models and production systems."/>
 <title>Afridho Tavadhu // vadhh@VadhOS</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="%230a0e14"/><path d="M16 18 L34 32 L16 46" stroke="%2300f2ff" stroke-width="6" fill="none"/><rect x="38" y="42" width="14" height="6" fill="%2300f2ff"/></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -206,6 +207,49 @@ section:last-of-type { border-bottom: none; }
 #hero .cta-row    { animation: riseIn .6s ease 1.3s both; }
 #hero .scroll-hint{ animation: riseIn .6s ease 1.55s both; }
 
+/* ═══════════ SUBTLE FX ═══════════ */
+/* Scroll progress along topbar's bottom edge */
+#topbar::after {
+  content: ""; position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--blue));
+  transform: scaleX(var(--scroll, 0)); transform-origin: 0 50%;
+  box-shadow: 0 0 10px rgba(0,242,255,0.4);
+}
+
+/* Cursor-tracking spotlight on cards */
+.proj, .skill-card, .stat, .social a { position: relative; }
+.proj::before, .skill-card::before, .stat::before, .social a::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(190px circle at var(--mx, 50%) var(--my, 50%), rgba(0,242,255,0.09), transparent 70%);
+  transition: opacity .35s ease;
+}
+.proj:hover::before, .skill-card:hover::before, .stat:hover::before, .social a:hover::before { opacity: 1; }
+
+/* Target-lock corner brackets on project cards */
+.proj::after {
+  content: ""; position: absolute; inset: 10px; pointer-events: none; opacity: 0;
+  background:
+    linear-gradient(var(--cyan), var(--cyan)) left 0 top 0 / 12px 1px,
+    linear-gradient(var(--cyan), var(--cyan)) left 0 top 0 / 1px 12px,
+    linear-gradient(var(--cyan), var(--cyan)) right 0 top 0 / 12px 1px,
+    linear-gradient(var(--cyan), var(--cyan)) right 0 top 0 / 1px 12px,
+    linear-gradient(var(--cyan), var(--cyan)) left 0 bottom 0 / 12px 1px,
+    linear-gradient(var(--cyan), var(--cyan)) left 0 bottom 0 / 1px 12px,
+    linear-gradient(var(--cyan), var(--cyan)) right 0 bottom 0 / 12px 1px,
+    linear-gradient(var(--cyan), var(--cyan)) right 0 bottom 0 / 1px 12px;
+  background-repeat: no-repeat;
+  transition: opacity .25s ease, inset .25s ease;
+}
+.proj:hover::after { opacity: .8; inset: 6px; }
+
+/* Micro RGB-split glitch on hover */
+@keyframes glitchTxt {
+  20% { text-shadow: 2px 0 var(--red), -2px 0 var(--blue); }
+  40% { text-shadow: -2px 0 var(--red), 2px 0 var(--blue); }
+  60% { text-shadow: 1px 0 var(--red), -1px 0 var(--blue); }
+}
+#hero h1:hover .accent, #topbar .brand:hover { animation: glitchTxt .4s steps(2, end) 1; }
+
 /* ═══════════ ABOUT ═══════════ */
 .about-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; align-items: start; }
 .about-grid p { margin-bottom: 16px; color: var(--text); }
@@ -397,7 +441,7 @@ footer .ok { color: var(--green); }
       <a href="resume.pdf" download class="btn ghost">⬇ Download Resume</a>
       <a href="#contact" class="btn ghost">@ Contact</a>
     </div>
-    <div class="scroll-hint"><span class="arrow">↓</span> scroll &nbsp;·&nbsp; or press <b style="color:var(--cyan)">1–7</b> / <b style="color:var(--cyan)">j k</b> to navigate</div>
+    <div class="scroll-hint"><span class="arrow">↓</span> scroll &nbsp;·&nbsp; or press <b style="color:var(--cyan)">1–6</b> / <b style="color:var(--cyan)">j k</b> to navigate</div>
   </section>
 
   <!-- ═══════════ ABOUT ═══════════ -->
@@ -615,11 +659,59 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   }
 })();
 
+// ═══════════ DECRYPT HEADINGS ═══════════
+const GLYPHS = '!<>-_\\/[]{}=+*^?#01';
+function decrypt(el) {
+  if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const orig = el.textContent;
+  let frame = 0;
+  (function tick() {
+    let out = '', done = true;
+    for (let i = 0; i < orig.length; i++) {
+      if (frame / 3 > i + 2) out += orig[i];
+      else { out += GLYPHS[Math.random() * GLYPHS.length | 0]; done = false; }
+    }
+    el.textContent = out;
+    frame++;
+    if (!done) requestAnimationFrame(tick);
+  })();
+}
+
 // ═══════════ REVEAL ON SCROLL ═══════════
 const io = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in');
+      if (e.target.classList.contains('sec-head')) decrypt(e.target.querySelector('h2'));
+      io.unobserve(e.target);
+    }
+  });
 }, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// ═══════════ SCROLL PROGRESS ═══════════
+let progPending = false;
+function updProgress() {
+  const h = document.documentElement;
+  const max = h.scrollHeight - h.clientHeight;
+  h.style.setProperty('--scroll', max > 0 ? h.scrollTop / max : 0);
+  progPending = false;
+}
+addEventListener('scroll', () => {
+  if (!progPending) { progPending = true; requestAnimationFrame(updProgress); }
+}, { passive: true });
+updProgress();
+
+// ═══════════ CARD SPOTLIGHT ═══════════
+if (window.matchMedia('(hover: hover)').matches) {
+  document.querySelectorAll('.proj, .skill-card, .stat, .social a').forEach(card => {
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+}
 
 // ═══════════ COUNT-UP STATS ═══════════
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
