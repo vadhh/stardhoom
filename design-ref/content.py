@@ -25,6 +25,12 @@ META = (("Based in", "Yogyakarta, Indonesia"), ("Education", "B.Eng Informatics,
 OFFER = "I take one freelance project at a time: AI features and\nweb apps, from first prototype to launch."
 EMAIL = "attridho@gmail.com"
 LINKS = (("GitHub", "/vadhh"), ("LinkedIn", "/afr1dho"))
+# Hover card on "vadh" in the hero name. A snapshot of api.github.com/users/vadhh for no-JS and offline; the page
+# refreshes name, bio and counts from the API when the card first opens. Keys match the API's.
+GITHUB = {"login": "vadhh", "name": "DHOOM", "avatar_url": "https://avatars.githubusercontent.com/u/149752468?v=4",
+          "bio": "Mask on. Building immune systems for AI agents. MLOps · Adversarial ML · RAG Security. "
+                 "All caps when you spell the name.",
+          "public_repos": 43, "followers": 12, "following": 11}
 ASCII_LOGO = """██████╗ ██╗  ██╗ ██████╗  ██████╗ ███╗   ███╗
 ██╔══██╗██║  ██║██╔═══██╗██╔═══██╗████╗ ████║
 ██║  ██║███████║██║   ██║██║   ██║██╔████╔██║

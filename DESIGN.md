@@ -23,7 +23,7 @@ Contrast comes from size and weight, not colour.
 | `--muted` | `#8C8C8C` | Leads, body, labels, meta, secondary links |
 | `--white` | `#FFFFFF` | Accent: CTA and email underlines, corner brackets, focus ring, hover titles |
 | `--card` | `#1B1B1B` | Cover and logo tile fill (placeholder hatch alternates with `#181818`) |
-| `--pop` | `#F2C230` | Only the glint in the background canvas. Nowhere else |
+| `--pop` | `#F2C230` | The glint in the background canvas, the hovered "vadh" in the name, and the food in snake.html. Nowhere else |
 | `--pad` | 39px (20px < 1024) | Outer margin |
 | `--gut` | 30px | Inner column gutter |
 
@@ -148,8 +148,8 @@ projects, that every listed image, logo, `js/` and `fonts/` file exists, and tha
   Dates `YYYY-MM` or `Present`. `logo` → 96×96 PNG(s) in `img/logos/`, `;`-separated for side-by-side tiles.
 - Copy (hero lead, section leads, about, whoami, facts, offer, email, links) lives in `content.py`. A `\n` is a
   desktop-only line break.
-- Upload to Neocities: `index.html`, `js/`, `fonts/`, `img/projects/`, `img/logos/`, `snake.html` (footer link). Not
-  `design-ref/`: it holds crops of a third-party screenshot. Nothing runs on the host.
+- Deploys to Vercel on push: `vercel.json` runs the build, then `design-ref/stage.py` publishes only the pages and the
+  files they reference. Never `design-ref/`: it holds crops of a third-party screenshot.
 
 ## FigCraft source
 

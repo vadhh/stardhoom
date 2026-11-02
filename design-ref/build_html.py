@@ -141,6 +141,32 @@ function waves() {
   };
 }
 
+// GitHub card on "vadh" (CSS shows and hides it): placed under the link each time it opens, refreshed from the API
+// the first time. Delegated listeners, because SplitText's autoSplit rebuilds the h1's contents on resize.
+function ghCard() {
+  const card = document.getElementById("gh-card");
+  let fetched = false;
+  const open = (e) => {
+    const a = e.target.closest(".gh");
+    if (!a || a.contains(e.relatedTarget)) return;
+    card.classList.remove("off");
+    const r = a.getBoundingClientRect(), p = card.offsetParent.getBoundingClientRect();
+    card.style.left = Math.max(0, Math.min(r.left - p.left, p.width - card.offsetWidth)) + "px";
+    const h = card.offsetHeight, flip = r.bottom + 10 + h > innerHeight && r.top - 10 - h > 0;   // no room below: go above
+    card.style.top = (flip ? r.top - p.top - 10 - h : r.bottom - p.top + 10) + "px";
+    if (fetched) return;
+    fetched = true;
+    fetch("https://api.github.com/users/vadhh").then((res) => res.ok ? res.json() : {}).then((u) =>
+      card.querySelectorAll("[data-k]").forEach((el) => { const v = u[el.dataset.k]; if (v != null && v !== "") el.textContent = v; }))
+      .catch(() => {});   // offline or rate-limited: the built-in snapshot stays
+  };
+  document.addEventListener("pointerover", open);
+  document.addEventListener("focusin", open);
+  // Escape dismisses it until the pointer or focus comes back to the link
+  document.addEventListener("keydown", (e) => e.key === "Escape" && card.classList.add("off"));
+}
+addEventListener("DOMContentLoaded", ghCard);
+
 addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
   const root = document.documentElement;
   if (!window.gsap) return root.classList.remove("js");
@@ -177,7 +203,8 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
       .from(".facts > *", { y: 24, autoAlpha: 0, duration: 0.9, stagger: 0.08, ease: "power3.out" }, 1.1)
       .from(".corner", { autoAlpha: 0, scale: 0, duration: 0.5, ease: "back.out(2)" }, 1.5);
     gsap.set(".intro .lead, .paths", { visibility: "visible" });
-    SplitText.create("h1", { type: "lines,chars", mask: "lines", autoSplit: true,
+    // deepSlice off: the default slices the nested "vadh" link and leaves an empty, focusable <a> clone behind
+    SplitText.create("h1", { type: "lines,chars", mask: "lines", autoSplit: true, deepSlice: false,
       onSplit: (self) => gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, delay: 0.15, ease: "expo.out" }) });
 
     // mono labels and card numbers scramble in
@@ -223,6 +250,21 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
   const t0 = gsap.ticker.time;
   setTimeout(() => gsap.ticker.time - t0 < 1.5 && mm.revert(), 2500);
 }));"""
+
+
+def gh_card(url):
+    """GitHub profile card for the hero's "vadh". It sits beside the h1, not in it: SplitText's line masks clip.
+    The card is a mouse shortcut only (tabindex -1, aria-hidden); the "vadh" link itself is the keyboard path and
+    reads the card as its description. data-k fields are refreshed from the GitHub API by ghCard()."""
+    g = GITHUB
+    stats = "".join(f'<div><dt>{k}</dt><dd data-k="{key}">{g[key]}</dd></div>'
+                    for k, key in (("Repos", "public_repos"), ("Followers", "followers"), ("Following", "following")))
+    return (f'<a class="gh-card" id="gh-card" href="{e(url)}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">'
+            f'<span class="gh-head">GitHub · Profile</span>'
+            f'<span class="gh-who"><img src="{e(g["avatar_url"])}&amp;s=112" alt="" width="56" height="56" loading="lazy">'
+            f'<span><strong data-k="name">{e(g["name"])}</strong><span class="mono">@{e(g["login"])}</span></span></span>'
+            f'<span class="gh-bio" data-k="bio">{e(g["bio"])}</span>'
+            f'<dl>{stats}</dl></a>')
 
 
 def page():
@@ -322,6 +364,37 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .facts {{ border-top: 1px solid var(--line); padding: 24px 0 36px; align-items: end; }}
 .facts dl + dl {{ padding-left: var(--gut); }} .facts dl:first-child {{ grid-column: 1 / 3; }}
 .facts dt {{ font: 13px var(--mono); color: var(--muted); }} .facts dd {{ font-size: 18px; letter-spacing: -.02em; }}
+/* "vadh" in the name opens a GitHub card on hover (mouse only, so a tap on a phone just follows the link) or keyboard
+   focus. It lingers .2s after the pointer leaves, so the pointer can cross the gap onto it (::before bridges it, above or below). */
+/* the hint: a faint underline that blinks twice like a cursor every 9s (reduced motion: no blink). It's set on the
+   SplitText char divs too, because decoration doesn't reach inline-blocks, and kept close to the baseline so the
+   line masks don't clip it. */
+.gh, .gh > div {{ text-decoration: underline var(--line); text-decoration-thickness: .02em; text-underline-offset: .02em;
+  transition: color .2s, text-decoration-color .2s; animation: gh-blink 9s -6.78s step-end infinite; }}
+/* the negative delay starts the cycle 6.78s in, so the first blink (at 92% = 8.28s) comes 1.5s after load */
+@keyframes gh-blink {{ 0% {{ text-decoration-color: var(--line); }} 92%, 96% {{ text-decoration-color: var(--muted); }}
+  94%, 98% {{ text-decoration-color: var(--line); }} }}
+.gh:hover, .gh:focus-visible {{ color: var(--pop); }}
+.gh:hover, .gh:focus-visible, .gh:hover > div, .gh:focus-visible > div {{ text-decoration-color: currentColor; animation: none; }}
+.gh-card {{ position: absolute; z-index: 5; top: 0; left: 0; width: min(340px, 100%); padding: 20px;
+  display: grid; gap: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 24px 64px rgb(0 0 0 / .5); visibility: hidden; opacity: 0; transform: translateY(6px);
+  transition: opacity .2s, transform .2s, visibility 0s .2s, border-color .2s; }}
+.gh-card::before {{ content: ""; position: absolute; inset: -16px 0; }}
+.intro:has(.gh:focus-visible, .gh-card:hover) .gh-card:not(.off) {{ visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }}
+@media (hover: hover) {{ .intro:has(.gh:hover) .gh-card:not(.off) {{ visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }} }}
+.gh-card:hover {{ border-color: var(--muted); }}
+.gh-head {{ display: flex; justify-content: space-between; font: 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }}
+.gh-head::after {{ content: "↗"; content: "↗" / ""; transition: transform .2s; }} .gh-card:hover .gh-head::after {{ transform: translate(2px, -2px); }}
+.gh-who {{ display: flex; gap: 14px; align-items: center; }}
+.gh-who img {{ border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }}
+.gh-who > span {{ display: grid; }}
+.gh-who strong {{ font-weight: 600; font-size: 20px; line-height: 1.3; letter-spacing: -.04em; }}
+.gh-who .mono {{ font-size: 13px; color: var(--muted); }}
+.gh-bio {{ font-size: 14px; line-height: 1.43; letter-spacing: -.01em; color: var(--muted); }}
+.gh-card dl {{ display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); padding-top: 14px; }}
+.gh-card dl div + div {{ padding-left: 14px; border-left: 1px solid var(--line); }}
+.gh-card dt {{ font: 12px var(--mono); color: var(--muted); }} .gh-card dd {{ font-size: 18px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }}
 
 /* work */
 .work-body {{ margin-top: 70px; align-items: start; }}
@@ -400,6 +473,7 @@ footer a:hover {{ color: var(--text); }}
   .wrap::before, br.wide {{ display: none; }}
   .grid, .rows .row, .cards {{ grid-template-columns: minmax(0, 1fr); }}
   .grid > *, .rows .row > *, .cards {{ grid-column: 1 / -1 !important; padding-left: 0 !important; }}
+  .grid > .gh-card {{ padding-left: 20px !important; }}
   section.wrap {{ padding-top: 48px; padding-bottom: 64px; }}
   .nav {{ grid-template-columns: 1fr auto; }} .nav ul {{ display: none; }} .nav .logo {{ grid-column: 1 !important; }} .nav .go {{ grid-column: 2 !important; }}
   .corner {{ top: 72px; }}
@@ -445,7 +519,7 @@ footer a:hover {{ color: var(--text); }}
   :root {{ --bg: #FFFFFF; --text: #000000; --muted: #444444; --white: #000000; --line: #CCCCCC; --card: #F2F2F2; --stripe: #E6E6E6;
     color-scheme: light; }}
   *, ::before, ::after {{ opacity: 1 !important; visibility: visible !important; transform: none !important; clip-path: none !important; }}
-  .bg-waves, .skip {{ display: none !important; }}
+  .bg-waves, .skip, .gh-card {{ display: none !important; }}
   /* the covers are light logos on transparent images, so they keep their dark panel */
   .cover {{ background: #1B1B1B; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
   section.wrap {{ padding-top: 48px; padding-bottom: 48px; }}
@@ -464,7 +538,8 @@ footer a:hover {{ color: var(--text); }}
   </nav>
   <span class="corner l" aria-hidden="true"></span><span class="corner r" aria-hidden="true"></span>
   <div class="grid intro" id="top" tabindex="-1">
-    <h1>Afridho Tavadhu</h1>
+    <h1>Afridho Ta<a class="gh" href="{e(links["GitHub"])}" target="_blank" rel="noopener" aria-describedby="gh-card">vadh</a>u</h1>
+    {gh_card(links["GitHub"])}
     <p class="lead">{"".join(f'<span>{e(x)}</span> ' for x in LEAD.split(chr(10)))}</p>
     <div class="paths"><a class="cta" href="{mailto}">Start a project</a><a class="cta down" href="#work">See selected work</a></div>
   </div>
@@ -551,6 +626,7 @@ def check(html):
     for f in FONTS:
         assert (OUT.parent / "fonts" / f).is_file() and f"url(fonts/{f})" in html, f"missing font: fonts/{f}"
     assert "fonts.googleapis" not in html, "Google Fonts link is back"
+    assert '<a class="gh"' in html and 'id="gh-card"' in html, "GitHub hover card missing"
 
 
 if __name__ == "__main__":
