@@ -10,7 +10,7 @@ Personal portfolio website with a retro terminal/cyberpunk aesthetic. Static sit
 
 - Vanilla HTML5, CSS3, JavaScript (ES6+)
 - HTML5 Canvas (Snake game)
-- Google Fonts (Fira Code)
+- Inter + Fira Code, self-hosted in `fonts/` for index.html (about.html and snake.html still load Fira Code from Google Fonts)
 - No dependencies, no build step
 
 ## Development

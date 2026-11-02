@@ -29,8 +29,10 @@ Contrast comes from size and weight, not colour.
 
 ## Typography
 
-**Inter** 400/600 for everything; **Fira Code** 400 for labels, indexes, dates, tags and meta. Both from Google
-Fonts. Tight negative tracking on all display sizes.
+**Inter** 400/600 for everything; **Fira Code** 400 for labels, indexes, dates, tags and meta. Both self-hosted
+from `fonts/` (latin subsets, SIL OFL in `fonts/OFL.txt`): Inter is one variable woff2 for 400–600, both files
+are preloaded, `font-display: swap`, and a size-matched local Arial ("Inter Fallback") stands in while Inter loads.
+`↗` and `↳` aren't in either font, so they come from the system face. Tight negative tracking on all display sizes.
 
 | Role | Selector | Size / line-height | Weight | Tracking | Colour |
 |---|---|---|---|---|---|
@@ -104,7 +106,8 @@ opacity and clip-path animate; each effect plays once.
 - **Load:** column rules draw down; the name rises letter by letter out of its line mask; lead lines, both CTAs
   (underline drawing in) and facts fade up; corner brackets land last.
 - **Scroll:** labels and card indexes scramble in; cards fade up while covers wipe up and images settle from 1.15×;
-  job rows slide up; numbers in `↳` highlights count up.
+  job rows slide up; numbers in `↳` highlights count up. The real text stays in the DOM until the count starts: it is zeroed only
+  when the trigger fires, then ends on the exact original text.
 - **Smooth scroll:** Lenis on GSAP's ticker, anchor jumps glide. In-page links use a custom click handler (`lenis.scrollTo`, then focus the target with
   `preventScroll` and `pushState` the hash); Lenis's own `anchors` option is off.
 - **Background warp:** fixed full-screen canvas behind the page, 12px halftone dot grid. Dot size follows a
@@ -127,20 +130,25 @@ opacity and clip-path animate; each effect plays once.
 - Reduced motion keeps colour, border, opacity and filter fades (≤200ms) but drops transforms, GSAP motion,
   scroll smoothing and the moving background (drawn once, still).
 - **No JS:** the full page renders statically; no background canvas.
+- **Link arrows:** literal `↗` in link text sits in `aria-hidden` spans; every `target="_blank"` link carries an
+  `.sr-only` " (opens in new tab)". The `.cta::after` arrow uses `content: "↗" / ""` so it isn't announced.
+- **Print:** `@media print` switches to black on white, forces every GSAP-hidden card, cover, job row and hero part
+  visible, hides the canvas and skip link, and keeps cards and jobs from breaking across pages. Covers keep a dark
+  panel so the light logos stay visible.
 
 ## Building the site
 
 `python3 design-ref/build_html.py` writes `index.html` (don't hand-edit it) and asserts card count, hidden
-projects, and that every listed image, logo and `js/` file exists. Run with plain `python3`, not `-I`.
+projects, that every listed image, logo, `js/` and `fonts/` file exists, and that no Google Fonts link is back. Run with plain `python3`, not `-I`.
 
 - `projects.csv`: `order,title,kind,status,year,summary,highlight,stack,repo,monogram,show,image,live`.
   `show` = `featured` → card (max 6; if none, the first six not `ARCHIVED`), `no` → hidden, blank → "More projects"
-  (newest year first). `stack` is `;`-separated. `image` → 16:10 cover, 960×600 JPEG/PNG in `img/projects/`.
+  (newest year first). `stack` is `;`-separated. `image` → 16:10 cover, 960×600 in `img/projects/` (current covers are lossless WebP; they have transparency).
 - `experience.csv`: `order,type,role,company,start,end,location,summary,highlight,stack,link,logo`.
   Dates `YYYY-MM` or `Present`. `logo` → 96×96 PNG(s) in `img/logos/`, `;`-separated for side-by-side tiles.
 - Copy (hero lead, section leads, about, whoami, facts, offer, email, links) lives in `content.py`. A `\n` is a
   desktop-only line break.
-- Upload to Neocities: `index.html`, `js/`, `img/projects/`, `img/logos/`, `snake.html` (footer link). Not
+- Upload to Neocities: `index.html`, `js/`, `fonts/`, `img/projects/`, `img/logos/`, `snake.html` (footer link). Not
   `design-ref/`: it holds crops of a third-party screenshot. Nothing runs on the host.
 
 ## FigCraft source

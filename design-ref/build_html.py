@@ -20,8 +20,17 @@ def br(s):
     return " <br class=\"wide\">".join(e(line) for line in s.split("\n"))
 
 
+# Literal arrows are decoration: screen readers would say "north-east arrow". New-tab links say so instead.
+ARROW = '<span aria-hidden="true">↗</span>'
+NEW_TAB = '<span class="sr-only"> (opens in new tab)</span>'
+
+
+def arrow(s):
+    return e(s).replace("↗", ARROW)
+
+
 def ext(url, label, cls="link"):
-    return f'<a class="{cls}" href="{e(url)}" target="_blank" rel="noopener">{e(label)}</a>'
+    return f'<a class="{cls}" href="{e(url)}" target="_blank" rel="noopener">{arrow(label)}{NEW_TAB}</a>'
 
 
 def card(i, p):
@@ -70,6 +79,9 @@ def job(r):
 
 
 JS = ("gsap.min.js", "ScrollTrigger.min.js", "SplitText.min.js", "ScrambleTextPlugin.min.js", "lenis.min.js")
+FONTS = ("inter-latin.woff2", "fira-code-400-latin.woff2")   # fonts/, both preloaded (hero name + mono labels)
+LATIN = ("U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, "
+         "U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD")  # Google's latin subset range
 
 # Runs first, in <head>: the .js class hides the hero until GSAP takes over, and drops itself after 3s
 # so a script that never loads can't leave the page blank. No class with reduced motion, so nothing hides.
@@ -190,13 +202,13 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
     ScrollTrigger.batch(".job", { ...once, onEnter: (rows) =>
       gsap.to(rows, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.12, ease: "power3.out" }) });
 
-    // numbers in highlights count up, keeping their decimals, then snap back to the exact text
+    // numbers in highlights count up from 0 once the line is in view, keeping their decimals, then snap back to the
+    // exact text. Nothing is zeroed before the trigger fires, so the real numbers sit in the DOM until then.
     const counted = gsap.utils.toArray(".hl").filter((el) => /\d/.test(el.textContent)).map((el) => [el, el.textContent]);
     counted.forEach(([el, text]) => {
       const n = { p: 0 };
       const draw = () => el.textContent = text.replace(/\d+(\.\d+)?/g, (m, d) => (m * n.p).toFixed(d ? d.length - 1 : 0));
-      draw();
-      gsap.to(n, { p: 1, duration: 1.4, ease: "power2.out", onUpdate: draw, onComplete: () => el.textContent = text,
+      gsap.to(n, { p: 1, duration: 1.4, ease: "power2.out", onStart: draw, onUpdate: draw, onComplete: () => el.textContent = text,
         scrollTrigger: { trigger: el, start: "top 90%", once: true } });
     });
     return () => {
@@ -226,17 +238,24 @@ def page():
 <title>Afridho Tavadhu · AI features and web apps</title>
 <meta name="description" content="{e(flat(LEAD))}">
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23141414"/><path d="M18 20 L32 46 L46 20" stroke="%23F2F2F2" stroke-width="7" fill="none" stroke-linejoin="round"/></svg>'>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+{"".join(f'<link rel="preload" href="fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS)}
 <script>{HEAD_JS}</script>
 {"".join(f'<script src="js/{f}" defer></script>' for f in JS)}
 <style>
+/* self-hosted latin subsets (SIL OFL, see fonts/OFL.txt); Inter is one variable file for 400 and 600.
+   ↗ and ↳ aren't in either font (nor in Google's), so they fall back to the system face as before. */
+@font-face {{ font-family: "Inter"; font-weight: 400 600; font-display: swap; src: url(fonts/{FONTS[0]}) format("woff2");
+  unicode-range: {LATIN}; }}
+@font-face {{ font-family: "Fira Code"; font-weight: 400; font-display: swap; src: url(fonts/{FONTS[1]}) format("woff2");
+  unicode-range: {LATIN}; }}
+/* size-matched Arial while Inter loads, so the swap barely shifts layout; no weight range, so 600 gets synthetic bold */
+@font-face {{ font-family: "Inter Fallback"; src: local("Arial"); size-adjust: 107.31%; ascent-override: 90.27%;
+  descent-override: 22.48%; line-gap-override: 0%; }}
 :root {{
   --bg: #141414; --line: #262626; --text: #F2F2F2; --muted: #8C8C8C; --white: #FFFFFF; --card: #1B1B1B; --stripe: #181818;
   --pad: 39px; --gut: 30px;
   color-scheme: dark;
-  --pop: #F2C230; --sans: "Inter", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace;
+  --pop: #F2C230; --sans: "Inter", "Inter Fallback", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace;
 }}
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 html {{ scroll-behavior: smooth; }} html.lenis {{ scroll-behavior: auto; }}
@@ -249,6 +268,8 @@ ul {{ list-style: none; }}
 .skip {{ position: absolute; z-index: 10; top: 12px; left: var(--pad); padding: 13px 16px; font: 13px var(--mono);
   color: var(--text); background: var(--bg); border: 1px solid var(--line); transform: translateY(-200%); }}
 .skip:focus {{ transform: none; }}
+.sr-only {{ position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0; }}
 .mono {{ font-family: var(--mono); }}
 .muted {{ color: var(--muted); }}
 
@@ -274,7 +295,7 @@ h2.xl {{ font-size: clamp(56px, 8.3vw, 120px); letter-spacing: -.06em; line-heig
 .cta {{ display: inline-flex; justify-content: space-between; gap: 24px; min-width: 170px; padding-bottom: 14px;
   font-size: 20px; letter-spacing: -.02em; background: linear-gradient(var(--white), var(--white)) 0 100% / 100% 2px no-repeat;
   transition: background-size .3s; }}
-.cta::after {{ content: "↗"; transition: transform .2s; }}
+.cta::after {{ content: "↗"; content: "↗" / ""; transition: transform .2s; }}
 .cta:hover {{ background-size: 0 2px; }}
 .cta:hover::after {{ transform: translate(2px, -2px); }}
 
@@ -297,7 +318,7 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .hero .lead span:first-child {{ color: var(--text); }}
 .paths {{ grid-column: 3 / 5; display: grid; grid-template-columns: 1fr 1fr; }}
 .paths .cta {{ margin-left: var(--gut); justify-self: start; white-space: nowrap; font-size: clamp(16px, 1.45vw, 20px); }}
-.cta.down::after {{ content: "↓"; }} .cta.down:hover::after {{ transform: translateY(3px); }}
+.cta.down::after {{ content: "↓"; content: "↓" / ""; }} .cta.down:hover::after {{ transform: translateY(3px); }}
 .facts {{ border-top: 1px solid var(--line); padding: 24px 0 36px; align-items: end; }}
 .facts dl + dl {{ padding-left: var(--gut); }} .facts dl:first-child {{ grid-column: 1 / 3; }}
 .facts dt {{ font: 13px var(--mono); color: var(--muted); }} .facts dd {{ font-size: 18px; letter-spacing: -.02em; }}
@@ -366,7 +387,7 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .links li:last-child {{ border-bottom: 1px solid var(--line); }}
 .links a {{ display: grid; grid-template-columns: 1fr 1fr; padding: 22px 0 22px var(--gut); align-items: baseline; }}
 .links strong {{ font-weight: 600; font-size: 20px; letter-spacing: -.04em; }}
-.links span {{ font: 14px var(--mono); color: var(--muted); padding-left: var(--gut); }}
+.links a > span {{ font: 14px var(--mono); color: var(--muted); padding-left: var(--gut); }}
 .links a:hover span {{ color: var(--text); }}
 footer.wrap {{ border-top: 1px solid var(--line); }}
 footer .grid {{ padding: 30px 0 40px; font: 13px var(--mono); color: var(--muted); }}
@@ -401,7 +422,7 @@ footer a:hover {{ color: var(--text); }}
   .about-body {{ margin-top: 20px; }} .prose {{ order: -1; padding: 0 0 32px; gap: 18px; }} .prose p {{ font-size: 17px; }}
   .who dl {{ grid-template-columns: 100px minmax(0, 1fr); }} .who dd {{ padding-left: 0; }}
   .email {{ margin-top: 36px; font-size: 24px; }} .offer {{ font-size: 16px; }}
-  .links {{ padding-top: 40px; }} .links a {{ padding-left: 0; }} .links span {{ text-align: right; }}
+  .links {{ padding-top: 40px; }} .links a {{ padding-left: 0; }} .links a > span {{ text-align: right; }}
   footer .grid {{ gap: 6px; }}
   /* ~44px hit areas for thumbs; padding and negative margin cancel out, so the rhythm doesn't move */
   .link {{ padding: 14px 0; margin: -10px 0 -14px; }}
@@ -419,6 +440,17 @@ footer a:hover {{ color: var(--text); }}
     animation: none !important; scroll-behavior: auto !important; }}
   .cta:hover::after {{ transform: none; }}
 }}
+/* print: black on white, and everything GSAP keeps hidden until it scrolls into view is shown (!important beats inline) */
+@media print {{
+  :root {{ --bg: #FFFFFF; --text: #000000; --muted: #444444; --white: #000000; --line: #CCCCCC; --card: #F2F2F2; --stripe: #E6E6E6;
+    color-scheme: light; }}
+  *, ::before, ::after {{ opacity: 1 !important; visibility: visible !important; transform: none !important; clip-path: none !important; }}
+  .bg-waves, .skip {{ display: none !important; }}
+  /* the covers are light logos on transparent images, so they keep their dark panel */
+  .cover {{ background: #1B1B1B; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+  section.wrap {{ padding-top: 48px; padding-bottom: 48px; }}
+  .card, .job, .rows .row {{ break-inside: avoid; }}
+}}
 </style>
 </head>
 <body>
@@ -428,7 +460,7 @@ footer a:hover {{ color: var(--text); }}
   <nav class="grid nav" aria-label="Main">
     <a class="logo" href="#top">vadhh</a>
     <ul><li><a href="#work">Work</a></li><li><a href="#experience">Experience</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul>
-    <a class="go" href="{mailto}">Start a project ↗</a>
+    <a class="go" href="{mailto}">Start a project {ARROW}</a>
   </nav>
   <span class="corner l" aria-hidden="true"></span><span class="corner r" aria-hidden="true"></span>
   <div class="grid intro" id="top" tabindex="-1">
@@ -453,7 +485,7 @@ footer a:hover {{ color: var(--text); }}
     <h3>More projects</h3>
     <p class="count">{len(rest)} more on GitHub</p>
     <ul class="rows">{"".join(more_row(p) for p in rest)}</ul>
-    <a class="cta" href="https://github.com/vadhh" target="_blank" rel="noopener">All repositories on GitHub</a>
+    <a class="cta" href="https://github.com/vadhh" target="_blank" rel="noopener">All repositories on GitHub{NEW_TAB}</a>
   </div>
 </section>
 
@@ -482,13 +514,13 @@ footer a:hover {{ color: var(--text); }}
       <a class="email" href="{mailto}">{e(EMAIL)}</a>
       <p class="offer">{br(OFFER)}</p>
     </div>
-    <ul class="links">{"".join(f'<li><a href="{e(links[k])}" target="_blank" rel="noopener"><strong>{e(k)}</strong><span>{e(v)}  ↗</span></a></li>' for k, v in LINKS)}</ul>
+    <ul class="links">{"".join(f'<li><a href="{e(links[k])}" target="_blank" rel="noopener"><strong>{e(k)}</strong><span>{e(v)}  {ARROW}</span>{NEW_TAB}</a></li>' for k, v in LINKS)}</ul>
   </div>
 </section>
 </main>
 
 <footer class="wrap">
-  <div class="grid"><span class="c1">© 2026 Afridho Tavadhu</span><a class="c3" href="snake.html">Bored? Play snake ↗</a><span class="c4">Built by hand, no frameworks</span></div>
+  <div class="grid"><span class="c1">© 2026 Afridho Tavadhu</span><a class="c3" href="snake.html">Bored? Play snake {ARROW}</a><span class="c4">Built by hand, no frameworks</span></div>
 </footer>
 <script>
 {ANIM_JS}
@@ -511,11 +543,14 @@ def check(html):
         for x in filter(None, (x.strip() for x in r.get("logo", "").split(";"))):
             assert (CONTENT.parent / x).is_file(), f"missing logo: {x}"
     for t in hidden:
-        assert f">{e(t)}<" not in html and f">{e(t)} ↗<" not in html, f"hidden project shown: {t}"
+        assert f">{e(t)}<" not in html and f">{e(t)} {ARROW}" not in html, f"hidden project shown: {t}"
     for r in jobs():
         assert e(r["role"]) in html, r["role"]
     for f in JS:
         assert (OUT.parent / "js" / f).is_file() and f'<script src="js/{f}" defer>' in html, f"missing script: js/{f}"
+    for f in FONTS:
+        assert (OUT.parent / "fonts" / f).is_file() and f"url(fonts/{f})" in html, f"missing font: fonts/{f}"
+    assert "fonts.googleapis" not in html, "Google Fonts link is back"
 
 
 if __name__ == "__main__":

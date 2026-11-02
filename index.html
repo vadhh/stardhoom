@@ -7,20 +7,27 @@
 <title>Afridho Tavadhu · AI features and web apps</title>
 <meta name="description" content="I build AI features and web apps that hold up in production, from first prototype to launch.">
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23141414"/><path d="M18 20 L32 46 L46 20" stroke="%23F2F2F2" stroke-width="7" fill="none" stroke-linejoin="round"/></svg>'>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="fonts/fira-code-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <script>const r = document.documentElement;
 if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
   r.classList.add("js"); setTimeout(() => r.classList.remove("js"), 3000);
 }</script>
 <script src="js/gsap.min.js" defer></script><script src="js/ScrollTrigger.min.js" defer></script><script src="js/SplitText.min.js" defer></script><script src="js/ScrambleTextPlugin.min.js" defer></script><script src="js/lenis.min.js" defer></script>
 <style>
+/* self-hosted latin subsets (SIL OFL, see fonts/OFL.txt); Inter is one variable file for 400 and 600.
+   ↗ and ↳ aren't in either font (nor in Google's), so they fall back to the system face as before. */
+@font-face { font-family: "Inter"; font-weight: 400 600; font-display: swap; src: url(fonts/inter-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Fira Code"; font-weight: 400; font-display: swap; src: url(fonts/fira-code-400-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+/* size-matched Arial while Inter loads, so the swap barely shifts layout; no weight range, so 600 gets synthetic bold */
+@font-face { font-family: "Inter Fallback"; src: local("Arial"); size-adjust: 107.31%; ascent-override: 90.27%;
+  descent-override: 22.48%; line-gap-override: 0%; }
 :root {
   --bg: #141414; --line: #262626; --text: #F2F2F2; --muted: #8C8C8C; --white: #FFFFFF; --card: #1B1B1B; --stripe: #181818;
   --pad: 39px; --gut: 30px;
   color-scheme: dark;
-  --pop: #F2C230; --sans: "Inter", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace;
+  --pop: #F2C230; --sans: "Inter", "Inter Fallback", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; } html.lenis { scroll-behavior: auto; }
@@ -33,6 +40,8 @@ ul { list-style: none; }
 .skip { position: absolute; z-index: 10; top: 12px; left: var(--pad); padding: 13px 16px; font: 13px var(--mono);
   color: var(--text); background: var(--bg); border: 1px solid var(--line); transform: translateY(-200%); }
 .skip:focus { transform: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0; }
 .mono { font-family: var(--mono); }
 .muted { color: var(--muted); }
 
@@ -58,7 +67,7 @@ h2.xl { font-size: clamp(56px, 8.3vw, 120px); letter-spacing: -.06em; line-heigh
 .cta { display: inline-flex; justify-content: space-between; gap: 24px; min-width: 170px; padding-bottom: 14px;
   font-size: 20px; letter-spacing: -.02em; background: linear-gradient(var(--white), var(--white)) 0 100% / 100% 2px no-repeat;
   transition: background-size .3s; }
-.cta::after { content: "↗"; transition: transform .2s; }
+.cta::after { content: "↗"; content: "↗" / ""; transition: transform .2s; }
 .cta:hover { background-size: 0 2px; }
 .cta:hover::after { transform: translate(2px, -2px); }
 
@@ -81,7 +90,7 @@ h1 { grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); line
 .hero .lead span:first-child { color: var(--text); }
 .paths { grid-column: 3 / 5; display: grid; grid-template-columns: 1fr 1fr; }
 .paths .cta { margin-left: var(--gut); justify-self: start; white-space: nowrap; font-size: clamp(16px, 1.45vw, 20px); }
-.cta.down::after { content: "↓"; } .cta.down:hover::after { transform: translateY(3px); }
+.cta.down::after { content: "↓"; content: "↓" / ""; } .cta.down:hover::after { transform: translateY(3px); }
 .facts { border-top: 1px solid var(--line); padding: 24px 0 36px; align-items: end; }
 .facts dl + dl { padding-left: var(--gut); } .facts dl:first-child { grid-column: 1 / 3; }
 .facts dt { font: 13px var(--mono); color: var(--muted); } .facts dd { font-size: 18px; letter-spacing: -.02em; }
@@ -150,7 +159,7 @@ h1 { grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); line
 .links li:last-child { border-bottom: 1px solid var(--line); }
 .links a { display: grid; grid-template-columns: 1fr 1fr; padding: 22px 0 22px var(--gut); align-items: baseline; }
 .links strong { font-weight: 600; font-size: 20px; letter-spacing: -.04em; }
-.links span { font: 14px var(--mono); color: var(--muted); padding-left: var(--gut); }
+.links a > span { font: 14px var(--mono); color: var(--muted); padding-left: var(--gut); }
 .links a:hover span { color: var(--text); }
 footer.wrap { border-top: 1px solid var(--line); }
 footer .grid { padding: 30px 0 40px; font: 13px var(--mono); color: var(--muted); }
@@ -185,7 +194,7 @@ footer a:hover { color: var(--text); }
   .about-body { margin-top: 20px; } .prose { order: -1; padding: 0 0 32px; gap: 18px; } .prose p { font-size: 17px; }
   .who dl { grid-template-columns: 100px minmax(0, 1fr); } .who dd { padding-left: 0; }
   .email { margin-top: 36px; font-size: 24px; } .offer { font-size: 16px; }
-  .links { padding-top: 40px; } .links a { padding-left: 0; } .links span { text-align: right; }
+  .links { padding-top: 40px; } .links a { padding-left: 0; } .links a > span { text-align: right; }
   footer .grid { gap: 6px; }
   /* ~44px hit areas for thumbs; padding and negative margin cancel out, so the rhythm doesn't move */
   .link { padding: 14px 0; margin: -10px 0 -14px; }
@@ -203,6 +212,17 @@ footer a:hover { color: var(--text); }
     animation: none !important; scroll-behavior: auto !important; }
   .cta:hover::after { transform: none; }
 }
+/* print: black on white, and everything GSAP keeps hidden until it scrolls into view is shown (!important beats inline) */
+@media print {
+  :root { --bg: #FFFFFF; --text: #000000; --muted: #444444; --white: #000000; --line: #CCCCCC; --card: #F2F2F2; --stripe: #E6E6E6;
+    color-scheme: light; }
+  *, ::before, ::after { opacity: 1 !important; visibility: visible !important; transform: none !important; clip-path: none !important; }
+  .bg-waves, .skip { display: none !important; }
+  /* the covers are light logos on transparent images, so they keep their dark panel */
+  .cover { background: #1B1B1B; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  section.wrap { padding-top: 48px; padding-bottom: 48px; }
+  .card, .job, .rows .row { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
@@ -212,7 +232,7 @@ footer a:hover { color: var(--text); }
   <nav class="grid nav" aria-label="Main">
     <a class="logo" href="#top">vadhh</a>
     <ul><li><a href="#work">Work</a></li><li><a href="#experience">Experience</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul>
-    <a class="go" href="mailto:attridho@gmail.com?subject=Project%20inquiry">Start a project ↗</a>
+    <a class="go" href="mailto:attridho@gmail.com?subject=Project%20inquiry">Start a project <span aria-hidden="true">↗</span></a>
   </nav>
   <span class="corner l" aria-hidden="true"></span><span class="corner r" aria-hidden="true"></span>
   <div class="grid intro" id="top" tabindex="-1">
@@ -231,13 +251,13 @@ footer a:hover { color: var(--text); }
   <h2 id="work-h">Selected<br>work</h2>
   <div class="grid work-body">
     <p class="lead c1">Things I&#x27;ve shipped <br class="wide">at work, for clients <br class="wide">and for myself.</p>
-    <div class="cards"><article class="card"><span class="idx" aria-hidden="true">01</span><div class="cover"><img src="img/projects/atask.webp" alt="AI Question Pipeline preview" width="960" height="600" loading="lazy"></div><h3>AI Question Pipeline</h3><p class="meta">LIVE · ATASK · 2026</p><p class="body">AI content pipeline that turns educational material into quality-checked practice questions for every school level.</p><p class="hl">↳ Question generation almost 3x faster</p><p class="tags">Python · SQLite · Claude Code</p><p class="links-row"><a class="link" href="https://www.atask.net/" target="_blank" rel="noopener">atask.net ↗</a></p></article><article class="card"><span class="idx" aria-hidden="true">02</span><div class="cover"><img src="img/projects/minifw.webp" alt="MiniFW-AI preview" width="960" height="600" loading="lazy"></div><h3>MiniFW-AI</h3><p class="meta">DEPLOYED · SYDECO · 2025</p><p class="body">AI-powered behavioral firewall engine for detecting unknown network threats on Linux gateway hardware.</p><p class="tags">Python · MLP · YARA</p></article><article class="card"><span class="idx" aria-hidden="true">03</span><div class="cover"><img src="img/projects/asta-logo.webp" alt="ASTA preview" width="960" height="600" loading="lazy"></div><h3>ASTA</h3><p class="meta">LIVE · FREELANCE · 2026</p><p class="body">Mobile-first, game-style web app for children&#x27;s emotional wellbeing. Kids check in with how they feel, then pick something to do about it: breathe, draw, play or learn.</p><p class="hl">↳ Built in 3 days</p><p class="tags">React 19 · TypeScript · Vite</p><p class="links-row"><a class="link live" href="https://asta-theta.vercel.app/" target="_blank" rel="noopener">asta-theta.vercel.app ↗</a><a class="link" href="https://github.com/vadhh/asta" target="_blank" rel="noopener">GitHub ↗</a></p></article><article class="card"><span class="idx" aria-hidden="true">04</span><div class="cover"><img src="img/projects/custseg.webp" alt="Customer Segmentation preview" width="960" height="600" loading="lazy"></div><h3>Customer Segmentation</h3><p class="meta">ACTIVE · STUDY · 2025</p><p class="body">K-Means segmentation of retail customers over 500k+ transactions, deployed with Streamlit. Asah capstone.</p><p class="hl">↳ $22.4M potential revenue uplift</p><p class="tags">Python · Scikit-Learn · Streamlit</p><p class="links-row"><a class="link" href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" rel="noopener">GitHub ↗</a></p></article><article class="card"><span class="idx" aria-hidden="true">05</span><div class="cover"><img src="img/projects/vaultsearch-logo.webp" alt="VaultSearch preview" width="960" height="600" loading="lazy"></div><h3>VaultSearch</h3><p class="meta">DEPLOYED · PERSONAL · 2025</p><p class="body">Offline RAG on Llama 3 and Qdrant. Documents stay local.</p><p class="hl">↳ Retrieval under 1 second</p><p class="tags">Llama 3 · Qdrant · LangChain</p><p class="links-row"><a class="link" href="https://github.com/vadhh/vaultsearch" target="_blank" rel="noopener">GitHub ↗</a></p></article><article class="card"><span class="idx" aria-hidden="true">06</span><div class="cover"><img src="img/projects/nids.webp" alt="Network Intrusion Detection preview" width="960" height="600" loading="lazy"></div><h3>Network Intrusion Detection</h3><p class="meta">ACTIVE · THESIS · 2025</p><p class="body">PCA + SVM detection engine for DDoS and port-scan attacks on the CIC-IDS-2017 dataset.</p><p class="hl">↳ Shorter training time, accuracy kept</p><p class="tags">Python · Scikit-Learn · NumPy</p><p class="links-row"><a class="link" href="https://github.com/vadhh/ids-thesis-svm" target="_blank" rel="noopener">GitHub ↗</a></p></article></div>
+    <div class="cards"><article class="card"><span class="idx" aria-hidden="true">01</span><div class="cover"><img src="img/projects/atask.webp" alt="AI Question Pipeline preview" width="960" height="600" loading="lazy"></div><h3>AI Question Pipeline</h3><p class="meta">LIVE · ATASK · 2026</p><p class="body">AI content pipeline that turns educational material into quality-checked practice questions for every school level.</p><p class="hl">↳ Question generation almost 3x faster</p><p class="tags">Python · SQLite · Claude Code</p><p class="links-row"><a class="link" href="https://www.atask.net/" target="_blank" rel="noopener">atask.net <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></p></article><article class="card"><span class="idx" aria-hidden="true">02</span><div class="cover"><img src="img/projects/minifw.webp" alt="MiniFW-AI preview" width="960" height="600" loading="lazy"></div><h3>MiniFW-AI</h3><p class="meta">DEPLOYED · SYDECO · 2025</p><p class="body">AI-powered behavioral firewall engine for detecting unknown network threats on Linux gateway hardware.</p><p class="tags">Python · MLP · YARA</p></article><article class="card"><span class="idx" aria-hidden="true">03</span><div class="cover"><img src="img/projects/asta-logo.webp" alt="ASTA preview" width="960" height="600" loading="lazy"></div><h3>ASTA</h3><p class="meta">LIVE · FREELANCE · 2026</p><p class="body">Mobile-first, game-style web app for children&#x27;s emotional wellbeing. Kids check in with how they feel, then pick something to do about it: breathe, draw, play or learn.</p><p class="hl">↳ Built in 3 days</p><p class="tags">React 19 · TypeScript · Vite</p><p class="links-row"><a class="link live" href="https://asta-theta.vercel.app/" target="_blank" rel="noopener">asta-theta.vercel.app <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a><a class="link" href="https://github.com/vadhh/asta" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></p></article><article class="card"><span class="idx" aria-hidden="true">04</span><div class="cover"><img src="img/projects/custseg.webp" alt="Customer Segmentation preview" width="960" height="600" loading="lazy"></div><h3>Customer Segmentation</h3><p class="meta">ACTIVE · STUDY · 2025</p><p class="body">K-Means segmentation of retail customers over 500k+ transactions, deployed with Streamlit. Asah capstone.</p><p class="hl">↳ $22.4M potential revenue uplift</p><p class="tags">Python · Scikit-Learn · Streamlit</p><p class="links-row"><a class="link" href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></p></article><article class="card"><span class="idx" aria-hidden="true">05</span><div class="cover"><img src="img/projects/vaultsearch-logo.webp" alt="VaultSearch preview" width="960" height="600" loading="lazy"></div><h3>VaultSearch</h3><p class="meta">DEPLOYED · PERSONAL · 2025</p><p class="body">Offline RAG on Llama 3 and Qdrant. Documents stay local.</p><p class="hl">↳ Retrieval under 1 second</p><p class="tags">Llama 3 · Qdrant · LangChain</p><p class="links-row"><a class="link" href="https://github.com/vadhh/vaultsearch" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></p></article><article class="card"><span class="idx" aria-hidden="true">06</span><div class="cover"><img src="img/projects/nids.webp" alt="Network Intrusion Detection preview" width="960" height="600" loading="lazy"></div><h3>Network Intrusion Detection</h3><p class="meta">ACTIVE · THESIS · 2025</p><p class="body">PCA + SVM detection engine for DDoS and port-scan attacks on the CIC-IDS-2017 dataset.</p><p class="hl">↳ Shorter training time, accuracy kept</p><p class="tags">Python · Scikit-Learn · NumPy</p><p class="links-row"><a class="link" href="https://github.com/vadhh/ids-thesis-svm" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></p></article></div>
   </div>
   <div class="more">
     <h3>More projects</h3>
     <p class="count">3 more on GitHub</p>
-    <ul class="rows"><li class="row"><span class="c1 mono">2026 · PERSONAL</span><span class="c2"><a class="title" href="https://github.com/vadhh/devpulse" target="_blank" rel="noopener">DevPulse ↗</a></span><span class="c34">Pock Touch Bar widget showing CPU, memory, and battery as dot-matrix graphs.</span></li><li class="row"><span class="c1 mono">2025 · STUDY</span><span class="c2"><a class="title" href="https://github.com/vadhh/telco-churn-mlops" target="_blank" rel="noopener">Telco Churn MLOps ↗</a></span><span class="c34">Churn model with MLflow experiment tracking and CI/CD on GitHub Actions. Asah by Accenture x Dicoding.</span></li><li class="row"><span class="c1 mono">2025 · PERSONAL</span><span class="c2"><a class="title" href="https://github.com/vadhh/ids-inference-microservice" target="_blank" rel="noopener">Network IDS Inference Microservice ↗</a></span><span class="c34">Production-grade machine-learning microservice for real-time network intrusion detection.</span></li></ul>
-    <a class="cta" href="https://github.com/vadhh" target="_blank" rel="noopener">All repositories on GitHub</a>
+    <ul class="rows"><li class="row"><span class="c1 mono">2026 · PERSONAL</span><span class="c2"><a class="title" href="https://github.com/vadhh/devpulse" target="_blank" rel="noopener">DevPulse <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></span><span class="c34">Pock Touch Bar widget showing CPU, memory, and battery as dot-matrix graphs.</span></li><li class="row"><span class="c1 mono">2025 · STUDY</span><span class="c2"><a class="title" href="https://github.com/vadhh/telco-churn-mlops" target="_blank" rel="noopener">Telco Churn MLOps <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></span><span class="c34">Churn model with MLflow experiment tracking and CI/CD on GitHub Actions. Asah by Accenture x Dicoding.</span></li><li class="row"><span class="c1 mono">2025 · PERSONAL</span><span class="c2"><a class="title" href="https://github.com/vadhh/ids-inference-microservice" target="_blank" rel="noopener">Network IDS Inference Microservice <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></span><span class="c34">Production-grade machine-learning microservice for real-time network intrusion detection.</span></li></ul>
+    <a class="cta" href="https://github.com/vadhh" target="_blank" rel="noopener">All repositories on GitHub<span class="sr-only"> (opens in new tab)</span></a>
   </div>
 </section>
 
@@ -246,7 +266,7 @@ footer a:hover { color: var(--text); }
     <div class="c1" style="grid-column: 1 / 3"><p class="label">02 / Experience</p><h2 id="exp-h">Where I've<br>worked</h2></div>
     <p class="lead">Jobs, internships and programs. <br class="wide">Client work is in Work, above.</p>
   </div>
-  <ul class="rows jobs"><li class="row job"><div class="c1"><p class="dates mono">Oct 2026 to Present</p><p class="type mono">FULL-TIME</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/atask.png" alt="" width="44" height="44" loading="lazy"></div><h3>Full-stack developer</h3><p class="company">PT ATASK Teknologi Internasional</p><p class="loc">Remote</p></div><div class="c34"><p class="body">I build and run an AI content pipeline that turns educational material into quality-checked practice questions for every school level. I own generation, automated and human review, production operations and reporting to leadership.</p><p class="hl">↳ Question generation almost 3x faster, with better quality across grades</p><p class="tags mono">Python · SQLite · Claude Code</p><a class="link" href="https://www.atask.net/" target="_blank" rel="noopener">atask.net ↗</a></div></li><li class="row job"><div class="c1"><p class="dates mono">Dec 2025 to Present</p><p class="type mono">FULL-TIME</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/sydeco.png" alt="" width="44" height="44" loading="lazy"></div><h3>Lead product engineer</h3><p class="company">PT Sydeco</p><p class="loc">Sleman, Yogyakarta</p></div><div class="c34"><p class="body">I build security platforms: a FastAPI gateway that protects APIs, network security tools built on nftables, an AI behavioral firewall and a multi-layer ML contract risk analyzer.</p><p class="tags mono">Python · YARA · Wazuh · SQLite · Landlock</p><a class="link" href="https://www.syde.co/" target="_blank" rel="noopener">syde.co ↗</a></div></li><li class="row job"><div class="c1"><p class="dates mono">Jul 2025 to Jan 2026</p><p class="type mono">PROGRAM</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/asah.png" alt="" width="44" height="44" loading="lazy"><img class="logo" src="img/logos/dicoding.png" alt="" width="44" height="44" loading="lazy"><img class="logo" src="img/logos/accenture.png" alt="" width="44" height="44" loading="lazy"></div><h3>Machine Learning Cohort</h3><p class="company">Asah led by Dicoding x Accenture</p><p class="loc">Remote</p></div><div class="c34"><p class="body">Earned a competitive national scholarship, shared with 2,000 students, for a 6-month machine learning accelerator. Built industry-grade projects with mentors from Accenture and Dicoding.</p><p class="tags mono">Python · Pandas · NumPy · Scikit-learn · Jupyter Notebook</p><a class="link" href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" rel="noopener">github.com/vadhh/Capstone-Project-A25-CS286 ↗</a></div></li><li class="row job"><div class="c1"><p class="dates mono">Dec 2024 to Apr 2025</p><p class="type mono">INTERNSHIP</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/tas.png" alt="" width="44" height="44" loading="lazy"></div><h3>Junior Frontend Developer &amp; UI/UX Intern</h3><p class="company">PT. Teknologi Aplikasi Sejahtera</p><p class="loc">Pedurungan, Semarang</p></div><div class="c34"><p class="body">Integrated REST APIs into responsive web interfaces with the backend team, and turned user requirements into technical specs.</p><p class="tags mono">Figma · Vue.js · Tailwind CSS</p><a class="link" href="https://teknosejahtera.co.id/" target="_blank" rel="noopener">teknosejahtera.co.id ↗</a></div></li></ul>
+  <ul class="rows jobs"><li class="row job"><div class="c1"><p class="dates mono">Oct 2026 to Present</p><p class="type mono">FULL-TIME</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/atask.png" alt="" width="44" height="44" loading="lazy"></div><h3>Full-stack developer</h3><p class="company">PT ATASK Teknologi Internasional</p><p class="loc">Remote</p></div><div class="c34"><p class="body">I build and run an AI content pipeline that turns educational material into quality-checked practice questions for every school level. I own generation, automated and human review, production operations and reporting to leadership.</p><p class="hl">↳ Question generation almost 3x faster, with better quality across grades</p><p class="tags mono">Python · SQLite · Claude Code</p><a class="link" href="https://www.atask.net/" target="_blank" rel="noopener">atask.net <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></div></li><li class="row job"><div class="c1"><p class="dates mono">Dec 2025 to Present</p><p class="type mono">FULL-TIME</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/sydeco.png" alt="" width="44" height="44" loading="lazy"></div><h3>Lead product engineer</h3><p class="company">PT Sydeco</p><p class="loc">Sleman, Yogyakarta</p></div><div class="c34"><p class="body">I build security platforms: a FastAPI gateway that protects APIs, network security tools built on nftables, an AI behavioral firewall and a multi-layer ML contract risk analyzer.</p><p class="tags mono">Python · YARA · Wazuh · SQLite · Landlock</p><a class="link" href="https://www.syde.co/" target="_blank" rel="noopener">syde.co <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></div></li><li class="row job"><div class="c1"><p class="dates mono">Jul 2025 to Jan 2026</p><p class="type mono">PROGRAM</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/asah.png" alt="" width="44" height="44" loading="lazy"><img class="logo" src="img/logos/dicoding.png" alt="" width="44" height="44" loading="lazy"><img class="logo" src="img/logos/accenture.png" alt="" width="44" height="44" loading="lazy"></div><h3>Machine Learning Cohort</h3><p class="company">Asah led by Dicoding x Accenture</p><p class="loc">Remote</p></div><div class="c34"><p class="body">Earned a competitive national scholarship, shared with 2,000 students, for a 6-month machine learning accelerator. Built industry-grade projects with mentors from Accenture and Dicoding.</p><p class="tags mono">Python · Pandas · NumPy · Scikit-learn · Jupyter Notebook</p><a class="link" href="https://github.com/vadhh/Capstone-Project-A25-CS286" target="_blank" rel="noopener">github.com/vadhh/Capstone-Project-A25-CS286 <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></div></li><li class="row job"><div class="c1"><p class="dates mono">Dec 2024 to Apr 2025</p><p class="type mono">INTERNSHIP</p></div><div class="c2"><div class="logos"><img class="logo" src="img/logos/tas.png" alt="" width="44" height="44" loading="lazy"></div><h3>Junior Frontend Developer &amp; UI/UX Intern</h3><p class="company">PT. Teknologi Aplikasi Sejahtera</p><p class="loc">Pedurungan, Semarang</p></div><div class="c34"><p class="body">Integrated REST APIs into responsive web interfaces with the backend team, and turned user requirements into technical specs.</p><p class="tags mono">Figma · Vue.js · Tailwind CSS</p><a class="link" href="https://teknosejahtera.co.id/" target="_blank" rel="noopener">teknosejahtera.co.id <span aria-hidden="true">↗</span><span class="sr-only"> (opens in new tab)</span></a></div></li></ul>
 </section>
 
 <section class="wrap" id="about" tabindex="-1" aria-labelledby="about-h">
@@ -266,13 +286,13 @@ footer a:hover { color: var(--text); }
       <a class="email" href="mailto:attridho@gmail.com?subject=Project%20inquiry">attridho@gmail.com</a>
       <p class="offer">I take one freelance project at a time: AI features and <br class="wide">web apps, from first prototype to launch.</p>
     </div>
-    <ul class="links"><li><a href="https://github.com/vadhh" target="_blank" rel="noopener"><strong>GitHub</strong><span>/vadhh  ↗</span></a></li><li><a href="https://linkedin.com/in/afr1dho" target="_blank" rel="noopener"><strong>LinkedIn</strong><span>/afr1dho  ↗</span></a></li></ul>
+    <ul class="links"><li><a href="https://github.com/vadhh" target="_blank" rel="noopener"><strong>GitHub</strong><span>/vadhh  <span aria-hidden="true">↗</span></span><span class="sr-only"> (opens in new tab)</span></a></li><li><a href="https://linkedin.com/in/afr1dho" target="_blank" rel="noopener"><strong>LinkedIn</strong><span>/afr1dho  <span aria-hidden="true">↗</span></span><span class="sr-only"> (opens in new tab)</span></a></li></ul>
   </div>
 </section>
 </main>
 
 <footer class="wrap">
-  <div class="grid"><span class="c1">© 2026 Afridho Tavadhu</span><a class="c3" href="snake.html">Bored? Play snake ↗</a><span class="c4">Built by hand, no frameworks</span></div>
+  <div class="grid"><span class="c1">© 2026 Afridho Tavadhu</span><a class="c3" href="snake.html">Bored? Play snake <span aria-hidden="true">↗</span></a><span class="c4">Built by hand, no frameworks</span></div>
 </footer>
 <script>
 // Background: a full-screen halftone dot grid on a fixed canvas (it stays put while the page scrolls). Dot size
@@ -386,13 +406,13 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
     ScrollTrigger.batch(".job", { ...once, onEnter: (rows) =>
       gsap.to(rows, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.12, ease: "power3.out" }) });
 
-    // numbers in highlights count up, keeping their decimals, then snap back to the exact text
+    // numbers in highlights count up from 0 once the line is in view, keeping their decimals, then snap back to the
+    // exact text. Nothing is zeroed before the trigger fires, so the real numbers sit in the DOM until then.
     const counted = gsap.utils.toArray(".hl").filter((el) => /\d/.test(el.textContent)).map((el) => [el, el.textContent]);
     counted.forEach(([el, text]) => {
       const n = { p: 0 };
       const draw = () => el.textContent = text.replace(/\d+(\.\d+)?/g, (m, d) => (m * n.p).toFixed(d ? d.length - 1 : 0));
-      draw();
-      gsap.to(n, { p: 1, duration: 1.4, ease: "power2.out", onUpdate: draw, onComplete: () => el.textContent = text,
+      gsap.to(n, { p: 1, duration: 1.4, ease: "power2.out", onStart: draw, onUpdate: draw, onComplete: () => el.textContent = text,
         scrollTrigger: { trigger: el, start: "top 90%", once: true } });
     });
     return () => {
