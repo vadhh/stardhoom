@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-label="VaultSearch">
+  <defs>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563EB"/><stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <!-- mark: a magnifier whose lens is a vault wheel -->
+  <rect x="4" y="4" width="112" height="112" rx="28" fill="#0B0F17" stroke="#1F2937" stroke-width="2"/>
+  <g stroke="url(#b)" stroke-linecap="round" fill="none">
+    <circle cx="52" cy="52" r="27" stroke-width="7"/>
+    <circle cx="52" cy="52" r="5" stroke-width="4"/>
+    <path d="M52.0 45.0 L52.0 35.0 M58.1 55.5 L66.7 60.5 M45.9 55.5 L37.3 60.5" stroke-width="4"/>
+    <circle cx="72.5" cy="52.0" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="66.5" cy="66.5" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="52.0" cy="72.5" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="37.5" cy="66.5" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="31.5" cy="52.0" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="37.5" cy="37.5" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="52.0" cy="31.5" r="1.8" fill="#22D3EE" stroke="none"/>
+    <circle cx="66.5" cy="37.5" r="1.8" fill="#22D3EE" stroke="none"/>
+    <path d="M73 73 L92 92" stroke-width="11"/>
+  </g>
+  <!-- wordmark -->
+  <text x="136" y="80" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="700"
+        font-size="56" letter-spacing="-1.5"><tspan fill="#F2F2F2">Vault</tspan><tspan fill="url(#b)">Search</tspan></text>
+</svg>

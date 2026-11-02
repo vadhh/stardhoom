@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" role="img" aria-label="ASTA">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7BC043"/><stop offset="1" stop-color="#3E7D2A"/>
+    </linearGradient>
+  </defs>
+  <!-- mark: a sprout growing out of an open hand -->
+  <rect x="4" y="4" width="112" height="112" rx="30" fill="url(#g)"/>
+  <path d="M60 86 V54" stroke="#FFF3DA" stroke-width="6" stroke-linecap="round"/>
+  <path d="M60 60 C45 60 34 50 32 35 C47 35 58 44 60 60 Z" fill="#FFF3DA"/>
+  <path d="M60 54 C62 37 74 27 91 26 C89 43 77 53 60 54 Z" fill="#FFD34E"/>
+  <path d="M28 76 Q60 104 92 76 Q86 98 60 98 Q34 98 28 76 Z" fill="#FFF3DA"/>
+  <!-- wordmark -->
+  <text x="136" y="86" font-family="'Baloo 2','Nunito','Arial Rounded MT Bold',sans-serif" font-weight="800"
+        font-size="70" letter-spacing="4" fill="#5A3A1E">ASTA</text>
+</svg>
