@@ -92,11 +92,16 @@ if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
 
 # Entrance and scroll animations. Only transform, opacity and clip-path; each element plays once.
 ANIM_JS = r"""// Background: a full-screen halftone dot grid on a fixed canvas (it stays put while the page scrolls). Dot size
-// follows a domain-warped field that travels like a swell; scrolling pushes it along, dots swell near the pointer, and
-// a glint of --pop passes over the brightest crests. Each frame buckets dots into 6 sizes so the whole grid is 7 fills.
+// follows a domain-warped field that travels like a swell; the field scrolls at 0.3x, like a far layer, dots swell near
+// the pointer, and a glint of --pop passes over the brightest crests. Each frame buckets dots into 6 sizes so the whole
+// grid is 7 fills. Each section has a mood (dot contrast, drift speed, glint rate) that the field eases into.
+const MOODS = { hero: { amp: 1, speed: 1, glint: 1 }, work: { amp: 0.8, speed: 1, glint: 0.6 },
+  experience: { amp: 0.8, speed: 0.8, glint: 0.6 }, about: { amp: 0.5, speed: 0.5, glint: 0 },
+  contact: { amp: 1.15, speed: 1.3, glint: 1.3 } };
 function waves() {
   const cv = document.querySelector(".bg-waves"), ctx = cv.getContext("2d"), S = 12;
-  let W, H, cells = [], t = 0, last = -1, grow = 1, mx = -1e4, my = -1e4;
+  let W, H, cells = [], t = 0, last = -1, grow = 1, mx = -1e4, my = -1e4, aim = MOODS.hero;
+  const cur = { ...aim };
   const css = getComputedStyle(document.documentElement), ink = css.getPropertyValue("--text").trim(), pop = css.getPropertyValue("--pop").trim();
   const size = () => {
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -106,19 +111,20 @@ function waves() {
   };
   const frame = () => {
     ctx.clearRect(0, 0, W, H);
-    const sc = scrollY * 0.0016, lv = [[], [], [], [], [], []], hot = [];
+    // parallax: the dots stay on their screen grid (a moving grid would strobe), the field under them scrolls at 0.3x
+    const sy = scrollY * 0.3, lv = [[], [], [], [], [], []], hot = [], glint = 1 - 0.15 * cur.glint;
     for (let i = 0; i < cells.length; i += 2) {
       const x = cells[i], y = cells[i + 1];
       if (x > W * grow * 1.3 - y * 0.3) continue;           // intro: the field sweeps in from the left
       // domain warp: the grid is bent twice by slow sines, then read as a marbled field. The whole warp travels
-      // diagonally like a swell, and scrolling pushes it further along.
-      const px = x * 0.0019, py = y * 0.0019, go = t * 0.45 + sc;
+      // diagonally like a swell.
+      const px = x * 0.0019, py = (y + sy) * 0.0019, go = t * 0.45;
       const wx = px + 1.4 * Math.sin(py * 1.7 + t * 0.3 + go), wy = py + 1.4 * Math.sin(px * 1.3 - t * 0.25);
       const v = Math.sin(wx * 2.1 + 1.2 * Math.sin(wy * 2.6 - go)) * Math.cos(wy * 1.8 - 1.1 * Math.sin(wx * 1.9 + t * 0.2));
-      let s = ((v + 1) / 2) ** 2.6;
+      let s = ((v + 1) / 2) ** 2.6 * cur.amp;
       const dx = x - mx, dy = y - my;
       if (dx < 160 && dx > -160 && dy < 160 && dy > -160) { const d = Math.hypot(dx, dy); if (d < 160) s += (1 - d / 160) * 0.55; }
-      if (v > 0.95 && Math.sin((x + y) * 0.003 - t * 0.8) > 0.85) hot.push(x, y);   // a glint passes over the brightest crests
+      if (v > 0.95 && Math.sin((x + y + sy) * 0.003 - t * 0.8) > glint) hot.push(x, y);   // a glint passes over the brightest crests
       else lv[Math.min(5, Math.round(s * 5))].push(x, y);
     }
     ctx.fillStyle = ink; ctx.globalAlpha = 0.2;
@@ -129,15 +135,25 @@ function waves() {
     for (let i = 0; i < hot.length; i += 2) { ctx.moveTo(hot[i] + 2, hot[i + 1]); ctx.arc(hot[i], hot[i + 1], 2, 0, 7); }
     ctx.fill();
   };
-  // ~30fps is plenty for a slow swell; nothing draws while the tab is hidden
-  const tick = (time) => { if (document.hidden || time - last < 1 / 31) return; last = t = time; cv.style.opacity = 0.5 + 0.5 * Math.min(1, scrollY / innerHeight); frame(); };
+  // ~30fps is plenty for a slow swell; nothing draws while the tab is hidden. The clock is integrated (t += dt * speed)
+  // so a mood's speed change doesn't jump the field, and the mood eases in over about a second.
+  const tick = (time) => {
+    if (document.hidden || time - last < 1 / 31) return;
+    const dt = last < 0 ? 0 : Math.min(time - last, 0.1), k = 1 - Math.exp(-dt / 0.8);
+    last = time;
+    for (const p in cur) cur[p] += (aim[p] - cur[p]) * k;
+    t += dt * cur.speed;
+    cv.style.opacity = 0.5 + 0.5 * Math.min(1, scrollY / innerHeight); frame();
+  };
   const point = (e) => { mx = e.clientX; my = e.clientY; };
   const resize = () => { size(); frame(); };
   addEventListener("resize", resize); resize();
   return {
     play() { grow = 0; gsap.to({}, { duration: 2.4, delay: 1, ease: "power2.inOut", onUpdate() { grow = this.progress(); } });
       gsap.ticker.add(tick); addEventListener("pointermove", point); },
-    stop() { gsap.ticker.remove(tick); removeEventListener("pointermove", point); grow = 1; t = 0; last = -1; mx = my = -1e4; frame(); },
+    mood(name) { aim = MOODS[name] || MOODS.hero; },
+    stop() { gsap.ticker.remove(tick); removeEventListener("pointermove", point); grow = 1; t = 0; last = -1; mx = my = -1e4;
+      aim = MOODS.hero; Object.assign(cur, aim); frame(); },
   };
 }
 
@@ -207,31 +223,50 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
     SplitText.create("h1", { type: "lines,chars", mask: "lines", autoSplit: true, deepSlice: false,
       onSplit: (self) => gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, delay: 0.15, ease: "expo.out" }) });
 
+    // contact bookend: the closing line rises letter by letter like the name (same numbers) when it scrolls in. Its
+    // masks get room below for the g's tail (.ln-mask). Once it has played, a re-split on resize makes no new tween.
+    let closed = false;
+    SplitText.create("#contact-h", { type: "lines,chars", mask: "lines", linesClass: "ln", autoSplit: true,
+      onSplit: (self) => closed ? undefined : gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, ease: "expo.out",
+        scrollTrigger: { trigger: "#contact-h", ...once, onEnter: () => closed = true } }) });
+    // then the email's underline draws in from the left (--u scales .email::after); .drawing holds off the CSS
+    // hover transition so it doesn't chase the tween
+    const email = document.querySelector(".email");
+    email.classList.add("drawing"); cleanups.push(() => email.classList.remove("drawing"));
+    gsap.fromTo(email, { "--u": 0 }, { "--u": 1, duration: 0.9, delay: 0.2, ease: "power3.inOut",
+      scrollTrigger: { trigger: email, ...once }, onComplete: () => email.classList.remove("drawing") });
+
+    // the background eases into each section's mood while that section holds the middle of the screen
+    gsap.utils.toArray(".hero, main > section").forEach((sec) => ScrollTrigger.create({ trigger: sec, start: "top 50%",
+      end: "bottom 50%", onToggle: (self) => self.isActive && bg.mood(sec.id || "hero") }));
+
     // mono labels and card numbers scramble in
     gsap.utils.toArray(".label, .idx").forEach((el) => gsap.fromTo(el, { autoAlpha: 0 }, {
       autoAlpha: 1, duration: 0.9, ease: "none", scrollTrigger: { trigger: el, ...once },
       scrambleText: { text: el.textContent, chars: el.matches(".idx") ? "0123456789" : "01/_<>", speed: 0.5 } }));
 
-    // work cards: covers wipe up while the image settles, staggered per row
-    gsap.set(".card", { autoAlpha: 0, y: 40 });
+    // work cards: covers wipe up while the image settles, staggered per row. Cards and job rows fade with opacity, not
+    // autoAlpha: visibility:hidden would drop their links from the Tab order until they scroll in.
+    gsap.set(".card", { opacity: 0, y: 40 });
     gsap.set(".cover", { clipPath: "inset(100% 0% 0% 0%)" });
     gsap.set(".cover img", { scale: 1.15 });
     ScrollTrigger.batch(".card", { ...once, onEnter: (cards) => {
       const covers = cards.map((c) => c.querySelector(".cover"));
       gsap.timeline({ defaults: { stagger: 0.12 } })
-        .to(cards, { autoAlpha: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0)
+        .to(cards, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0)
         .to(covers, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.1, ease: "expo.inOut" }, 0)
         .to(covers.map((c) => c.querySelector("img")).filter(Boolean), { scale: 1, duration: 1.4, ease: "expo.out" }, 0);
     } });
 
     // experience rows slide up
-    gsap.set(".job", { autoAlpha: 0, y: 50 });
+    gsap.set(".job", { opacity: 0, y: 50 });
     ScrollTrigger.batch(".job", { ...once, onEnter: (rows) =>
-      gsap.to(rows, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.12, ease: "power3.out" }) });
+      gsap.to(rows, { opacity: 1, y: 0, duration: 0.9, stagger: 0.12, ease: "power3.out" }) });
 
     // numbers in highlights count up from 0 once the line is in view, keeping their decimals, then snap back to the
-    // exact text. Nothing is zeroed before the trigger fires, so the real numbers sit in the DOM until then.
-    const counted = gsap.utils.toArray(".hl").filter((el) => /\d/.test(el.textContent)).map((el) => [el, el.textContent]);
+    // exact text. Nothing is zeroed before the trigger fires, so the real numbers sit in the DOM until then. Only
+    // multi-digit numbers count: a single digit would flash false values ("under 0 second", "almost 1x faster").
+    const counted = gsap.utils.toArray(".hl").filter((el) => /\d\d/.test(el.textContent)).map((el) => [el, el.textContent]);
     counted.forEach(([el, text]) => {
       const n = { p: 0 };
       const draw = () => el.textContent = text.replace(/\d+(\.\d+)?/g, (m, d) => (m * n.p).toFixed(d ? d.length - 1 : 0));
@@ -244,6 +279,12 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
       bg.stop();
       if (lenis) { gsap.ticker.remove(raf); lenis.destroy(); }
     };
+  });
+  // parallax, desktop only: the name lifts out a little faster than the page as the hero scrolls away (below 1024px
+  // it sits right under the nav, so there's no room to lift)
+  mm.add("(prefers-reduced-motion: no-preference) and (min-width: 1024px)", () => {
+    gsap.to("h1", { y: () => -0.25 * document.querySelector(".hero").offsetHeight, ease: "none",
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true, invalidateOnRefresh: true } });
   });
   root.classList.remove("js");
   // animation clock stalled (static screenshot tools, background tabs): undo it all so nothing stays hidden
@@ -333,19 +374,23 @@ section.wrap {{ border-top: 1px solid var(--line); padding-top: 120px; padding-b
 h2 {{ font-weight: 600; font-size: clamp(48px, 6.7vw, 96px); line-height: 1.04; letter-spacing: -.06em; }}
 h2.m {{ font-size: clamp(36px, 5vw, 72px); letter-spacing: -.05em; }}
 h2.xl {{ font-size: clamp(56px, 8.3vw, 120px); letter-spacing: -.06em; line-height: .97; }}
+/* SplitText's line masks clip (overflow: clip); at line-height .97 they'd cut the g's tail. Padding plus an equal
+   negative margin gives it room without moving the layout. */
+.ln-mask {{ padding-bottom: .2em; margin-bottom: -.2em; }}
 .lead {{ font-size: clamp(18px, 1.7vw, 24px); line-height: 1.33; letter-spacing: -.02em; color: var(--muted); }}
 .cta {{ display: inline-flex; justify-content: space-between; gap: 24px; min-width: 170px; padding-bottom: 14px;
   font-size: 20px; letter-spacing: -.02em; background: linear-gradient(var(--white), var(--white)) 0 100% / 100% 2px no-repeat;
   transition: background-size .3s; }}
 .cta::after {{ content: "↗"; content: "↗" / ""; transition: transform .2s; }}
-.cta:hover {{ background-size: 0 2px; }}
-.cta:hover::after {{ transform: translate(2px, -2px); }}
+/* keyboard focus gets the same feedback as hover, here and on every link style below */
+.cta:hover, .cta:focus-visible {{ background-size: 0 2px; }}
+.cta:hover::after, .cta:focus-visible::after {{ transform: translate(2px, -2px); }}
 
 /* hero */
 .nav {{ padding-top: 30px; font-size: 14px; align-items: baseline; }}
 .nav .logo {{ font-weight: 600; font-size: 16px; letter-spacing: -.02em; }}
 .nav ul {{ grid-column: 2 / 4; display: flex; padding-left: 0; }}
-.nav li {{ flex: 1; }} .nav li a {{ color: var(--muted); }} .nav li a:hover {{ color: var(--text); }}
+.nav li {{ flex: 1; }} .nav li a {{ color: var(--muted); }} .nav li a:hover, .nav li a:focus-visible {{ color: var(--text); }}
 .nav .go {{ grid-column: 4; padding-left: 0; }}
 .corner {{ position: absolute; top: 96px; width: 13px; height: 13px; border: 1.5px solid var(--white); }}
 .corner.l {{ left: var(--pad); border-width: 1.5px 0 0 1.5px; }} .corner.r {{ right: var(--pad); border-width: 1.5px 1.5px 0 0; }}
@@ -360,7 +405,7 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .hero .lead span:first-child {{ color: var(--text); }}
 .paths {{ grid-column: 3 / 5; display: grid; grid-template-columns: 1fr 1fr; }}
 .paths .cta {{ margin-left: var(--gut); justify-self: start; white-space: nowrap; font-size: clamp(16px, 1.45vw, 20px); }}
-.cta.down::after {{ content: "↓"; content: "↓" / ""; }} .cta.down:hover::after {{ transform: translateY(3px); }}
+.cta.down::after {{ content: "↓"; content: "↓" / ""; }} .cta.down:hover::after, .cta.down:focus-visible::after {{ transform: translateY(3px); }}
 .facts {{ border-top: 1px solid var(--line); padding: 24px 0 36px; align-items: end; }}
 .facts dl + dl {{ padding-left: var(--gut); }} .facts dl:first-child {{ grid-column: 1 / 3; }}
 .facts dt {{ font: 13px var(--mono); color: var(--muted); }} .facts dd {{ font-size: 18px; letter-spacing: -.02em; }}
@@ -382,7 +427,8 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
   transition: opacity .2s, transform .2s, visibility 0s .2s, border-color .2s; }}
 .gh-card::before {{ content: ""; position: absolute; inset: -16px 0; }}
 .intro:has(.gh:focus-visible, .gh-card:hover) .gh-card:not(.off) {{ visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }}
-@media (hover: hover) {{ .intro:has(.gh:hover) .gh-card:not(.off) {{ visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }} }}
+/* hover waits .15s, so a pointer passing over "vadh" (say, from the nav down to the CTAs) doesn't open the card */
+@media (hover: hover) {{ .intro:has(.gh:hover) .gh-card:not(.off) {{ visibility: visible; opacity: 1; transform: none; transition-delay: .15s; }} }}
 .gh-card:hover {{ border-color: var(--muted); }}
 .gh-head {{ display: flex; justify-content: space-between; font: 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }}
 .gh-head::after {{ content: "↗"; content: "↗" / ""; transition: transform .2s; }} .gh-card:hover .gh-head::after {{ transform: translate(2px, -2px); }}
@@ -408,13 +454,16 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
   background: repeating-linear-gradient(135deg, var(--card) 0 10px, var(--stripe) 10px 20px); }}
 .card h3, .job h3 {{ font-weight: 600; font-size: 20px; line-height: 1.3; letter-spacing: -.04em; transition: color .2s; }}
 .card h3 {{ margin-top: 24px; }}
-.card:hover h3 {{ color: var(--white); }} .card:hover .cover {{ border-color: var(--muted); }} .card:hover .cover img {{ filter: none; }}
+/* :has(:focus-visible), not :focus-within, so a mouse click on a card link doesn't leave the card lit afterwards */
+.card:hover h3, .card:has(:focus-visible) h3 {{ color: var(--white); }}
+.card:hover .cover, .card:has(:focus-visible) .cover {{ border-color: var(--muted); }}
+.card:hover .cover img, .card:has(:focus-visible) .cover img {{ filter: none; }}
 .card .meta-line, p.meta {{ font: 12px var(--mono); letter-spacing: .08em; color: var(--muted); margin: 4px 0 10px; }}
 .body {{ font-size: 14px; line-height: 1.43; color: var(--muted); letter-spacing: -.01em; }}
 .hl {{ font-variant-numeric: tabular-nums; font-size: 13px; line-height: 1.4; margin-top: 10px; }}
 .tags {{ font: 12px/1.5 var(--mono); margin-top: 8px; }}
 .link {{ display: inline-block; font: 12px var(--mono); color: var(--muted); margin-top: 4px; }}
-.link:hover, .title:hover {{ color: var(--text); }}
+.link:hover, .title:hover, .link:focus-visible, .title:focus-visible {{ color: var(--text); }}
 .links-row {{ display: flex; flex-wrap: wrap; gap: 0 18px; }} .link.live {{ color: var(--text); }}
 .more {{ margin-top: 120px; }}
 .more h3 {{ font-weight: 600; font-size: 32px; letter-spacing: -.04em; }}
@@ -435,7 +484,7 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .job .logo {{ display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 6px;
   background: var(--card); object-fit: cover; font-weight: 600; font-size: 14px; letter-spacing: -.02em; color: var(--muted); }}
 .job .logos {{ display: flex; gap: 8px; }}
-.job img.logo {{ padding: 0; opacity: .8; transition: opacity .2s; }} .job:hover img.logo {{ opacity: 1; }}
+.job img.logo {{ padding: 0; opacity: .8; transition: opacity .2s; }} .job:hover img.logo, .job:has(:focus-visible) img.logo {{ opacity: 1; }}
 .company {{ margin-top: 6px; }} .loc {{ font-size: 14px; color: var(--muted); }}
 .job .body {{ font-size: 16px; line-height: 1.5; }} .job .hl {{ font-size: 14px; }} .job .tags {{ color: var(--muted); }}
 
@@ -453,7 +502,14 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 /* contact */
 .contact-body {{ align-items: start; }}
 .contact-body .left {{ grid-column: 1 / 3; }}
-.email {{ display: inline-block; margin-top: 70px; font-size: 32px; letter-spacing: -.03em; border-bottom: 2px solid var(--white); }}
+.email {{ display: inline-block; margin-top: 70px; font-size: 32px; letter-spacing: -.03em; }}
+/* the 2px underline is a pseudo-element, so it can draw in (GSAP tweens --u) and retract to the left on hover or focus
+   like the CTA's; a border, not a background, so it still prints. Hover only where hover is real: a tap opens Mail. */
+.email::after {{ content: ""; display: block; border-top: 2px solid var(--white); transform: scaleX(var(--u, 1));
+  transform-origin: left; transition: transform .3s; }}
+.email.drawing::after {{ transition: none; }}
+.email:focus-visible::after {{ transform: scaleX(0); }}
+@media (hover: hover) {{ .email:hover::after {{ transform: scaleX(0); }} }}
 .offer {{ margin-top: 22px; font-size: 18px; color: var(--muted); letter-spacing: -.01em; max-width: 520px; }}
 .links {{ grid-column: 3 / 5; padding-top: 30px; }}
 .links li {{ border-top: 1px solid var(--line); background: var(--bg); }}
@@ -461,11 +517,11 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .links a {{ display: grid; grid-template-columns: 1fr 1fr; padding: 22px 0 22px var(--gut); align-items: baseline; }}
 .links strong {{ font-weight: 600; font-size: 20px; letter-spacing: -.04em; }}
 .links a > span {{ font: 14px var(--mono); color: var(--muted); padding-left: var(--gut); }}
-.links a:hover span {{ color: var(--text); }}
+.links a:hover span, .links a:focus-visible span {{ color: var(--text); }}
 footer.wrap {{ border-top: 1px solid var(--line); }}
 footer .grid {{ padding: 30px 0 40px; font: 13px var(--mono); color: var(--muted); }}
 footer .c3 {{ grid-column: 3; }} footer .c4 {{ grid-column: 4; padding-left: 0; }}
-footer a:hover {{ color: var(--text); }}
+footer a:hover, footer a:focus-visible {{ color: var(--text); }}
 
 /* phone and tablet: one column, horizontal hairlines only */
 @media (max-width: 1023px) {{
@@ -510,9 +566,12 @@ footer a:hover {{ color: var(--text); }}
 .js h1, .js .intro .lead, .js .paths, .js .facts > *, .js .corner {{ visibility: hidden; }} .js .wrap {{ --rule: 0; }}
 /* reduced motion: no movement, but the short (≤200ms) colour, border and opacity fades stay as hover feedback */
 @media (prefers-reduced-motion: reduce) {{
-  *, ::before, ::after {{ transition-property: color, background-color, border-color, opacity, filter !important;
+  /* visibility is listed so the GitHub card's .15s hover delay holds here too; without it the card turns visible (and
+     catches the pointer) at once, while its opacity still waits */
+  *, ::before, ::after {{ transition-property: color, background-color, border-color, opacity, filter, visibility !important;
     animation: none !important; scroll-behavior: auto !important; }}
-  .cta:hover::after {{ transform: none; }}
+  /* !important: .cta.down:hover::after is more specific and would still drop the arrow */
+  .cta::after {{ transform: none !important; }}
 }}
 /* print: black on white, and everything GSAP keeps hidden until it scrolls into view is shown (!important beats inline) */
 @media print {{
@@ -585,7 +644,7 @@ footer a:hover {{ color: var(--text); }}
   <div class="grid contact-body">
     <div class="left">
       <p class="label">04 / Contact</p>
-      <h2 class="xl" id="contact-h">Let's build<br>something.</h2>
+      <h2 class="xl" id="contact-h">Let's build <br>something.</h2>
       <a class="email" href="{mailto}">{e(EMAIL)}</a>
       <p class="offer">{br(OFFER)}</p>
     </div>

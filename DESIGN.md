@@ -86,35 +86,50 @@ are preloaded, `font-display: swap`, and a size-matched local Arial ("Inter Fall
 - **Project card** (`article.card`, featured only, max 6): right-aligned mono index `01`–`06` → 16:10 cover
   (6px radius, 1px `--line` border, image at 88% brightness) → title → meta `STATUS · KIND · YEAR` → summary →
   `↳ highlight` → first 3 stack tags → links (live in `--text`, then `GitHub ↗`). No cover: hatched placeholder
-  with the monogram. 1px bottom divider. Hover: title to `--white`, cover border to `--muted`, image to full brightness. No lift, no shadow.
+  with the monogram. 1px bottom divider. Hover, or keyboard focus on a link in the card: title to `--white`, cover border to
+  `--muted`, image to full brightness. No lift, no shadow.
 - **More-projects row:** 4-col row between hairlines, 13px padding: `YEAR · KIND` mono (col 1), title (linked
   `↗` when there's a repo, col 2), summary (cols 3–4). Header shows "N more on GitHub"; ends with an "All repositories on GitHub" CTA.
 - **Job row:** col 1 dates (`Mon YYYY to Mon YYYY`) + type; col 2 44px logo tile(s) → role → company → location;
-  cols 3–4 summary, `↳ highlight`, stack tags, site link. Logo at 80% opacity, 100% on row hover.
+  cols 3–4 summary, `↳ highlight`, stack tags, site link. Logo at 80% opacity, 100% on row hover or keyboard focus in the row.
   No logo: tile with the company's first two letters. Freelance rows are left out (they're under Work).
 - **About dl:** two columns (term muted 14, value 15) between hairlines, under a `~/whoami` label.
 - **Contact links:** rows between hairlines, name (Inter 600, 20) + handle (mono 14, muted → `--text` on hover).
-  Email is 32px with a 2px `--white` underline.
-- **CTA:** text + `↗` (or `↓` for in-page) with a 2px `--white` underline drawn as a background. Hover: underline
-  retracts to the left, arrow nudges 2px up-right (`↓` drops 3px).
+  Email is 32px with a 2px `--white` underline, drawn as a pseudo-element so it can draw in on scroll and retract to the
+  left on hover (real-hover devices only, since a tap opens Mail) or keyboard focus.
+- **CTA:** text + `↗` (or `↓` for in-page) with a 2px `--white` underline drawn as a background. Hover or keyboard
+  focus: underline retracts to the left, arrow nudges 2px up-right (`↓` drops 3px). Every hover on the page has a
+  `:focus-visible` twin; card and job rows use `:has(:focus-visible)`, so a mouse click doesn't leave them lit.
 
 ## Motion & background
 
 GSAP 3.15.0 (core, ScrollTrigger, SplitText, ScrambleText) + Lenis 1.3.27, vendored in `js/`. Only transform,
-opacity and clip-path animate; each effect plays once.
+opacity and clip-path animate. Each effect plays once, except the two scroll-linked ones under **Parallax**.
 
 - **Load:** column rules draw down; the name rises letter by letter out of its line mask; lead lines, both CTAs
   (underline drawing in) and facts fade up; corner brackets land last.
 - **Scroll:** labels and card indexes scramble in; cards fade up while covers wipe up and images settle from 1.15×;
-  job rows slide up; numbers in `↳` highlights count up. The real text stays in the DOM until the count starts: it is zeroed only
+  job rows slide up. Cards and job rows fade with opacity, not visibility, so their links stay in the Tab order before
+  they scroll in. Multi-digit numbers in `↳` highlights count up (a single digit would flash false values like
+  "under 0 second"). The real text stays in the DOM until the count starts: it is zeroed only
   when the trigger fires, then ends on the exact original text.
+- **Contact bookend:** the closing line rises letter by letter with the name's exact numbers (SplitText line masks,
+  padded `.ln-mask` so the g's tail isn't clipped; a space before its `<br>` keeps the aria-label "Let's build
+  something."). Then the email underline draws in from the left (`--u` scales `.email::after`).
+- **Parallax:** the background field scrolls at 0.3× under a fixed dot grid (moving the grid itself would strobe). On
+  desktop (≥1024px) the name lifts out faster than the page, up to 25% of the hero's height as the hero scrolls away;
+  it's scrubbed, so scrolling back restores it. Below 1024px the name sits under the nav, so it doesn't lift.
 - **Smooth scroll:** Lenis on GSAP's ticker, anchor jumps glide. In-page links use a custom click handler (`lenis.scrollTo`, then focus the target with
   `preventScroll` and `pushState` the hash); Lenis's own `anchors` option is off.
 - **Background warp:** fixed full-screen canvas behind the page, 12px halftone dot grid. Dot size follows a
-  domain-warped field (grid bent twice by slow sines, read as marbling) that travels diagonally and is pushed by
-  scroll. Dots swell within 160px of the pointer; a `--pop` glint crosses the brightest crests. Sweeps in from the
+  domain-warped field (grid bent twice by slow sines, read as marbling) that travels diagonally; it scrolls at
+  0.3× (see Parallax). Dots swell within 160px of the pointer; a `--pop` glint crosses the brightest crests. Sweeps in from the
   left after the intro, 50% opacity in the hero, full one screen down.
   Drawn at ~30fps, skipped while the tab is hidden; colours come from `--text` / `--pop` read once at start.
+- **Section moods:** while a section holds the middle of the screen, the field eases (about 1s) into that section's
+  mood: dot contrast, drift speed and glint rate (`MOODS` in the script). Hero 1 / 1 / 1; Work 0.8 / 1 / 0.6;
+  Experience 0.8 / 0.8 / 0.6; About 0.5 / 0.5 / 0, quiet for the reading section; Contact 1.15 / 1.3 / 1.3, so it
+  swells at the end. The clock is integrated, so speed changes never jump the field.
 - **Hiding:** `.js` on `<html>` hides hero parts until the intro starts and removes itself after 3s; if the
   animation clock stalls, everything reverts to visible.
 
