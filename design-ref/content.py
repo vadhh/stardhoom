@@ -6,7 +6,7 @@ from pathlib import Path
 CONTENT = Path(__file__).resolve().parent.parent / "content"
 
 # ── copy shared by every layout ("\n" is a desktop line break; narrow layouts join it with a space) ──
-LEAD = "I build AI features and web apps that hold up\nin production, from first prototype to launch."
+LEAD = "Focusing on Security for AI systems.\nI build AI features and web apps that hold up\nin production, from first prototype to launch."
 WORK_LEAD = "Things I've shipped\nat work, for clients\nand for myself."
 EXPERIENCE_LEAD = "Jobs, internships and programs.\nClient work is in Work, above."
 ABOUT_HEADING = "Models die in notebooks.\nI build products."

@@ -3,6 +3,7 @@
 Run `python3 design-ref/build_html.py` after editing a sheet or the copy in content.py, then upload
 index.html. The output is plain static HTML with inline CSS (no build step on the host, no runtime fetch).
 """
+import re
 from html import escape
 from pathlib import Path
 
@@ -21,6 +22,9 @@ def br(s):
 
 
 # Literal arrows are decoration: screen readers would say "north-east arrow". New-tab links say so instead.
+ICON = ("""<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">"""
+        """<rect width="64" height="64" rx="12" fill="%23141414"/><path d="M18 20 L32 46 L46 20" stroke="%23F2F2F2" """
+        """stroke-width="7" fill="none" stroke-linejoin="round"/></svg>'>""")
 ARROW = '<span aria-hidden="true">↗</span>'
 NEW_TAB = '<span class="sr-only"> (opens in new tab)</span>'
 
@@ -31,6 +35,19 @@ def arrow(s):
 
 def ext(url, label, cls="link"):
     return f'<a class="{cls}" href="{e(url)}" target="_blank" rel="noopener">{arrow(label)}{NEW_TAB}</a>'
+
+
+def cases():
+    """{project title: (page name, fragment)} for content/cases/*.html. A fragment is the article body as plain HTML
+    (h1, a .lede paragraph, h2/h3, p, ul, table); its first line names the project it belongs to."""
+    out = {}
+    for f in sorted((CONTENT / "cases").glob("*.html")):
+        body = f.read_text()
+        out[re.match(r"<!-- project: (.+?) -->", body).group(1)] = (f"case-{f.stem}.html", body)
+    return out
+
+
+CASES = cases()
 
 
 def card(i, p):
@@ -45,7 +62,8 @@ def card(i, p):
     if p["highlight"]:
         parts.append(f'<p class="hl">↳ {e(p["highlight"])}</p>')
     parts.append(f'<p class="tags">{e(tags(p["stack"], 3))}</p>')
-    links = ([ext(p["live"], link_label(p["live"]), "link live")] if p.get("live") else []) + \
+    links = ([f'<a class="link live" href="{CASES[p["title"]][0]}">Case study</a>'] if p["title"] in CASES else []) + \
+            ([ext(p["live"], link_label(p["live"]), "link live")] if p.get("live") else []) + \
             ([ext(p["repo"], link_label(p["repo"]))] if p["repo"] else [])
     if links:
         parts.append(f'<p class="links-row">{"".join(links)}</p>')
@@ -80,6 +98,9 @@ def job(r):
 
 JS = ("gsap.min.js", "ScrollTrigger.min.js", "SplitText.min.js", "ScrambleTextPlugin.min.js", "lenis.min.js")
 FONTS = ("inter-latin.woff2", "fira-code-400-latin.woff2")   # fonts/, both preloaded (hero name + mono labels)
+# the closing flower: the reel's frames as a sheet (design-ref/trace_flower.py), which stage.py ships through the canvas'
+# data-src, and the poster: the shader's first frame at 1920 x 1080, shot in a browser
+END_FLOWER = ("img/footer-flower.png", "img/footer-flower.jpg")
 LATIN = ("U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, "
          "U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD")  # Google's latin subset range
 
@@ -90,207 +111,9 @@ if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
   r.classList.add("js"); setTimeout(() => r.classList.remove("js"), 3000);
 }"""
 
-# Entrance and scroll animations. Only transform, opacity and clip-path; each element plays once.
-ANIM_JS = r"""// Background: a full-screen halftone dot grid on a fixed canvas (it stays put while the page scrolls). Dot size
-// follows a domain-warped field that travels like a swell; the field scrolls at 0.3x, like a far layer, dots swell near
-// the pointer, and a glint of --pop passes over the brightest crests. Each frame buckets dots into 6 sizes so the whole
-// grid is 7 fills. Each section has a mood (dot contrast, drift speed, glint rate) that the field eases into.
-const MOODS = { hero: { amp: 1, speed: 1, glint: 1 }, work: { amp: 0.8, speed: 1, glint: 0.6 },
-  experience: { amp: 0.8, speed: 0.8, glint: 0.6 }, about: { amp: 0.5, speed: 0.5, glint: 0 },
-  contact: { amp: 1.15, speed: 1.3, glint: 1.3 } };
-function waves() {
-  const cv = document.querySelector(".bg-waves"), ctx = cv.getContext("2d"), S = 12;
-  let W, H, cells = [], t = 0, last = -1, grow = 1, mx = -1e4, my = -1e4, aim = MOODS.hero;
-  const cur = { ...aim };
-  const css = getComputedStyle(document.documentElement), ink = css.getPropertyValue("--text").trim(), pop = css.getPropertyValue("--pop").trim();
-  const size = () => {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cells = [];
-    for (let y = S / 2; y < H; y += S) for (let x = S / 2; x < W; x += S) cells.push(x, y);
-  };
-  const frame = () => {
-    ctx.clearRect(0, 0, W, H);
-    // parallax: the dots stay on their screen grid (a moving grid would strobe), the field under them scrolls at 0.3x
-    const sy = scrollY * 0.3, lv = [[], [], [], [], [], []], hot = [], glint = 1 - 0.15 * cur.glint;
-    for (let i = 0; i < cells.length; i += 2) {
-      const x = cells[i], y = cells[i + 1];
-      if (x > W * grow * 1.3 - y * 0.3) continue;           // intro: the field sweeps in from the left
-      // domain warp: the grid is bent twice by slow sines, then read as a marbled field. The whole warp travels
-      // diagonally like a swell.
-      const px = x * 0.0019, py = (y + sy) * 0.0019, go = t * 0.45;
-      const wx = px + 1.4 * Math.sin(py * 1.7 + t * 0.3 + go), wy = py + 1.4 * Math.sin(px * 1.3 - t * 0.25);
-      const v = Math.sin(wx * 2.1 + 1.2 * Math.sin(wy * 2.6 - go)) * Math.cos(wy * 1.8 - 1.1 * Math.sin(wx * 1.9 + t * 0.2));
-      let s = ((v + 1) / 2) ** 2.6 * cur.amp;
-      const dx = x - mx, dy = y - my;
-      if (dx < 160 && dx > -160 && dy < 160 && dy > -160) { const d = Math.hypot(dx, dy); if (d < 160) s += (1 - d / 160) * 0.55; }
-      if (v > 0.95 && Math.sin((x + y + sy) * 0.003 - t * 0.8) > glint) hot.push(x, y);   // a glint passes over the brightest crests
-      else lv[Math.min(5, Math.round(s * 5))].push(x, y);
-    }
-    ctx.fillStyle = ink; ctx.globalAlpha = 0.2;
-    lv.forEach((pts, l) => { if (!l) return; ctx.beginPath();
-      for (let i = 0; i < pts.length; i += 2) { ctx.moveTo(pts[i] + l * 0.45, pts[i + 1]); ctx.arc(pts[i], pts[i + 1], l * 0.45, 0, 7); }
-      ctx.fill(); });
-    ctx.fillStyle = pop; ctx.globalAlpha = 0.55; ctx.beginPath();
-    for (let i = 0; i < hot.length; i += 2) { ctx.moveTo(hot[i] + 2, hot[i + 1]); ctx.arc(hot[i], hot[i + 1], 2, 0, 7); }
-    ctx.fill();
-  };
-  // ~30fps is plenty for a slow swell; nothing draws while the tab is hidden. The clock is integrated (t += dt * speed)
-  // so a mood's speed change doesn't jump the field, and the mood eases in over about a second.
-  const tick = (time) => {
-    if (document.hidden || time - last < 1 / 31) return;
-    const dt = last < 0 ? 0 : Math.min(time - last, 0.1), k = 1 - Math.exp(-dt / 0.8);
-    last = time;
-    for (const p in cur) cur[p] += (aim[p] - cur[p]) * k;
-    t += dt * cur.speed;
-    cv.style.opacity = 0.5 + 0.5 * Math.min(1, scrollY / innerHeight); frame();
-  };
-  const point = (e) => { mx = e.clientX; my = e.clientY; };
-  const resize = () => { size(); frame(); };
-  addEventListener("resize", resize); resize();
-  return {
-    play() { grow = 0; gsap.to({}, { duration: 2.4, delay: 1, ease: "power2.inOut", onUpdate() { grow = this.progress(); } });
-      gsap.ticker.add(tick); addEventListener("pointermove", point); },
-    mood(name) { aim = MOODS[name] || MOODS.hero; },
-    stop() { gsap.ticker.remove(tick); removeEventListener("pointermove", point); grow = 1; t = 0; last = -1; mx = my = -1e4;
-      aim = MOODS.hero; Object.assign(cur, aim); frame(); },
-  };
-}
-
-// GitHub card on "vadh" (CSS shows and hides it): placed under the link each time it opens, refreshed from the API
-// the first time. Delegated listeners, because SplitText's autoSplit rebuilds the h1's contents on resize.
-function ghCard() {
-  const card = document.getElementById("gh-card");
-  let fetched = false;
-  const open = (e) => {
-    const a = e.target.closest(".gh");
-    if (!a || a.contains(e.relatedTarget)) return;
-    card.classList.remove("off");
-    const r = a.getBoundingClientRect(), p = card.offsetParent.getBoundingClientRect();
-    card.style.left = Math.max(0, Math.min(r.left - p.left, p.width - card.offsetWidth)) + "px";
-    const h = card.offsetHeight, flip = r.bottom + 10 + h > innerHeight && r.top - 10 - h > 0;   // no room below: go above
-    card.style.top = (flip ? r.top - p.top - 10 - h : r.bottom - p.top + 10) + "px";
-    if (fetched) return;
-    fetched = true;
-    fetch("https://api.github.com/users/vadhh").then((res) => res.ok ? res.json() : {}).then((u) =>
-      card.querySelectorAll("[data-k]").forEach((el) => { const v = u[el.dataset.k]; if (v != null && v !== "") el.textContent = v; }))
-      .catch(() => {});   // offline or rate-limited: the built-in snapshot stays
-  };
-  document.addEventListener("pointerover", open);
-  document.addEventListener("focusin", open);
-  // Escape dismisses it until the pointer or focus comes back to the link
-  document.addEventListener("keydown", (e) => e.key === "Escape" && card.classList.add("off"));
-}
-addEventListener("DOMContentLoaded", ghCard);
-
-addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
-  const root = document.documentElement;
-  if (!window.gsap) return root.classList.remove("js");
-  gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
-  const mm = gsap.matchMedia(), bg = waves();
-  mm.add("(prefers-reduced-motion: no-preference)", () => {
-    bg.play();
-    const once = { start: "top 85%", once: true }, cleanups = [];
-
-    // smooth scroll, driven by GSAP's ticker so ScrollTrigger stays in sync; anchors glide too
-    const lenis = window.Lenis && new Lenis({ autoRaf: false });
-    const raf = (t) => lenis.raf(t * 1000);
-    // in-page links glide, then hand focus to the target (Tab carries on from there) and update the hash
-    const jump = (e) => {
-      const a = e.target.closest('a[href^="#"]'), el = a && document.getElementById(a.hash.slice(1));
-      if (!el || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      e.preventDefault(); history.pushState(null, "", a.hash);
-      lenis.scrollTo(el, { onComplete: () => el.focus({ preventScroll: true }) });
-    };
-    if (lenis) {
-      lenis.on("scroll", ScrollTrigger.update);
-      gsap.ticker.add(raf); gsap.ticker.lagSmoothing(0);
-      document.addEventListener("click", jump); cleanups.push(() => document.removeEventListener("click", jump));
-    }
-
-    // hero: rules draw down, the name rises letter by letter out of its line mask, then the offer, both paths
-    // and the facts row fade up, corner brackets last
-    gsap.timeline()
-      .fromTo(".wrap", { "--rule": 0 }, { "--rule": 1, duration: 1.6, ease: "power2.inOut" }, 0)
-      .from(".intro .lead span", { y: 24, autoAlpha: 0, duration: 0.9, stagger: 0.1, ease: "power3.out" }, 0.7)
-      // explicit % on both ends: a .from() mixing "0" and "100%" ends at 0%, and the inline value would block :hover
-      .fromTo(".paths .cta", { y: 16, autoAlpha: 0, backgroundSize: "0% 2px" },
-        { y: 0, autoAlpha: 1, backgroundSize: "100% 2px", clearProps: "backgroundSize", duration: 0.8, stagger: 0.1, ease: "power3.out" }, 0.95)
-      .from(".facts > *", { y: 24, autoAlpha: 0, duration: 0.9, stagger: 0.08, ease: "power3.out" }, 1.1)
-      .from(".corner", { autoAlpha: 0, scale: 0, duration: 0.5, ease: "back.out(2)" }, 1.5);
-    gsap.set(".intro .lead, .paths", { visibility: "visible" });
-    // deepSlice off: the default slices the nested "vadh" link and leaves an empty, focusable <a> clone behind
-    SplitText.create("h1", { type: "lines,chars", mask: "lines", autoSplit: true, deepSlice: false,
-      onSplit: (self) => gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, delay: 0.15, ease: "expo.out" }) });
-
-    // contact bookend: the closing line rises letter by letter like the name (same numbers) when it scrolls in. Its
-    // masks get room below for the g's tail (.ln-mask). Once it has played, a re-split on resize makes no new tween.
-    let closed = false;
-    SplitText.create("#contact-h", { type: "lines,chars", mask: "lines", linesClass: "ln", autoSplit: true,
-      onSplit: (self) => closed ? undefined : gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, ease: "expo.out",
-        scrollTrigger: { trigger: "#contact-h", ...once, onEnter: () => closed = true } }) });
-    // then the email's underline draws in from the left (--u scales .email::after); .drawing holds off the CSS
-    // hover transition so it doesn't chase the tween
-    const email = document.querySelector(".email");
-    email.classList.add("drawing"); cleanups.push(() => email.classList.remove("drawing"));
-    gsap.fromTo(email, { "--u": 0 }, { "--u": 1, duration: 0.9, delay: 0.2, ease: "power3.inOut",
-      scrollTrigger: { trigger: email, ...once }, onComplete: () => email.classList.remove("drawing") });
-
-    // the background eases into each section's mood while that section holds the middle of the screen
-    gsap.utils.toArray(".hero, main > section").forEach((sec) => ScrollTrigger.create({ trigger: sec, start: "top 50%",
-      end: "bottom 50%", onToggle: (self) => self.isActive && bg.mood(sec.id || "hero") }));
-
-    // mono labels and card numbers scramble in
-    gsap.utils.toArray(".label, .idx").forEach((el) => gsap.fromTo(el, { autoAlpha: 0 }, {
-      autoAlpha: 1, duration: 0.9, ease: "none", scrollTrigger: { trigger: el, ...once },
-      scrambleText: { text: el.textContent, chars: el.matches(".idx") ? "0123456789" : "01/_<>", speed: 0.5 } }));
-
-    // work cards: covers wipe up while the image settles, staggered per row. Cards and job rows fade with opacity, not
-    // autoAlpha: visibility:hidden would drop their links from the Tab order until they scroll in.
-    gsap.set(".card", { opacity: 0, y: 40 });
-    gsap.set(".cover", { clipPath: "inset(100% 0% 0% 0%)" });
-    gsap.set(".cover img", { scale: 1.15 });
-    ScrollTrigger.batch(".card", { ...once, onEnter: (cards) => {
-      const covers = cards.map((c) => c.querySelector(".cover"));
-      gsap.timeline({ defaults: { stagger: 0.12 } })
-        .to(cards, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0)
-        .to(covers, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.1, ease: "expo.inOut" }, 0)
-        .to(covers.map((c) => c.querySelector("img")).filter(Boolean), { scale: 1, duration: 1.4, ease: "expo.out" }, 0);
-    } });
-
-    // experience rows slide up
-    gsap.set(".job", { opacity: 0, y: 50 });
-    ScrollTrigger.batch(".job", { ...once, onEnter: (rows) =>
-      gsap.to(rows, { opacity: 1, y: 0, duration: 0.9, stagger: 0.12, ease: "power3.out" }) });
-
-    // numbers in highlights count up from 0 once the line is in view, keeping their decimals, then snap back to the
-    // exact text. Nothing is zeroed before the trigger fires, so the real numbers sit in the DOM until then. Only
-    // multi-digit numbers count: a single digit would flash false values ("under 0 second", "almost 1x faster").
-    const counted = gsap.utils.toArray(".hl").filter((el) => /\d\d/.test(el.textContent)).map((el) => [el, el.textContent]);
-    counted.forEach(([el, text]) => {
-      const n = { p: 0 };
-      const draw = () => el.textContent = text.replace(/\d+(\.\d+)?/g, (m, d) => (m * n.p).toFixed(d ? d.length - 1 : 0));
-      gsap.to(n, { p: 1, duration: 1.4, ease: "power2.out", onStart: draw, onUpdate: draw, onComplete: () => el.textContent = text,
-        scrollTrigger: { trigger: el, start: "top 90%", once: true } });
-    });
-    return () => {
-      counted.forEach(([el, text]) => el.textContent = text);
-      cleanups.forEach((f) => f());
-      bg.stop();
-      if (lenis) { gsap.ticker.remove(raf); lenis.destroy(); }
-    };
-  });
-  // parallax, desktop only: the name lifts out a little faster than the page as the hero scrolls away (below 1024px
-  // it sits right under the nav, so there's no room to lift)
-  mm.add("(prefers-reduced-motion: no-preference) and (min-width: 1024px)", () => {
-    gsap.to("h1", { y: () => -0.25 * document.querySelector(".hero").offsetHeight, ease: "none",
-      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true, invalidateOnRefresh: true } });
-  });
-  root.classList.remove("js");
-  // animation clock stalled (static screenshot tools, background tabs): undo it all so nothing stays hidden
-  const t0 = gsap.ticker.time;
-  setTimeout(() => gsap.ticker.time - t0 < 1.5 && mm.revert(), 2500);
-}));"""
+# The page's script, design-ref/anim.js: the hero's and the closing flower's WebGL, the snap, and the entrance and
+# scroll animations (only transform, opacity and clip-path; each element plays once, the parallax is scroll-linked).
+ANIM_JS = (Path(__file__).parent / "anim.js").read_text().rstrip("\n")   # inlined into the page
 
 
 def gh_card(url):
@@ -320,8 +143,9 @@ def page():
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Afridho Tavadhu · AI features and web apps</title>
 <meta name="description" content="{e(flat(LEAD))}">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23141414"/><path d="M18 20 L32 46 L46 20" stroke="%23F2F2F2" stroke-width="7" fill="none" stroke-linejoin="round"/></svg>'>
+{ICON}
 {"".join(f'<link rel="preload" href="fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS)}
+<link rel="preload" href="img/batik-dots.bin" as="fetch" crossorigin>
 <script>{HEAD_JS}</script>
 {"".join(f'<script src="js/{f}" defer></script>' for f in JS)}
 <style>
@@ -343,6 +167,12 @@ def page():
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 html {{ scroll-behavior: smooth; }} html.lenis {{ scroll-behavior: auto; }}
 body {{ background: var(--bg); color: var(--text); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }}
+/* a stacked halo of page colour (blurs alone are too faint round thin strokes) clears the batik dots right round each glyph, so small grey copy reads over the bright tones */
+.hero {{ text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 8px var(--bg), 0 0 8px var(--bg); }} .gh-card, .card {{ text-shadow: none; }}
+/* the haloed hero text that moves (the name's letters rising and its parallax; the lead, paths and facts fading up) gets
+   its own compositor layers, drawn once and then moved. Redrawn every frame, its six blurred shadows on 192px letters kept
+   the GPU at ~75% and dropped about a third of the frames on load and on scrolling out (measured on an M1, headed) */
+@media (prefers-reduced-motion: no-preference) {{ h1, h1 div, .intro .lead span, .paths .cta, .facts > * {{ will-change: transform; }} }}
 a {{ color: inherit; text-decoration: none; }}
 ul {{ list-style: none; }}
 :focus-visible {{ outline: 2px solid var(--white); outline-offset: 3px; }}
@@ -394,7 +224,21 @@ h2.xl {{ font-size: clamp(56px, 8.3vw, 120px); letter-spacing: -.06em; line-heig
 .nav .go {{ grid-column: 4; padding-left: 0; }}
 .corner {{ position: absolute; top: 96px; width: 13px; height: 13px; border: 1.5px solid var(--white); }}
 .corner.l {{ left: var(--pad); border-width: 1.5px 0 0 1.5px; }} .corner.r {{ right: var(--pad); border-width: 1.5px 1.5px 0 0; }}
-.bg-waves {{ position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }}
+/* the batik sits behind the hero only and fades out over its last 30%; full strength, as rendered in Remotion (its
+   own masks already dim the dots under the nav and the name) */
+.bg-waves {{ position: absolute; top: 0; left: 0; width: 100%; z-index: -1; pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }}
+/* below 1024 the name sits under the nav and the lead mid-hero, out of reach of the masks made for a name along the
+   bottom, so the dots stay at half strength there */
+@media (max-width: 1023px) {{ .bg-waves {{ opacity: .5; }} }}
+/* pause for the batik: a 30px ring in a 44px target under the right corner bracket; two bars, a triangle when paused */
+.bg-pause {{ position: absolute; z-index: 2; top: 116px; right: calc(var(--pad) - 7px); width: 44px; height: 44px; padding: 0; border: 0;
+  background: none; color: var(--muted); cursor: pointer; display: grid; place-items: center; }}
+.bg-pause[hidden] {{ display: none; }}
+.bg-pause::before {{ content: ""; grid-area: 1 / 1; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; }}
+.bg-pause::after {{ content: ""; grid-area: 1 / 1; width: 9px; height: 10px; box-sizing: border-box; border-inline: 3px solid currentColor; }}
+.bg-pause[aria-pressed="true"]::after {{ width: 0; height: 0; margin-left: 3px; border: solid transparent; border-width: 5px 0 5px 9px; border-left-color: currentColor; }}
+.bg-pause:hover, .bg-pause:focus-visible {{ color: var(--text); }} .bg-pause:hover::before {{ border-color: var(--muted); }}
 /* the first viewport holds name, offer, both paths and the facts row; the facts sit on its bottom edge */
 .hero {{ display: flex; flex-direction: column; min-height: min(100svh, 1080px); container-type: inline-size; }}
 .intro {{ margin-top: auto; padding: 120px 0 56px; align-items: end; }}
@@ -402,7 +246,7 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
   white-space: nowrap; margin-left: -.04em; }}
 .hero .lead {{ grid-column: 1 / 3; margin-top: clamp(32px, 5vh, 56px); padding-right: var(--gut);
   font-size: clamp(22px, 2.2vw, 32px); line-height: 1.25; letter-spacing: -.03em; text-wrap: balance; }}
-.hero .lead span:first-child {{ color: var(--text); }}
+.hero .lead span:first-child {{ color: var(--text); display: block; }}   /* the focus line sits on its own line */
 .paths {{ grid-column: 3 / 5; display: grid; grid-template-columns: 1fr 1fr; }}
 .paths .cta {{ margin-left: var(--gut); justify-self: start; white-space: nowrap; font-size: clamp(16px, 1.45vw, 20px); }}
 .cta.down::after {{ content: "↓"; content: "↓" / ""; }} .cta.down:hover::after, .cta.down:focus-visible::after {{ transform: translateY(3px); }}
@@ -419,6 +263,10 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 /* the negative delay starts the cycle 6.78s in, so the first blink (at 92% = 8.28s) comes 1.5s after load */
 @keyframes gh-blink {{ 0% {{ text-decoration-color: var(--line); }} 92%, 96% {{ text-decoration-color: var(--muted); }}
   94%, 98% {{ text-decoration-color: var(--line); }} }}
+/* while the batik plays, the first blink waits for it to enter and dim (waves() sets data-hint, "go" 1.5s after the
+   entrance); "go" starts the cycle 8.1s in, so the blink comes 0.2s later, then every 9s */
+.hero[data-hint="wait"] .gh, .hero[data-hint="wait"] .gh > div {{ animation: none; }}
+.hero[data-hint="go"] .gh, .hero[data-hint="go"] .gh > div {{ animation-delay: -8.1s; }}
 .gh:hover, .gh:focus-visible {{ color: var(--pop); }}
 .gh:hover, .gh:focus-visible, .gh:hover > div, .gh:focus-visible > div {{ text-decoration-color: currentColor; animation: none; }}
 .gh-card {{ position: absolute; z-index: 5; top: 0; left: 0; width: min(340px, 100%); padding: 20px;
@@ -520,8 +368,16 @@ h1 {{ grid-column: 1 / -1; font-weight: 600; font-size: min(13.6cqw, 192px); lin
 .links a:hover span, .links a:focus-visible span {{ color: var(--text); }}
 footer.wrap {{ border-top: 1px solid var(--line); }}
 footer .grid {{ padding: 30px 0 40px; font: 13px var(--mono); color: var(--muted); }}
-footer .c3 {{ grid-column: 3; }} footer .c4 {{ grid-column: 4; padding-left: 0; }}
+footer .c4 {{ grid-column: 4; padding-left: 0; }}
 footer a:hover, footer a:focus-visible {{ color: var(--text); }}
+/* the flower closes the page: a screen of it past the footer, fading in from the ground, with no text on it. The wheel
+   rests first with its top third showing (.third), then on the whole screen; the canvas draws over its poster, and its
+   pause sits bottom right on a page-colour disc */
+.flower-end {{ position: relative; height: 100svh;
+  -webkit-mask-image: linear-gradient(transparent, #000 15%); mask-image: linear-gradient(transparent, #000 15%); }}
+.flower-end img, .flower-end canvas {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }}
+.flower-end .third {{ position: absolute; top: 33.333%; }}
+.flower-end .bg-pause {{ top: auto; bottom: 24px; }} .flower-end .bg-pause::before {{ background: var(--bg); }}
 
 /* phone and tablet: one column, horizontal hairlines only */
 @media (max-width: 1023px) {{
@@ -571,14 +427,14 @@ footer a:hover, footer a:focus-visible {{ color: var(--text); }}
   *, ::before, ::after {{ transition-property: color, background-color, border-color, opacity, filter, visibility !important;
     animation: none !important; scroll-behavior: auto !important; }}
   /* !important: .cta.down:hover::after is more specific and would still drop the arrow */
-  .cta::after {{ transform: none !important; }}
+  .cta::after, .gh-head::after {{ transform: none !important; }}
 }}
 /* print: black on white, and everything GSAP keeps hidden until it scrolls into view is shown (!important beats inline) */
 @media print {{
   :root {{ --bg: #FFFFFF; --text: #000000; --muted: #444444; --white: #000000; --line: #CCCCCC; --card: #F2F2F2; --stripe: #E6E6E6;
     color-scheme: light; }}
   *, ::before, ::after {{ opacity: 1 !important; visibility: visible !important; transform: none !important; clip-path: none !important; }}
-  .bg-waves, .skip, .gh-card {{ display: none !important; }}
+  .bg-waves, .bg-pause, .skip, .gh-card, .flower-end {{ display: none !important; }}
   /* the covers are light logos on transparent images, so they keep their dark panel */
   .cover {{ background: #1B1B1B; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
   section.wrap {{ padding-top: 48px; padding-bottom: 48px; }}
@@ -596,6 +452,7 @@ footer a:hover, footer a:focus-visible {{ color: var(--text); }}
     <a class="go" href="{mailto}">Start a project {ARROW}</a>
   </nav>
   <span class="corner l" aria-hidden="true"></span><span class="corner r" aria-hidden="true"></span>
+  <button class="bg-pause" type="button" aria-label="Pause background animation" aria-pressed="false" hidden></button>
   <div class="grid intro" id="top" tabindex="-1">
     <h1>Afridho Ta<a class="gh" href="{e(links["GitHub"])}" target="_blank" rel="noopener" aria-describedby="gh-card">vadh</a>u</h1>
     {gh_card(links["GitHub"])}
@@ -654,11 +511,90 @@ footer a:hover, footer a:focus-visible {{ color: var(--text); }}
 </main>
 
 <footer class="wrap">
-  <div class="grid"><span class="c1">© 2026 Afridho Tavadhu</span><a class="c3" href="snake.html">Bored? Play snake {ARROW}</a><span class="c4">Built by hand, no frameworks</span></div>
+  <div class="grid"><span class="c1">© 2026 Afridho Tavadhu</span><span class="c2">Batik: Gringsing Lidah Api Padma, photo <a href="https://www.instagram.com/katalogsuminarkediri/">@katalogsuminarkediri</a></span><span class="c4">Built by hand, no frameworks</span></div>
 </footer>
+<div class="flower-end">
+  <img src="{END_FLOWER[1]}" alt="" width="1920" height="1080" loading="lazy" decoding="async">
+  <canvas data-src="{END_FLOWER[0]}" aria-hidden="true"></canvas>
+  <span class="third"></span>
+  <button class="bg-pause" type="button" aria-label="Pause flower animation" aria-pressed="false" hidden></button>
+</div>
 <script>
 {ANIM_JS}
 </script>
+</body>
+</html>
+"""
+
+
+# Case-study pages: static, no script. Same tokens and fonts as the index, copied by hand like snake.html; the article
+# sits on the index grid's second and third columns.
+CASE_CSS = """
+:root { --bg: #141414; --line: #262626; --text: #F2F2F2; --muted: #8C8C8C; --white: #FFFFFF; --pad: 39px; color-scheme: dark;
+  --sans: "Inter", "Inter Fallback", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+.skip { position: absolute; top: 12px; left: var(--pad); padding: 13px 16px; font: 13px var(--mono); background: var(--bg);
+  border: 1px solid var(--line); transform: translateY(-200%); } .skip:focus { transform: none; }
+.wrap { max-width: 1440px; margin: 0 auto; padding-inline: var(--pad); }
+nav, footer { display: flex; justify-content: space-between; gap: 24px; padding-block: 30px; font-size: 14px; }
+nav a, footer a { text-decoration: none; color: var(--muted); } nav .logo { color: var(--text); font-weight: 600; font-size: 16px; }
+nav a:hover, nav a:focus-visible, footer a:hover, footer a:focus-visible { color: var(--text); }
+footer { border-top: 1px solid var(--line); color: var(--muted); }
+article { max-width: 760px; padding-block: 80px 120px; }
+.label { font: 13px var(--mono); letter-spacing: .04em; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; }
+h1 { font-weight: 600; font-size: clamp(36px, 5vw, 64px); line-height: 1.04; letter-spacing: -.05em; text-wrap: balance; }
+.lede { font-size: clamp(19px, 1.8vw, 22px); line-height: 1.45; margin-top: 32px; }
+h2 { font-weight: 600; font-size: 28px; line-height: 1.15; letter-spacing: -.03em; margin-top: 72px; padding-top: 24px;
+  border-top: 1px solid var(--line); }
+h3 { font-weight: 600; font-size: 18px; margin-top: 36px; }
+p, ul, .tbl { margin-top: 18px; }
+ul { padding-left: 1.2em; } li + li { margin-top: 8px; }
+code { font: .88em var(--mono); }
+/* wide tables scroll inside their own box on phones; the box takes focus so the keyboard can scroll it */
+.tbl { overflow-x: auto; }
+table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: 12px 20px 12px 0; border-bottom: 1px solid var(--line); }
+th { font: 12px var(--mono); letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
+@media (min-width: 1024px) { article { margin-left: 25%; } }
+@media (max-width: 640px) { :root { --pad: 20px; } article { padding-block: 48px 80px; } h2 { margin-top: 56px; } }
+@media print { :root { --bg: #fff; --text: #000; --muted: #444; --line: #bbb; --white: #000; color-scheme: light; }
+  nav, footer { display: none; } article { margin: 0; max-width: none; padding: 0; } table { min-width: 0; } }
+"""
+
+
+def case_page(body, p):
+    title = re.search(r"<h1>(.*?)</h1>", body).group(1)
+    lede = re.sub(r"<[^>]+>", "", re.search(r'<p class="lede">(.*?)</p>', body, re.S).group(1))
+    body = body.replace("<table>", '<div class="tbl" tabindex="0" role="region" aria-label="Table"><table>').replace("</table>", "</table></div>")
+    return f"""<!doctype html>
+<!-- Generated by design-ref/build_html.py from content/cases/. Edit the fragment there, then re-run. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title} · Afridho Tavadhu</title>
+<meta name="description" content="{e(lede)}">
+{ICON}
+<style>
+@font-face {{ font-family: "Inter"; font-weight: 400 600; font-display: swap; src: url(fonts/{FONTS[0]}) format("woff2");
+  unicode-range: {LATIN}; }}
+@font-face {{ font-family: "Fira Code"; font-weight: 400; font-display: swap; src: url(fonts/{FONTS[1]}) format("woff2");
+  unicode-range: {LATIN}; }}
+@font-face {{ font-family: "Inter Fallback"; src: local("Arial"); size-adjust: 107.31%; ascent-override: 90.27%;
+  descent-override: 22.48%; line-gap-override: 0%; }}{CASE_CSS}</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="wrap" aria-label="Main"><a class="logo" href="index.html">vadhh</a><a href="index.html#work">← All work</a></nav>
+<main class="wrap" id="main">
+<article>
+<p class="label">Case study · {e(p["title"])} · {e(p["kind"])}</p>
+{body}</article>
+</main>
+<footer class="wrap"><a href="index.html#work">← All work</a><a href="mailto:{EMAIL}?subject=Project%20inquiry">{EMAIL}</a></footer>
 </body>
 </html>
 """
@@ -685,7 +621,14 @@ def check(html):
     for f in FONTS:
         assert (OUT.parent / "fonts" / f).is_file() and f"url(fonts/{f})" in html, f"missing font: fonts/{f}"
     assert "fonts.googleapis" not in html, "Google Fonts link is back"
+    # the hero's dots: the preload is what makes stage.py ship the file the script fetches
+    assert (OUT.parent / "img/batik-dots.bin").is_file() and 'href="img/batik-dots.bin"' in html \
+        and 'fetch("img/batik-dots.bin")' in html, "missing img/batik-dots.bin (python3 design-ref/pack_dots.py)"
+    for t, (name, _) in CASES.items():
+        assert t in [p["title"] for p in featured] and f'href="{name}"' in html, f"case study without a featured card: {t}"
     assert '<a class="gh"' in html and 'id="gh-card"' in html, "GitHub hover card missing"
+    for f in END_FLOWER:
+        assert (OUT.parent / f).is_file() and f'"{f}"' in html, f"missing {f} (uv run design-ref/trace_flower.py <reel>)"
 
 
 if __name__ == "__main__":
@@ -693,3 +636,7 @@ if __name__ == "__main__":
     check(html)
     OUT.write_text(html)
     print(f"wrote {OUT} ({len(html) // 1024} KB)")
+    by_title = {p["title"]: p for p in sheet("projects")}
+    for t, (name, body) in CASES.items():
+        (OUT.parent / name).write_text(case_page(body, by_title[t]))
+        print(f"wrote {name}")

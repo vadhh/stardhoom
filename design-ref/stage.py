@@ -9,9 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "public"
-PAGES = ("index.html", "about.html", "snake.html")
+PAGES = ("index.html", "about.html", "snake.html", *sorted(p.name for p in ROOT.glob("case-*.html")))   # + case studies
 EXTRA = ("fonts/OFL.txt",)   # font licence travels with the fonts
-REF = re.compile(r'''(?:src|href)="([^"]+)"|url\(['"]?([^'")]+)''')
+REF = re.compile(r'''(?:src|href|poster)="([^"]+)"|url\(['"]?([^'")]+)''')
 
 
 def local_refs(html):

@@ -1,0 +1,56 @@
+<!-- project: AI Question Pipeline -->
+<h1>Questions whose answer isn't in the book</h1>
+<p class="lede">The pipeline turns Indonesian textbook chapters into multiple-choice practice questions, and every answer key must be provable from the chapter. At a go/no-go review in October 2026, 3 of 7 pilot books passed. Three rounds of prompt changes didn't fix it. A check after generation did: 5 of 7 books passed, and defects across all seven fell from 15% to 8%. I built and run this pipeline on my own.</p>
+
+<h2>Problem</h2>
+<p>The bar was at most 10% defective questions per book, judged by a blind rubric review of at least 50 questions per book, sampled across all chapters. Seven pilot books went through production, 100 questions per call. Three passed. Indonesian grade 1 (16%), maths grade 1 (17%) and two English books (26% and 24%) failed.</p>
+<p>The main defect was grounding. The key rested on facts the chapter never wrote: animal sounds, fruit seeds, body-part counts, differences between two numbers, elapsed hours.</p>
+<p>I had missed an early warning. The study the day before used one chapter per book and put maths grade 1 at 4%. Across all chapters it was 17%. A single chapter told me nothing about the book.</p>
+
+<h2>Constraints</h2>
+<ul>
+<li>Generation ran on a small, low-cost model (GLM-5.3-Flash), and there was no budget for a paid API. Any model check had to run as a batch of Claude agents, not as an automatic step.</li>
+<li>The judges were blind Claude Sonnet reviewers using a fixed rubric.</li>
+<li>50 questions per book means one question moves the result by 2 points.</li>
+</ul>
+
+<h2>The failure: more rules in the prompt</h2>
+<p>The first fix was to add rules. The English prompt got "key provable from the unit text, no real-world facts or picture-only answers". The Indonesian prompt got the named failure patterns: no young animals, no animal sounds, no differences or clock times unless the chapter teaches them.</p>
+<p>I tested both on the worst two chapters of each failing book, 100 questions per run, with 25 per run reviewed blind. No difference was significant (p from 0.14 to 0.32, n = 50 per cell).</p>
+<ul>
+<li>The English rules made it worse. Out-of-scope questions did not drop (11 vs 11, and 12 vs 14 of 50). Circular questions jumped from 2 to 10 and from 0 to 18. The model obeyed "provable from the text" by copying the text into the question, which gave the answer away.</li>
+<li>The Indonesian rules leaned better (defects 42% to 26%, and 24% to 14%), but there were fewer good questions, and both books stayed far above 10%. Not adopted.</li>
+</ul>
+<p>This was the third time. Two earlier rounds of prompt changes had failed the same way, and I kept changing the prompt anyway.</p>
+
+<h2>The fix: check after generation</h2>
+<ul>
+<li>One Claude Haiku agent per chapter marks each question as grounded or not, and as circular or not.</li>
+<li>To mark a question grounded, the agent must quote at most 25 words of the chapter that prove the key.</li>
+<li>Code then checks that the quote is really in the chapter (3-word windows, at least 80% covered). If the quote isn't found, the question counts as ungrounded.</li>
+</ul>
+<p>On a pilot of 450 labelled questions the check flagged 25%, with precision 0.42 and recall 0.73. More than half of what it drops is fine, and about a quarter of real defects still slip through.</p>
+<p>The full run covered 5,594 questions. It flagged 1,361 (24%) and kept 4,233. If the pilot precision holds, about 790 of the dropped questions were fine. That is what the filter costs.</p>
+<table>
+<thead><tr><th>Book</th><th>Defective before</th><th>After the check</th><th>Passes (≤ 10%)</th></tr></thead>
+<tbody>
+<tr><td>English, book 6</td><td>24%</td><td>2%</td><td>Yes</td></tr>
+<tr><td>Indonesian, grade 1</td><td>16%</td><td>8%</td><td>Yes</td></tr>
+<tr><td>Science</td><td>9%</td><td>4%</td><td>Yes</td></tr>
+<tr><td>Civics, grade 4</td><td>8%</td><td>2%</td><td>Yes</td></tr>
+<tr><td>Civics, grade 1</td><td>6%</td><td>8%</td><td>Yes</td></tr>
+<tr><td>English, book 2</td><td>26%</td><td>14%</td><td>No</td></tr>
+<tr><td>Maths, grade 1</td><td>17%</td><td>16%</td><td>No</td></tr>
+</tbody>
+</table>
+<p>Each figure is a fresh blind sample of 50 questions. English book 2 still fails on circular questions the check missed and hints that give the answer away. Maths grade 1 still fails on questions that need a picture, a wrong time key and near-duplicate drills. Civics grade 1 going from 6% to 8% is noise: 3 questions against 4.</p>
+<h3>Is it real?</h3>
+<p>Per book, most of these moves are within noise at n = 50. Only English book 6, from 12 bad questions to 1, is clearly real on its own. Pooled over all seven books, defects went from 66 of 450 to 27 of 350, which is 15% to 8% (p ≈ 0.002).</p>
+
+<h2>What it led to</h2>
+<ul>
+<li>Defects get filtered out after generation. I stopped trying to prompt them away.</li>
+<li>The pipeline has had this shape ever since: generate, then code checks, then the AI check, then people review the flagged pool.</li>
+<li>As of 10 November 2026 there are 112,565 ready questions, and all 66 grade-and-subject categories have at least 900.</li>
+</ul>
+<p>Still open: the AI check finds likely problems for people to look at, and it can't judge on its own. On 724 teacher verdicts, the AI checkers agreed with the teacher 47% to 57% of the time. Passing everything would have agreed 64.5%.</p>
