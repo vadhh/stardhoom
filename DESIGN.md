@@ -24,6 +24,7 @@ Contrast comes from size and weight, not colour.
 | `--white` | `#FFFFFF` | Accent: CTA and email underlines, corner brackets, focus ring, hover titles |
 | `--card` | `#1B1B1B` | Cover and logo tile fill (placeholder hatch alternates with `#181818`) |
 | `--pop` | `#F2C230` | The hovered "vadh" in the name and the food in snake.html. Nowhere else |
+| `--hint` | `#666666` | The "vadh" underline at rest: the faintest grey with 3:1 on `--bg` |
 | `--pad` | 39px (20px < 1024) | Outer margin |
 | `--gut` | 30px | Inner column gutter |
 
@@ -33,17 +34,19 @@ Contrast comes from size and weight, not colour.
 from `fonts/` (latin subsets, SIL OFL in `fonts/OFL.txt`): Inter is one variable woff2 for 400–600, both files
 are preloaded, `font-display: swap`, and a size-matched local Arial ("Inter Fallback") stands in while Inter loads.
 `↗` and `↳` aren't in either font, so they come from the system face. Tight negative tracking on all display sizes.
+Sizes are set in rem (the table gives px at the default 16px root); fluid sizes clamp between rem bounds no more than
+2.5x apart, with a small rem share in the slope, equal to the old px/vw curves at 390 and 1440 and within ~2px between.
 
 | Role | Selector | Size / line-height | Weight | Tracking | Colour |
 |---|---|---|---|---|---|
-| Name | `h1` | `min(13.6cqw, 192px)` / .9; `25.5cqw` / .88 below 1024 | 600 | −6% | `--text` |
-| Section heading | `h2` | `clamp(48px, 6.7vw, 96px)` / 1.04 | 600 | −6% | `--text` |
-| About heading | `h2.m` | `clamp(36px, 5vw, 72px)` / 1.04 | 600 | −5% | `--text` |
-| Contact heading | `h2.xl` | `clamp(56px, 8.3vw, 120px)` / .97 | 600 | −6% | `--text` |
-| Hero lead | `.hero .lead` | `clamp(22px, 2.2vw, 32px)` / 1.25; 20 / 1.3 below 1024 | 400 | −3% | line 1 `--text`, line 2 `--muted` |
-| Lead | `.lead` | `clamp(18px, 1.7vw, 24px)` / 1.33 | 400 | −2% | `--muted` |
+| Name | `h1` | `min(13.6cqw, 192px)` / .9; `25.5cqw` / .88 below 1024 (container-sized display type, deliberately outside the rem/2.5x rule) | 600 | −6% | `--text` |
+| Section heading | `h2` | `clamp(3rem, .25rem + 6.42vw, 6rem)` (48–96) / 1.04 | 600 | −6% | `--text` |
+| About heading | `h2.m` | `clamp(2.25rem, .25rem + 4.73vw, 4.5rem)` (36–72) / 1.04 | 600 | −5% | `--text` |
+| Contact heading | `h2.xl` | `clamp(3.5rem, .27rem + 8vw, 7.5rem)` (56–120) / .97 | 600 | −6% | `--text` |
+| Hero lead | `.hero .lead` | `clamp(1.375rem, .18rem + 2vw, 2rem)` (22–32) / 1.25; 20 / 1.3 below 1024 | 400 | −3% | line 1 `--text`, line 2 `--muted` |
+| Lead | `.lead` | `clamp(1.125rem, .25rem + 1.42vw, 1.5rem)` (18–24) / 1.33 | 400 | −2% | `--muted` |
 | About prose | `.prose p` | 20 / 1.5 (17 below 1024) | 400 | −1% | `--muted` |
-| CTA | `.cta` | 20 (hero paths `clamp(16px, 1.45vw, 20px)`) | 400 | −2% | `--text` |
+| CTA | `.cta` | 20 (hero paths `clamp(1rem, .25rem + 1.16vw, 1.25rem)`, 16–20) | 400 | −2% | `--text` |
 | Card / job title | `.card h3`, `.job h3` | 20 / 1.3 | 600 | −4% | `--text` |
 | Body | `.body` | 14 / 1.43 (jobs 16 / 1.5) | 400 | −1% | `--muted` |
 | Highlight | `.hl` | 13 / 1.4 (jobs 14), tabular nums | 400 | 0 | `--text` |
@@ -68,14 +71,14 @@ are preloaded, `font-display: swap`, and a size-matched local Arial ("Inter Fall
 | Experience | label + heading cols 1–2, lead cols 3–4; job rows below |
 | About | label + `h2.m`; `~/whoami` dl cols 1–2, prose cols 3–4 |
 | Contact | label + `h2.xl`, email and offer cols 1–2; link list cols 3–4 |
-| Footer | mono 13: © col 1, the batik's name and its photo's source (@katalogsuminarkediri on Instagram) col 2, "Built by hand, no frameworks" col 4 |
+| Footer | the `<footer>` landmark holds this row and the closing flower. Mono 13: © col 1, the batik's name and its photo's source (@katalogsuminarkediri on Instagram) col 2, "Built by hand, no frameworks" col 4 |
 | Closing flower | `.flower-end`, full width, one screen (`100svh`) past the footer: the flower in glass tiles on a canvas over its poster, fading in from `--bg` over its top 15%. No text on it |
 
 **Below 1024px**
 - One column, `--pad` 20px, column rules and `<br class="wide">` hidden; horizontal hairlines only.
 - Sections pad 48 / 64. Nav keeps logo + "Start a project", hides the anchor list.
 - Hero drops the full-viewport height. The name wraps to two lines (one word per line, each about the
-  container width at `25.5cqw`). CTAs sit side by side and wrap; facts become `120px | value` rows between hairlines.
+  container width at `25.5cqw`, at every width below 1024). CTAs sit side by side and wrap; facts become `120px | value` rows between hairlines.
 - Cards stack (24px vertical padding); more-project rows stack meta / title / summary.
 - About: prose moves above the dl; dl becomes `100px | value`. Contact email drops to 24px.
 
@@ -98,8 +101,10 @@ are preloaded, `font-display: swap`, and a size-matched local Arial ("Inter Fall
 - **Contact links:** rows between hairlines, name (Inter 600, 20) + handle (mono 14, muted → `--text` on hover).
   Email is 32px with a 2px `--white` underline, drawn as a pseudo-element so it can draw in on scroll and retract to the
   left on hover (real-hover devices only, since a tap opens Mail) or keyboard focus.
-- **CTA:** text + `↗` (or `↓` for in-page) with a 2px `--white` underline drawn as a background. Hover or keyboard
-  focus: underline retracts to the left, arrow nudges 2px up-right (`↓` drops 3px). Every hover on the page has a
+- **CTA:** text + `↗` (or `↓` for in-page) with a 2px `--white` underline, a border on `::before` scaled by `--u` like the
+  email's (so it shows in forced colours and print). Hover or keyboard
+  focus: underline retracts to the left, arrow nudges 2px up-right (`↓` drops 3px; motion allowed only). Press: CTAs turn
+  `--muted`, text links dim to 60%, the pause buttons shrink to 90%. Every hover on the page has a
   `:focus-visible` twin; card and job rows use `:has(:focus-visible)`, so a mouse click doesn't leave them lit.
 
 ## Motion & background
@@ -123,8 +128,11 @@ opacity and clip-path animate. Each effect plays once, except the scroll-linked 
   something."). Then the email underline draws in from the left (`--u` scales `.email::after`); its trigger is clamped so it
   still fires on screens too tall for the email to reach 85%.
 - **Parallax:** on desktop (≥1024px) the name lifts out faster than the page, up to 25% of the hero's height as the hero scrolls away;
-  it's scrubbed, so scrolling back restores it. Below 1024px the name sits under the nav, so the distance is 0 (one
-  trigger at every width; a width query would reset the scroll position when the window widens past 1024px).
+  it's scroll-linked, so scrolling back restores it. It is a CSS scroll-driven animation (`h1 { animation: lift }` on
+  `scroll(root)`, `translate` over the first `min(100svh, 1080px)` of scroll, the hero's height whenever its content
+  fits), which follows Lenis since Lenis scrolls the document. Where `animation-timeline` isn't supported, anim.js scrubs
+  the same lift with GSAP ScrollTrigger: one trigger at every width with a distance of 0 below 1024px (a width query
+  would reset the scroll position when the window widens past 1024px).
 - **Smooth scroll:** Lenis on GSAP's ticker, anchor jumps glide. In-page links use a custom click handler (`lenis.scrollTo`, then focus the target with
   `preventScroll` and `pushState` the hash); Lenis's own `anchors` option is off.
 - **Snap per section:** one swipe, one stop. On a swipe's first wheel event, if the next stop in its direction is at
@@ -165,8 +173,8 @@ opacity and clip-path animate. Each effect plays once, except the scroll-linked 
     the dark fills, damped over the name. It runs only while the pointer is on the hero. With no pointer on it (it
     left the hero or the window, or hasn't moved since the page loaded), the light eases down to 45% (`DIM`) and the
     loop's clock slows with it to a stop, and then nothing draws until the pointer comes back and both ease up again
-    (about a second). The 2s entrance always plays at full light. On load, the first blink of the "vadh" underline (the
-    GitHub card's hint) waits until 1.5s after the entrance, when the dim has settled (`.hero[data-hint]`).
+    (about a second). The 2s entrance always plays at full light. On load, the one blink of the "vadh" underline (the
+    GitHub card's hint, two flashes over 0.9s) waits until 1.5s after the entrance, when the dim has settled (`.hero[data-hint]`).
   - **Pointer:** within 180px the dots swell, brighten and lean away from it, eased in and out (and damped over the
     text like the loop); it fades when the pointer leaves the window. Never on touch.
   - **Strength:** intensity 0.78, Remotion's `BatikHeroWithOverlay` value (made for text on top), at full opacity
@@ -185,15 +193,27 @@ opacity and clip-path animate. Each effect plays once, except the scroll-linked 
 
 ## Accessibility
 
-- `:focus-visible`: 2px `--white` outline, 3px offset. Sections are `aria-labelledby` their `h2`; decorative
-  indexes, corners and the canvas are `aria-hidden`.
+- `:focus-visible`: 2px `--white` outline, 3px offset. Sections carry no accessible name (a named `<section>` is a
+  region landmark); decorative indexes, corners and the canvas are `aria-hidden`. Landmarks: header, nav, main and
+  the footer, which also holds the closing flower and its pause button.
+- The h1's SplitText letters are `aria-hidden` and the h1 is named "Afridho Tavadhu"; each split gives the "vadh" link's
+  line and mask back to the accessibility tree, so no focusable element sits inside `aria-hidden`. The link is named
+  "vadh" (`aria-label`) and described by the GitHub card, which is off the Tab path and hidden from the tree while closed.
+- Lists styled `list-style: none` outside `<nav>` (cards, project and job rows, contact links) carry `role="list"`, which
+  Safari otherwise drops. Link names are unique per target and equal for the same target: hidden context names each
+  case study and repo ("Case study (MiniFW-AI)", "GitHub github.com/vadhh/asta"); "All repositories" opens the
+  repositories tab and the email address a plain `mailto:`.
 - "Skip to content" link to `main#main` is the first focusable element, hidden above the viewport until focused.
-- `#top`, `main` and the four sections carry `tabindex="-1"` so anchor jumps move focus (no ring on them).
-- Below 1024px, every link (nav, hero CTAs, email, `.link`, `.rows .title`, footer) gets padding + negative
-  margin for a ≥40px hit area without moving the layout.
-- `color-scheme: dark` on `:root`.
-- Reduced motion keeps colour, border, opacity and filter fades (≤200ms) but drops transforms, GSAP motion,
-  scroll smoothing and the moving background (drawn once, still).
+- `#top`, `main` and the four sections carry `tabindex="-1"` so anchor jumps move focus (a ring only after a keyboard jump).
+- Below 1024px and on any coarse pointer, every link (nav, hero CTAs, `.link`, `.rows .title`, footer; the email below
+  1024 only) gets padding + negative margin for a ≥40px hit area without moving the layout.
+- `color-scheme: dark` on `:root` and in a `<meta name="color-scheme">`.
+- Motion is opt-in: transform transitions, the arrows' nudges, the GitHub card's rise, the "vadh" blink, smooth
+  scrolling and the parallax are declared only under `prefers-reduced-motion: no-preference`; with reduce, colour,
+  border, opacity and filter fades (≤200ms) stay, GSAP motion is off and the moving background is drawn once, still.
+- CSS: cascade layers `reset, base, components, overrides` (the one-column collapse below 1024 is `overrides`, so it
+  needs no `!important`); element resets, not `*`; logical properties except the GitHub card's JS-set `left`/`top` and
+  the play triangle. Forced colours: the column rules are redrawn in `CanvasText`.
 - **No JS:** the full page renders statically; no background canvas, and the closing flower shows its poster.
 - **Link arrows:** literal `↗` in link text sits in `aria-hidden` spans; every `target="_blank"` link carries an
   `.sr-only` " (opens in new tab)". The `.cta::after` arrow uses `content: "↗" / ""` so it isn't announced.

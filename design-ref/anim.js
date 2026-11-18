@@ -308,18 +308,27 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
 
     // hero: rules draw down, the name rises letter by letter out of its line mask, then the offer, both paths
     // and the facts row fade up, corner brackets last
+    // the CTAs' underlines draw in with them (--u scales .cta::before); .drawing holds off its hover transition meanwhile
+    const ctas = gsap.utils.toArray(".paths .cta"), drawn = () => ctas.forEach((el) => el.classList.remove("drawing"));
+    ctas.forEach((el) => el.classList.add("drawing")); cleanups.push(drawn);
     gsap.timeline()
       .fromTo(".wrap", { "--rule": 0 }, { "--rule": 1, duration: 1.6, ease: "power2.inOut" }, 0)
       .from(".intro .lead span", { y: 24, autoAlpha: 0, duration: 0.9, stagger: 0.1, ease: "power3.out" }, 0.7)
-      // explicit % on both ends: a .from() mixing "0" and "100%" ends at 0%, and the inline value would block :hover
-      .fromTo(".paths .cta", { y: 16, autoAlpha: 0, backgroundSize: "0% 2px" },
-        { y: 0, autoAlpha: 1, backgroundSize: "100% 2px", clearProps: "backgroundSize", duration: 0.8, stagger: 0.1, ease: "power3.out" }, 0.95)
+      .fromTo(ctas, { y: 16, autoAlpha: 0, "--u": 0 },
+        { y: 0, autoAlpha: 1, "--u": 1, duration: 0.8, stagger: 0.1, ease: "power3.out", onComplete: drawn }, 0.95)
       .from(".facts > *", { y: 24, autoAlpha: 0, duration: 0.9, stagger: 0.08, ease: "power3.out" }, 1.1)
       .from(".corner", { autoAlpha: 0, scale: 0, duration: 0.5, ease: "back.out(2)" }, 1.5);
     gsap.set(".intro .lead, .paths", { visibility: "visible" });
-    // deepSlice off: the default slices the nested "vadh" link and leaves an empty, focusable <a> clone behind
+    // deepSlice off: the default slices the nested "vadh" link and leaves an empty, focusable <a> clone behind.
+    // SplitText names the h1 (aria-label) and hides every line and letter from screen readers, the link's line and mask
+    // too, which would hide a focusable link: each split gives those back, so only letters stay hidden and the link
+    // reads by its own aria-label
     SplitText.create("h1", { type: "lines,chars", mask: "lines", autoSplit: true, deepSlice: false,
-      onSplit: (self) => gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, delay: 0.15, ease: "expo.out" }) });
+      onSplit: (self) => {
+        const h1 = self.elements[0];
+        for (let el = h1.querySelector(".gh").parentElement; el !== h1; el = el.parentElement) el.removeAttribute("aria-hidden");
+        return gsap.from(self.chars, { yPercent: 110, duration: 1.2, stagger: 0.035, delay: 0.15, ease: "expo.out" });
+      } });
 
     // contact bookend: the closing line rises letter by letter like the name when it scrolls in. Its masks get room
     // below for the g's tail (.ln-mask), so it starts deeper (125%, not 110%) to hide the i dots under that room. Once it has played, a re-split on resize makes no new tween.
@@ -376,9 +385,10 @@ addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => {
     };
   });
   // parallax, desktop only: the name lifts out a little faster than the page as the hero scrolls away (below 1024px
-  // it sits right under the nav, so the distance is 0). Not a width query: a context created during a resize refresh
-  // makes ScrollTrigger skip restoring the scroll position, and the page jumps to the top.
-  mm.add("(prefers-reduced-motion: no-preference)", () => {
+  // it sits right under the nav, so the distance is 0). The page does it in CSS (h1's scroll-driven `lift`); this
+  // scrub is the fallback where scroll-driven animations aren't supported. Not a width query: a context created
+  // during a resize refresh makes ScrollTrigger skip restoring the scroll position, and the page jumps to the top.
+  if (!CSS.supports("(animation-timeline: view()) and (animation-range: entry)")) mm.add("(prefers-reduced-motion: no-preference)", () => {
     gsap.to("h1", { y: () => innerWidth < 1024 ? 0 : -0.25 * document.querySelector(".hero").offsetHeight, ease: "none",
       scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true, invalidateOnRefresh: true } });
   });

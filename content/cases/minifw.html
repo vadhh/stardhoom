@@ -10,7 +10,8 @@
 <h2>Constraints</h2>
 <p>The tightest one was the clock: any fix had to be built, rerun and verified the same day without breaking the frozen evidence.</p>
 <table>
-<thead><tr><th>Constraint</th><th>Limit</th><th>What it forced</th></tr></thead>
+<caption>Release constraints and what each one forced</caption>
+<thead><tr><th scope="col">Constraint</th><th scope="col">Limit</th><th scope="col">What it forced</th></tr></thead>
 <tbody>
 <tr><td>Deadline</td><td>Delivery by end of day; code frozen at 15:00</td><td>Fixes small enough to rebuild and re-verify within hours</td></tr>
 <tr><td>Network position</td><td>Runs on the existing gateway with one managed interface; blocks sit in the nftables <code>forward</code> chain</td><td>No inline tap: flow data comes from connection tracking (conntrack)</td></tr>
@@ -29,7 +30,8 @@
 <p>Lab clients reach the gateway through virtual Ethernet pairs with segmentation offloads on (TSO and GSO). The kernel merges many segments into one large packet before conntrack counts it. With those defaults, no transfer passed 56 packets a second and nothing was isolated. An earlier check of downloads up to 300 MB passed for the same reason.</p>
 <p>The test added on 6 November turned TSO, GSO and GRO off, so segments were MTU-sized, as on a network card that does not merge them first. Same transfers, same gateway:</p>
 <table>
-<thead><tr><th>Transfer (offloads off)</th><th>Before: peak</th><th>Before: result</th><th>After: peak</th><th>After: result</th></tr></thead>
+<caption id="transfers">The same transfers on the release candidate (before) and the fixed build (after)</caption>
+<thead><tr><th scope="col">Transfer (offloads off)</th><th scope="col">Before: peak</th><th scope="col">Before: result</th><th scope="col">After: peak</th><th scope="col">After: result</th></tr></thead>
 <tbody>
 <tr><td>20 MB, paced at 4 MB/s</td><td>1546 pkt/s</td><td>Isolated at 7.0 s for 24 h</td><td>1709 pkt/s</td><td>Not isolated</td></tr>
 <tr><td>2.5 Mbit/s stream, 60 s, one connection</td><td>234 pkt/s</td><td>Isolated at 7.1 s for 24 h; stream cut</td><td>265 pkt/s</td><td>Not isolated; all 18.75 MB arrived</td></tr>
@@ -50,7 +52,8 @@
 <h2>Numbers</h2>
 <p>The candidate was committed at 09:53 and the fix at 10:50. The fixed build was lab-verified by 11:15 and delivered at 16:43. These figures are for the fixed build.</p>
 <table>
-<thead><tr><th>Measure</th><th>Result</th><th>Source</th></tr></thead>
+<caption>Results for the fixed build</caption>
+<thead><tr><th scope="col">Measure</th><th scope="col">Result</th><th scope="col">Source</th></tr></thead>
 <tbody>
 <tr><td>Regression suite</td><td>659 passed in 30 s</td><td>Lab</td></tr>
 <tr><td>Reproducible build</td><td>Byte-identical installer on two VMs; the same hash on the tester's machine</td><td>Lab and independent</td></tr>

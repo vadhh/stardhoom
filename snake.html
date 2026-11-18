@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>Snake · Afridho Tavadhu</title>
 <meta name="description" content="Snake, in the style of the portfolio. Arrow keys, WASD or swipe.">
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23141414"/><path d="M18 20 L32 46 L46 20" stroke="%23F2F2F2" stroke-width="7" fill="none" stroke-linejoin="round"/></svg>'>
@@ -22,10 +23,12 @@
   --pad: 39px; --gut: 30px; color-scheme: dark;
   --sans: "Inter", "Inter Fallback", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+/* no global reset: only the default margins and paddings of the elements this page uses */
+body, p, h1, h2, dl, dd, ul, ol, button { margin: 0; }
+ul, ol { padding: 0; }
+body { background: var(--bg); color: var(--text); font: 1rem/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
 a { color: inherit; text-decoration: none; }
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 ol { list-style: none; }
 :focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
 .mono { font-family: var(--mono); }
@@ -33,71 +36,85 @@ ol { list-style: none; }
 .sym { font-family: system-ui, sans-serif; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* without JS there's no game: no dead Start button, no d-pad */
-html:not(.js) #overlay, html:not(.js) .pad { display: none !important; }
+html:not(.js) #overlay, html:not(.js) .pad { display: none; }
 
 /* 4-column grid with hairline rules at the column boundaries */
-.wrap { position: relative; max-width: 1440px; margin: 0 auto; padding-inline: var(--pad); }
-.wrap::before { content: ""; position: absolute; inset: 0 var(--pad); pointer-events: none;
+.wrap { position: relative; box-sizing: border-box; max-inline-size: 1440px; margin-inline: auto; padding-inline: var(--pad); }
+.wrap::before { content: ""; position: absolute; inset-block: 0; inset-inline: var(--pad); pointer-events: none;
   background: linear-gradient(var(--line), var(--line)) 25% 0 / 1px 100% no-repeat,
     linear-gradient(var(--line), var(--line)) 50% 0 / 1px 100% no-repeat,
     linear-gradient(var(--line), var(--line)) 75% 0 / 1px 100% no-repeat; }
+/* forced colors drop gradients, so there the rules are borders: 25% and 75% on ::before, 50% on ::after (under the content) */
+@media (forced-colors: active) and (min-width: 1024px) {
+  .wrap::before { background: none; inset-inline: calc(var(--pad) + (100% - 2 * var(--pad)) / 4); border-inline: 1px solid; }
+  .wrap::after { content: ""; position: absolute; inset-block: 0; inset-inline-start: 50%; z-index: -1; border-inline-start: 1px solid; }
+}
 .wrap > * { position: relative; }
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
-.nav { padding-top: 30px; font-size: 14px; align-items: baseline; }
-.nav .logo { font-weight: 600; font-size: 16px; letter-spacing: -.02em; }
+.nav { padding-block-start: 30px; font-size: .875rem; align-items: baseline; }
+.nav .logo { font-weight: 600; font-size: 1rem; letter-spacing: -.02em; }
 .nav .back { grid-column: 4; color: var(--muted); } .nav .back:hover { color: var(--text); }
 
-.game { padding: 80px 0 64px; align-items: start; }
+.game { padding-block: 80px 64px; align-items: start; }
 /* cols 1-2 let the column rules through, like the hero on index.html; the two-column rows below split on the 25% rule */
 .side { grid-column: 1 / 3; }
-.label { font: 13px var(--mono); letter-spacing: .04em; color: var(--muted); margin-bottom: 14px; }
-h1 { font-weight: 600; font-size: clamp(56px, 8.3vw, 120px); line-height: .97; letter-spacing: -.06em; }
-.lead { margin-top: 28px; max-width: 460px; font-size: clamp(18px, 1.7vw, 24px); line-height: 1.33; letter-spacing: -.02em; color: var(--muted); }
+.label { font: .8125rem var(--mono); letter-spacing: .04em; color: var(--muted); margin-block-end: 14px; }
+h1 { font-weight: 600; font-size: clamp(3.5rem, .25rem + 8.0222vw, 7.5rem); line-height: .97; letter-spacing: -.06em; }
+.lead { margin-block-start: 28px; max-inline-size: 460px; font-size: clamp(1.125rem, .25rem + 1.39vw, 1.5rem); line-height: 1.33; letter-spacing: -.02em; color: var(--muted); }
 .lead span { color: var(--text); }
-.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 56px; border-top: 1px solid var(--line); padding-top: 18px; }
-.stats div + div, .keys li > :last-child { padding-left: var(--gut); }
-.stats dt { font: 13px var(--mono); color: var(--muted); }
-.stats dd { font-size: 24px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.keys { margin-top: 40px; border-top: 1px solid var(--line); }
-.keys li { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-.keys li span:first-child { color: var(--muted); } .keys .mono { font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-block-start: 56px; border-block-start: 1px solid var(--line); padding-block-start: 18px; }
+.stats div + div, .keys li > :last-child { padding-inline-start: var(--gut); }
+.stats dt { font: .8125rem var(--mono); color: var(--muted); }
+.stats dd { font-size: 1.5rem; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.keys { margin-block-start: 40px; border-block-start: 1px solid var(--line); }
+.keys li { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-block: 12px; border-block-end: 1px solid var(--line); font-size: .875rem; }
+.keys li span:first-child { color: var(--muted); } .keys .mono { font-size: .8125rem; }
 
 /* the board: a square in cols 3-4, small enough that the whole game fits one screen */
-.stage { grid-column: 3 / 5; padding-left: var(--gut); background: var(--bg); scroll-margin-bottom: 16px; }
-.board { position: relative; width: min(100%, calc(100svh - 190px)); min-width: min(100%, 320px); aspect-ratio: 1;
-  background: var(--card); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; container-type: inline-size; }
+.stage { grid-column: 3 / 5; padding-inline-start: var(--gut); background: var(--bg); scroll-margin-block-end: 16px; }
+.board { position: relative; box-sizing: border-box; width: min(100%, calc(100svh - 190px)); min-width: min(100%, 320px); aspect-ratio: 1;
+  background: var(--card); border: 1px solid var(--line); border-radius: 6px; overflow: clip; container-type: inline-size; }
 canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .overlay { position: absolute; inset: 0; display: grid; align-content: safe center; gap: 18px; padding: clamp(20px, 6%, 48px);
   background: rgb(27 27 27 / .92); overflow: auto; }
 .overlay[hidden] { display: none; }
-.overlay h2 { font-weight: 600; font-size: clamp(32px, 4vw, 48px); line-height: 1; letter-spacing: -.05em; }
-.overlay .note { font: 13px var(--mono); color: var(--muted); }
-.scores { border-top: 1px solid var(--line); max-width: 420px; }
-.scores li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line);
-  font: 13px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.overlay h2 { font-weight: 600; font-size: clamp(2rem, .25rem + 3.6vw, 3rem); line-height: 1; letter-spacing: -.05em; }
+.overlay .note { font: .8125rem var(--mono); color: var(--muted); }
+.scores { border-block-start: 1px solid var(--line); max-inline-size: 420px; }
+.scores li { display: flex; justify-content: space-between; gap: 16px; padding-block: 10px; border-block-end: 1px solid var(--line);
+  font: .8125rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .scores .top { color: var(--text); }
 .scores .you { color: var(--text); }
-.scores .you span:first-child::after { content: "_"; content: "_" / ""; animation: blink 1s step-end infinite; }
+.scores .you span:first-child::after { content: "_"; content: "_" / ""; }
 @keyframes blink { 50% { opacity: 0; } }
-.cta { justify-self: start; display: inline-flex; justify-content: space-between; gap: 24px; min-width: 170px; margin-top: 8px;
-  padding-bottom: 14px; font-size: 20px; letter-spacing: -.02em;
-  background: linear-gradient(var(--white), var(--white)) 0 100% / 100% 2px no-repeat; transition: background-size .3s; }
-.cta::after { content: "↵"; content: "↵" / ""; transition: transform .2s; }
-.cta:hover { background-size: 0 2px; } .cta:hover::after { transform: translateX(2px); }
+/* the cursor blinks four times (under five seconds) and stays; it doesn't blink under reduced motion */
+@media (prefers-reduced-motion: no-preference) { .scores .you span:first-child::after { animation: blink 1s step-end 4; } }
+.cta { position: relative; justify-self: start; display: inline-flex; justify-content: space-between; gap: 24px; min-inline-size: 170px;
+  margin-block-start: 8px; padding-block-end: 14px; font-size: 1.25rem; letter-spacing: -.02em; }
+/* the underline is a border (forced colors keep it) that shrinks to the left on hover; a press dims the text */
+.cta::before { content: ""; position: absolute; inset-inline: 0; inset-block-end: 0; border-block-end: 2px solid var(--white); transform-origin: left; }
+.cta::after { content: "↵"; content: "↵" / ""; }
+.cta:hover::before { scale: 0 1; }
+.cta:active { color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .cta::before { transition: scale .3s; }
+  .cta::after { transition: transform .2s; } .cta:hover::after { transform: translateX(2px); }
+}
 /* small boards (320px phones, short desktop windows): the game-over card tightens so Play again stays inside */
 @container (max-width: 380px) {
-  .overlay { gap: 10px; } .overlay h2 { font-size: 28px; } .scores li { padding: 6px 0; } .cta { margin-top: 2px; padding-bottom: 10px; }
+  .overlay { gap: 10px; } .overlay h2 { font-size: 1.75rem; } .scores li { padding-block: 6px; } .cta { margin-block-start: 2px; padding-block-end: 10px; }
 }
 
 /* touch: a d-pad under the board, as well as swipes on it */
-.pad { display: none; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 56px); gap: 8px; margin-top: 24px; }
-.pad button { border: 1px solid var(--line); border-radius: 6px; background: var(--card); font: 18px system-ui, sans-serif; color: var(--muted);
+.pad { display: none; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 56px); gap: 8px; margin-block-start: 24px; }
+.pad button { border: 1px solid var(--line); border-radius: 6px; background: var(--card); font: 1.125rem system-ui, sans-serif; color: var(--muted);
   transition: border-color .2s, color .2s; touch-action: manipulation; }
 .pad button:active { border-color: var(--muted); color: var(--text); }
 .pad [data-dir="up"] { grid-column: 2; } .pad [data-dir="left"] { grid-column: 1; grid-row: 2; }
 .pad [data-dir="down"] { grid-column: 2; grid-row: 2; } .pad [data-dir="right"] { grid-column: 3; grid-row: 2; }
-@media (pointer: coarse), (max-width: 1023px) { .pad { display: grid; } }
+/* touch screens of any width, and narrow windows: ~44px hit areas on the nav links */
+@media (pointer: coarse), (max-width: 1023px) { .pad { display: grid; } .nav a { padding-block: 11px; margin-block: -11px; } }
 @media (pointer: coarse) { .keys .desk { display: none; } }
 @media (pointer: fine) { .keys .touch { display: none; } }
 
@@ -105,24 +122,20 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   :root { --pad: 20px; }
   .wrap::before { display: none; }
   .grid { grid-template-columns: minmax(0, 1fr); }
-  .grid > * { grid-column: 1 / -1 !important; padding: 0 !important; }
-  .nav { grid-template-columns: 1fr auto; } .nav .logo { grid-column: 1 !important; }
-  .nav .back { grid-column: 2 !important; }
-  .nav a { padding: 11px 0 !important; margin: -11px 0; }   /* ~44px hit areas; !important beats the .grid > * reset */
-  .stats div + div, .keys li > :last-child { padding-left: 16px; }
+  /* one column; the .nav rules below win on specificity */
+  .grid > * { grid-column: 1 / -1; padding: 0; }
+  .nav { grid-template-columns: 1fr auto; } .nav .logo { grid-column: 1; }
+  .nav .back { grid-column: 2; }
+  .stats div + div, .keys li > :last-child { padding-inline-start: 16px; }
   /* compact, so the board and the pad fit one phone screen */
-  .game { padding: 28px 0 32px !important; row-gap: 20px; }
-  .label { margin-bottom: 6px; } h1 { font-size: 48px; }
-  .lead { margin-top: 10px; font-size: 16px; }
-  .stats { margin-top: 16px; padding-top: 10px; } .stats dd { font-size: 20px; }
-  .pad { grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); margin-top: 16px; }
+  .game { padding-block: 28px 32px; row-gap: 20px; }
+  .label { margin-block-end: 6px; } h1 { font-size: 3rem; }
+  .lead { margin-block-start: 10px; font-size: 1rem; }
+  .stats { margin-block-start: 16px; padding-block-start: 10px; } .stats dd { font-size: 1.25rem; }
+  .pad { grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); margin-block-start: 16px; }
   .keys { display: none; }
   .board { width: 100%; min-width: 0; }
   .pad { justify-content: center; }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after { transition-property: color, background-color, border-color, opacity !important; animation: none !important; }
-  .cta:hover::after { transform: none; }
 }
 </style>
 </head>
@@ -145,7 +158,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
         <div><dt>Status</dt><dd id="status">Ready</dd></div>
       </dl>
       <p class="sr-only" id="say" aria-live="polite"></p>
-      <ul class="keys">
+      <ul class="keys" role="list">
         <li class="desk"><span>Move</span><span class="mono"><span class="sym">↑ ↓ ← →</span> or W A S D</span></li>
         <li class="touch"><span>Move</span><span class="mono">Swipe the board or use the pad</span></li>
         <li class="touch"><span>Pause</span><span class="mono">Tap the board</span></li>
@@ -154,7 +167,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
     </div>
 
     <div class="stage">
-      <div class="board">
+      <div class="board" tabindex="-1">
         <canvas id="board" role="img" aria-label="Snake board"></canvas>
         <div class="overlay" id="overlay">
           <p class="label">Ready</p>
@@ -183,6 +196,14 @@ const overlay = document.getElementById("overlay"), scoreEl = document.getElemen
 const say = (s) => document.getElementById("say").textContent = s;   // screen readers hear pauses and results, not every step
 const css = getComputedStyle(document.documentElement), color = (v) => css.getPropertyValue(v).trim();
 const C = { text: color("--text"), white: color("--white"), muted: color("--muted"), pop: color("--pop") };
+const board = cv.parentElement, stage = board.parentElement;
+// scroll only as far as needed, then focus (focus() alone may centre the element, a jump)
+const focusInView = (el) => { el.scrollIntoView({ block: "nearest" }); el.focus(); };
+// the overlay hides with its focused button, so focus goes to the board; short phones then get the board and the pad in view
+function focusBoard() {
+  focusInView(board);
+  if (stage.getBoundingClientRect().bottom > innerHeight) stage.scrollIntoView({ block: "end" });
+}
 
 let snake = [], dir = [1, 0], queue = [], food = [15, 10], score = 0, timer = null, paused = false;
 
@@ -203,10 +224,7 @@ function placeFood() {
 function start() {
   snake = [[10, 10], [9, 10], [8, 10]]; dir = [1, 0]; queue = []; score = 0; paused = false;
   scoreEl.textContent = 0; statusEl.textContent = "Playing";
-  placeFood(); overlay.hidden = true;
-  // short phones: bring the board and the pad fully into view
-  const stage = cv.closest(".stage");
-  if (stage.getBoundingClientRect().bottom > innerHeight) stage.scrollIntoView({ block: "end" });
+  placeFood(); overlay.hidden = true; focusBoard();
   clearInterval(timer); timer = setInterval(step, TICK);
   draw();
 }
@@ -227,11 +245,11 @@ function pause() {
   overlay.innerHTML = `<p class="label">Paused</p><h2>Snake</h2><p class="note">Score: ${score}</p>
     <button class="cta" type="button" data-resume>Resume</button>`;
   overlay.hidden = false; say(`Paused. Score ${score}.`);
-  overlay.querySelector("[data-resume]").focus({ preventScroll: true });
+  focusInView(overlay.querySelector("[data-resume]"));
 }
 
 function resume() {
-  paused = false; overlay.hidden = true; statusEl.textContent = "Playing";
+  paused = false; overlay.hidden = true; focusBoard(); statusEl.textContent = "Playing";
   timer = setInterval(step, TICK);
 }
 
@@ -242,14 +260,14 @@ function end(won) {
     <p class="label">${won ? "Board cleared" : "Collision detected"}</p>
     <h2>${won ? "You win" : "Game over"}</h2>
     <p class="note">Final score: ${score}</p>
-    <ol class="scores" aria-label="Top players">
+    <ol class="scores" role="list" aria-label="Top players">
       <li class="top"><span>1. NANATT</span><span>99999999999999</span></li>
       <li><span>2. VADHH</span><span>050000</span></li>
       <li class="you"><span>3. GUEST (YOU)</span><span>${String(score).padStart(6, "0")}</span></li>
     </ol>
     <button class="cta" type="button" data-start>Play again</button>`;
   overlay.hidden = false; say(`${won ? "You win" : "Game over"}. Final score ${score}.`);
-  overlay.querySelector("[data-start]").focus({ preventScroll: true });
+  focusInView(overlay.querySelector("[data-start]"));
 }
 
 // Halftone board like the portfolio's background: a dot per cell, the snake in --text fading toward its tail,

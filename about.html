@@ -1,25 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
 <title>vadhh@localhost: ~$ whoami</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+  :root {
+    color-scheme: dark;
+    --bg: #000000;
+    --chrome: #1a1a1a;
+    --green: #00ff00;
+    --cyan: #00ffff;
+    --yellow: #ffff00;
+    --magenta: #ff00ff;
+    --red: #ff0000;
+    --muted: #888888;
+  }
 
-  * {
+  body, h1, h2, p, ul, dl, dd {
     margin: 0;
+  }
+
+  ul {
     padding: 0;
+  }
+
+  button {
+    font: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    text-align: start;
+  }
+
+  .terminal-container, .terminal-body, .profile-image, .typewriter-box {
     box-sizing: border-box;
   }
 
   body {
-    background: #000000;
-    color: #00ff00;
+    background: var(--bg);
+    color: var(--green);
     font-family: 'Fira Code', 'Courier New', monospace;
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
-    overflow-x: hidden;
+    overflow-x: clip;
     position: relative;
   }
 
@@ -27,8 +55,8 @@
   body::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
+    inset-block-start: 0;
+    inset-inline-start: 0;
     width: 100%;
     height: 100%;
     background: repeating-linear-gradient(
@@ -46,14 +74,21 @@
   body::after {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
+    inset-block-start: 0;
+    inset-inline-start: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 255, 0, 0.02);
+    background: color-mix(in srgb, var(--green) 2%, transparent);
     pointer-events: none;
     z-index: 999;
-    animation: flicker 0.15s infinite;
+  }
+
+  /* Top-level, not nested: older engines drop declarations nested under a pseudo-element.
+     30 runs of 0.15s = 4.5s, so the flicker stops on its own (WCAG 2.2.2). */
+  @media (prefers-reduced-motion: no-preference) {
+    body::after {
+      animation: flicker 0.15s 30;
+    }
   }
 
   @keyframes flicker {
@@ -89,19 +124,19 @@
   /* Terminal Window */
   .terminal-window {
     background: rgba(0, 0, 0, 0.9);
-    border: 2px solid #00ff00;
-    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-    margin-bottom: 20px;
+    border: 2px solid var(--green);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--green) 30%, transparent);
+    margin-block-end: 20px;
   }
 
   /* Terminal Header */
   .terminal-header {
-    background: #1a1a1a;
+    background: var(--chrome);
     padding: 10px 15px;
     display: flex;
     align-items: center;
     gap: 8px;
-    border-bottom: 1px solid #00ff00;
+    border-block-end: 1px solid var(--green);
   }
 
   .terminal-dot {
@@ -116,9 +151,10 @@
   .dot-green { background: #27c93f; }
 
   .terminal-title {
-    margin-left: 10px;
-    font-size: 12px;
-    color: #00ff00;
+    margin-inline-start: 10px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--green);
   }
 
   /* Terminal Body */
@@ -128,25 +164,25 @@
   }
 
   .prompt {
-    color: #00ff00;
-    text-shadow: 0 0 5px #00ff00;
+    color: var(--green);
+    text-shadow: 0 0 5px var(--green);
   }
 
   .command {
-    color: #00ffff;
+    color: var(--cyan);
   }
 
   .output {
-    color: #00ff00;
-    margin-left: 20px;
+    color: var(--green);
+    margin-inline-start: 20px;
   }
 
   .comment {
-    color: #666666;
+    color: var(--muted);
   }
 
   .highlight {
-    color: #00ffff;
+    color: var(--cyan);
     font-weight: 700;
   }
 
@@ -154,9 +190,13 @@
     display: inline-block;
     width: 8px;
     height: 16px;
-    background: #00ff00;
-    animation: blink 1s infinite;
-    margin-left: 2px;
+    background: var(--green);
+    margin-inline-start: 2px;
+
+    /* 4 blinks, then a steady cursor (WCAG 2.2.2: under 5s) */
+    @media (prefers-reduced-motion: no-preference) {
+      animation: blink 1s 4;
+    }
   }
 
   @keyframes blink {
@@ -166,25 +206,27 @@
 
   /* Section Styling */
   .section {
-    margin-bottom: 30px;
+    margin-block-end: 30px;
   }
 
   .section-header {
-    color: #00ffff;
-    font-size: 16px;
+    color: var(--cyan);
+    font-size: 1rem;
     font-weight: 700;
-    margin: 25px 0 15px 0;
-    text-shadow: 0 0 10px #00ffff;
+    margin-block: 25px 15px;
+    text-shadow: 0 0 10px var(--cyan);
   }
 
   .section-header::before {
     content: '┌─[ ';
-    color: #00ff00;
+    content: '┌─[ ' / '';
+    color: var(--green);
   }
 
   .section-header::after {
     content: ' ]';
-    color: #00ff00;
+    content: ' ]' / '';
+    color: var(--green);
   }
 
   /* Command Input Simulation */
@@ -195,7 +237,7 @@
   }
 
   .command-line .prompt {
-    margin-right: 10px;
+    margin-inline-end: 10px;
   }
 
   /* Profile Section */
@@ -205,16 +247,16 @@
     gap: 20px;
     margin: 20px 0;
     padding: 15px;
-    border: 1px solid #00ff00;
-    background: rgba(0, 255, 0, 0.03);
+    border: 1px solid var(--green);
+    background: color-mix(in srgb, var(--green) 3%, transparent);
   }
 
   .profile-image {
     width: 180px;
     height: 220px;
-    border: 2px solid #00ff00;
-    overflow: hidden;
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+    border: 2px solid var(--green);
+    overflow: clip;
+    box-shadow: 0 0 15px color-mix(in srgb, var(--green) 30%, transparent);
   }
 
   .profile-image img {
@@ -228,27 +270,33 @@
 
   /* Stats Table */
   .stats-table {
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.8;
   }
 
   .stats-table .stat-row {
-    margin-bottom: 8px;
+    margin-block-end: 8px;
     display: flex;
   }
 
+  /* Lays out the value's parts like the row does (MANA bar + caption, full-width button on phones) */
+  .stats-table dd {
+    display: flex;
+    flex-direction: inherit;
+  }
+
   .stats-table .stat-label {
-    color: #ffff00;
+    color: var(--yellow);
     min-width: 150px;
     font-weight: 700;
   }
 
   .stats-table .stat-value {
-    color: #00ff00;
+    color: var(--green);
   }
 
   .stat-bar {
-    color: #ff0000;
+    color: var(--red);
     font-weight: 700;
   }
 
@@ -256,40 +304,44 @@
   .content-block {
     margin: 20px 0;
     padding: 15px;
-    border-left: 3px solid #00ffff;
-    background: rgba(0, 255, 255, 0.03);
+    border-inline-start: 3px solid var(--cyan);
+    background: color-mix(in srgb, var(--cyan) 3%, transparent);
   }
 
   .content-block p {
-    margin-bottom: 12px;
+    margin-block-end: 12px;
     line-height: 1.8;
   }
 
+  .content-block p, .content-block ul, .typewriter-box p {
+    max-inline-size: 80ch;
+  }
+
   .content-block ul {
-    margin-left: 20px;
-    margin-top: 10px;
+    margin-inline-start: 20px;
+    margin-block-start: 10px;
   }
 
   .content-block li {
-    margin-bottom: 10px;
+    margin-block-end: 10px;
     line-height: 1.8;
   }
 
   .content-block b {
-    color: #00ffff;
+    color: var(--cyan);
   }
 
   .content-block i {
-    color: #ffff00;
+    color: var(--yellow);
   }
 
   /* Typewriter Box */
   .typewriter-box {
-    background: rgba(0, 255, 0, 0.05);
-    border: 1px solid #00ff00;
+    background: color-mix(in srgb, var(--green) 5%, transparent);
+    border: 1px solid var(--green);
     padding: 15px;
     margin: 20px 0;
-    font-size: 13px;
+    font-size: 0.8125rem;
     min-height: 120px;
     white-space: pre-wrap;
     line-height: 1.7;
@@ -297,75 +349,87 @@
 
   /* Links styled as commands */
   .cmd-link {
-    color: #00ffff;
+    color: var(--cyan);
     text-decoration: none;
-    border: 1px solid #00ffff;
+    border: 1px solid var(--cyan);
     padding: 8px 20px;
     display: inline-block;
-    margin: 10px 10px 10px 0;
-    transition: all 0.3s;
-    font-size: 13px;
+    margin-block: 10px;
+    margin-inline: 0 10px;
+    transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s;
+    font-size: 0.8125rem;
     font-weight: 700;
   }
 
   .cmd-link:hover {
-    background: rgba(0, 255, 255, 0.1);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    color: #00ff00;
-    border-color: #00ff00;
+    background: color-mix(in srgb, var(--cyan) 10%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--cyan) 50%, transparent);
+    color: var(--green);
+    border-color: var(--green);
+  }
+
+  /* Press and keyboard-focus states for every control */
+  .cmd-link:active, .decrypt-btn:active, .trace-btn:active {
+    scale: 0.97;
+  }
+
+  :where(a, button):focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 3px;
   }
 
   /* CTF Name Challenge */
   .decrypt-btn {
-    color: #ff00ff; /* Magenta for "Locked" state */
+    color: var(--magenta); /* Magenta for "Locked" state */
     cursor: pointer;
     font-weight: bold;
-    background: rgba(255, 0, 255, 0.1);
+    background: color-mix(in srgb, var(--magenta) 10%, transparent);
     padding: 2px 8px;
-    border: 1px dashed #ff00ff;
-    transition: all 0.3s;
+    border: 1px dashed var(--magenta);
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
   }
 
-  .decrypt-btn:hover {
-    background: #ff00ff;
-    color: #000;
-    box-shadow: 0 0 10px #ff00ff;
+  /* .stats-table raises it over `.stats-table .stat-value`, so the text really turns black on magenta (green was 2.3:1) */
+  .stats-table .decrypt-btn:hover {
+    background: var(--magenta);
+    color: var(--bg);
+    box-shadow: 0 0 10px var(--magenta);
   }
 
   .decrypt-btn.unlocked {
-    color: #00ff00; /* Green for "Unlocked" state */
-    border: 1px solid #00ff00;
+    color: var(--green); /* Green for "Unlocked" state */
+    border: 1px solid var(--green);
     background: transparent;
     cursor: default;
   }
 
   /* Network Traceroute Challenge */
   .trace-btn {
-    color: #00ffff; /* Cyan for Network/Data */
+    color: var(--cyan); /* Cyan for Network/Data */
     cursor: crosshair; /* Target cursor */
     font-family: 'Courier New', monospace;
-    border-bottom: 1px dotted #00ffff;
-    transition: all 0.2s;
+    border-block-end: 1px dotted var(--cyan);
+    transition: background-color 0.2s, text-shadow 0.2s;
   }
 
   .trace-btn:hover {
-    background: rgba(0, 255, 255, 0.15);
-    text-shadow: 0 0 8px #00ffff;
+    background: color-mix(in srgb, var(--cyan) 15%, transparent);
+    text-shadow: 0 0 8px var(--cyan);
   }
 
   .trace-btn.resolved {
-    color: #00ff00;
-    border-bottom: none;
+    color: var(--green);
+    border-block-end: none;
     cursor: default;
     background: transparent;
   }
 
   /* System info bar */
   .system-bar {
-    background: #1a1a1a;
+    background: var(--chrome);
     padding: 8px 15px;
-    font-size: 11px;
-    border-top: 1px solid #00ff00;
+    font-size: 0.6875rem;
+    border-block-start: 1px solid var(--green);
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -373,12 +437,12 @@
   }
 
   .system-info {
-    color: #888888;
+    color: var(--muted);
   }
 
   .system-info span {
-    color: #00ff00;
-    margin-left: 5px;
+    color: var(--green);
+    margin-inline-start: 5px;
   }
 
   /* Center content */
@@ -390,15 +454,15 @@
   .construction-gif {
     display: block;
     margin: 20px auto;
-    border: 2px solid #00ff00;
+    border: 2px solid var(--green);
     padding: 5px;
-    background: #000;
+    background: var(--bg);
   }
 
   /* Responsive */
   @media (max-width: 768px) {
     body {
-      font-size: 12px;
+      font-size: 0.75rem;
     }
 
     .terminal-container {
@@ -427,11 +491,11 @@
 
     .stats-table .stat-label {
       min-width: auto;
-      margin-bottom: 3px;
+      margin-block-end: 3px;
     }
 
     .system-bar {
-      font-size: 10px;
+      font-size: 0.625rem;
     }
   }
 </style>
@@ -440,82 +504,85 @@
 
   <div class="terminal-container">
     <div class="terminal-window">
-      <div class="terminal-header">
+      <header class="terminal-header">
         <span class="terminal-dot dot-red"></span>
         <span class="terminal-dot dot-yellow"></span>
         <span class="terminal-dot dot-green"></span>
-        <span class="terminal-title">vadhh@localhost: ~$ whoami</span>
-      </div>
+        <h1 class="terminal-title">vadhh@localhost: ~$ whoami</h1>
+      </header>
 
-      <div class="terminal-body">
+      <main class="terminal-body">
         <!-- Boot Sequence -->
         <div class="section">
           <div class="command-line">
             <span class="prompt">vadhh@localhost:~$</span>
             <span class="command">./init_bio.sh</span>
           </div>
-          <div class="typewriter-box" id="typewriter"></div>
+          <div class="typewriter-box"><p id="typewriter"></p></div>
         </div>
 
         <!-- Profile Section -->
         <div class="section">
-          <div class="section-header">00_HUMAN</div>
-          
+          <h2 class="section-header">00_HUMAN</h2>
+
           <div class="profile-grid">
             <div class="profile-image">
-              <img src="me.jpg" alt="Vadhh">
+              <picture>
+                <source type="image/webp" srcset="img/me-180.webp 180w, img/me-360.webp 360w, img/me-540.webp 540w" sizes="(max-width: 768px) 146px, 176px">
+                <img src="me.jpg" alt="Vadhh" width="864" height="1184">
+              </picture>
             </div>
 
-            <div class="stats-table">
+            <dl class="stats-table">
               <div class="stat-row">
-                <span class="stat-label">IDENTITY:</span>
-                <span 
-                  class="stat-value decrypt-btn" 
-                  id="name-cipher" 
-                  onclick="decryptName()" 
+                <dt class="stat-label">IDENTITY:</dt>
+                <dd><button
+                  type="button"
+                  class="stat-value decrypt-btn"
+                  id="name-cipher"
                   data-real="AFRIDHO TATTAQ TAVADHU"
                 >
                   [ 0xSECURE_DATA_LOCKED ]
-                </span>
+                </button></dd>
               </div>
               <div class="stat-row">
-                <span class="stat-label">CLASS:</span>
-                <span class="stat-value">Engineering Student / Full-Stack Tinkerer</span>
+                <dt class="stat-label">CLASS:</dt>
+                <dd class="stat-value">Engineering Student / Full-Stack Tinkerer</dd>
               </div>
               <div class="stat-row">
-                <span class="stat-label">ALIGNMENT:</span>
-                <span class="stat-value">Chaotic Good (Open Source)</span>
+                <dt class="stat-label">ALIGNMENT:</dt>
+                <dd class="stat-value">Chaotic Good (Open Source)</dd>
               </div>
               <div class="stat-row">
-                <span class="stat-label">WEAPON:</span>
-                <span class="stat-value">Neovim (Configured to break often)</span>
+                <dt class="stat-label">WEAPON:</dt>
+                <dd class="stat-value">Neovim (Configured to break often)</dd>
               </div>
               <div class="stat-row">
-                <span class="stat-label">CURRENT_QUEST:</span>
-                <span class="stat-value">Surviving 7th Semester & MLOps Pipelines</span>
+                <dt class="stat-label">CURRENT_QUEST:</dt>
+                <dd class="stat-value">Surviving 7th Semester & MLOps Pipelines</dd>
               </div>
               <div class="stat-row">
-                <span class="stat-label">MANA:</span>
-                <span class="stat-bar">██░░░░░░░░</span>
-                <span class="stat-value"> (Caffeine Dependent)</span>
+                <dt class="stat-label">MANA:</dt>
+                <dd><span class="stat-bar" role="img" aria-label="20%">██░░░░░░░░</span>
+                <span class="stat-value"> (Caffeine Dependent)</span></dd>
               </div>
               <div class="stat-row">
-                <span class="stat-label">LOCATION:</span>
-                <span 
-                  class="stat-value trace-btn" 
-                  id="loc-trace" 
-                  onclick="traceLocation()"
+                <dt class="stat-label">LOCATION:</dt>
+                <dd><button
+                  type="button"
+                  class="stat-value trace-btn"
+                  id="loc-trace"
                 >
                   127.0.0.1 (Localhost)
-                </span>
+                </button></dd>
               </div>
-            </div>
+            </dl>
           </div>
         </div>
 
         <!-- The Pitch -->
         <div class="section">
-          <div class="section-header">01_STATE</div>
+          <h2 class="section-header">01_STATE</h2>
           <div class="content-block">
             <p><b>Models die in notebooks.</b> That is the hard truth of this industry.</p>
             
@@ -527,7 +594,7 @@
 
         <!-- The Philosophy -->
         <div class="section">
-          <div class="section-header">02_PHILOSOPHY</div>
+          <h2 class="section-header">02_PHILOSOPHY</h2>
           <div class="content-block">
             <p>I believe in <b>controlled chaos</b>. Whether it's the polyrhythms of System of a Down or a distributed system architecture, complexity requires orchestration.</p>
             
@@ -540,7 +607,7 @@
 
         <!-- Footer Section -->
         <div class="center-content">
-          <img src="https://cyber.dabamos.de/88x31/construction.gif" class="construction-gif" alt="Under Construction">
+          <img src="https://cyber.dabamos.de/88x31/construction.gif" class="construction-gif" alt="Under Construction" width="88" height="31" loading="lazy">
           <p class="output comment"># This personality is constantly under construction.</p>
           
           <a href="index.html" class="cmd-link">← RETURN TO SYSTEM ROOT</a>
@@ -550,14 +617,14 @@
           <span class="prompt">vadhh@localhost:~$</span>
           <span class="cursor"></span>
         </div>
-      </div>
+      </main>
 
-      <div class="system-bar">
+      <footer class="system-bar">
         <div class="system-info">SESSION:<span>WHOAMI</span></div>
         <div class="system-info">USER:<span>vadhh</span></div>
         <div class="system-info">PWD:<span>~/about</span></div>
         <div class="system-info">STATUS:<span>ONLINE</span></div>
-      </div>
+      </footer>
     </div>
   </div>
 
@@ -565,26 +632,26 @@
   const text = "> LOADING PROFILE...\n> STATUS: ONLINE.\n\nHello, friend.\n\nI am Vadhh. I build systems that turn messy data into revenue. I prefer the terminal over the mouse, and simple code over clever code.";
   
   const element = document.getElementById("typewriter");
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const typed = document.createTextNode("");
   let i = 0;
 
+  // ~18ms a character: typing ends in ~3.5s, before the cursor's 4s of blinking (WCAG 2.2.2: under 5s)
   function typeWriter() {
-    if (i < text.length) {
-      element.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
-      i++;
-      setTimeout(typeWriter, Math.floor(Math.random() * 50) + 30); 
-    } else {
-      element.innerHTML = text + '<span class="cursor"></span>';
-    }
+    typed.data = text.substring(0, ++i);
+    if (i < text.length) setTimeout(typeWriter, Math.random() * 16 + 10);
   }
 
-  window.onload = typeWriter;
-  
+  element.append(typed, Object.assign(document.createElement("span"), { className: "cursor" }));
+  if (reduceMotion.matches) typed.data = text;
+  else typeWriter();
+
   // CTF Decrypt Effect
   function decryptName() {
     const element = document.getElementById("name-cipher");
     const realName = element.getAttribute("data-real");
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    let iterations = 0;
+    let iterations = reduceMotion.matches ? realName.length : 0;
     
     // Prevent re-running if already unlocked
     if (element.classList.contains("unlocked")) return;
@@ -609,6 +676,7 @@
         element.classList.add("unlocked");       // Add plain text styling
         element.style.border = "none";           // Clean look
         element.style.padding = "0";
+        element.setAttribute("aria-disabled", "true");
       }
       
       // Speed of decryption (1/3 of a letter per frame approx)
@@ -631,7 +699,7 @@
     // Prevent re-running
     if (element.classList.contains("resolved")) return;
     
-    let stepIndex = 0;
+    let stepIndex = reduceMotion.matches ? steps.length : 0;
     
     // Fast cycle through IPs
     const timer = setInterval(() => {
@@ -643,9 +711,13 @@
         element.innerText = steps[steps.length - 1]; // Ensure final text matches exactly
         element.classList.remove("trace-btn");
         element.classList.add("resolved");
+        element.setAttribute("aria-disabled", "true");
       }
     }, 250); // 250ms per hop
   }
+
+  document.getElementById("name-cipher").addEventListener("click", decryptName);
+  document.getElementById("loc-trace").addEventListener("click", traceLocation);
 </script>
 
 
